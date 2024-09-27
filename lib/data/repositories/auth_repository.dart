@@ -24,7 +24,7 @@ class AuthRepository {
     try {
       // Gửi yêu cầu đăng nhập
       LoginSuccessDto loginSuccessDto = await authApiClient.login(
-        LoginDto(username: username, password: password),
+        LoginDto(username: username, password: password, otp: ''),
       );
 
       // Lưu token vào local data source
@@ -39,21 +39,6 @@ class AuthRepository {
       // Trả về kết quả thất bại
       return Failure('$e');
     }
-  }
-
-  Future<Result<void>> register({
-    required String username,
-    required String password,
-  }) async {
-    try {
-      await authApiClient.register(
-        RegisterDto(username: username, password: password),
-      );
-    } catch (e) {
-      log('$e');
-      return Failure('$e');
-    }
-    return Success(null);
   }
 
   Future<Result<String?>> getToken() async {

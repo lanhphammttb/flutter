@@ -1,0 +1,1 @@
+const String BASE_URL = 'https://api-staging.thongtinnguon.vn/api/';
