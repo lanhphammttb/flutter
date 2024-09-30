@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:nttcs/core/api/api_service.dart';
+import 'package:nttcs/core/constants/constants.dart';
 import 'package:nttcs/data/dtos/login_success_dto.dart';
 import 'package:nttcs/data/result_type.dart';
 
@@ -17,21 +18,24 @@ class AuthRepository {
     required this.authLocalDataSource,
   });
 
-  Future<Result<void>> login({
-    required String username,
-    required String password,
-  }) async {
+  Future<Result<void>> login(
+      {required String username,
+      required String password,
+      required String otp}) async {
     try {
       // Gửi yêu cầu đăng nhập
-      LoginSuccessDto loginSuccessDto = await authApiClient.login(
-        LoginDto(username: username, password: password),
+      final result = await authApiClient.login(
+        LoginDto(username: username, password: password, otp: ""),
       );
 
       // Lưu token vào local data source
-      await authLocalDataSource.saveToken(loginSuccessDto.token);
+      await authLocalDataSource.saveString(AuthDataConstants.token, result?['Token'] as String);
+      await authLocalDataSource.saveString(AuthDataConstants.code, result?['Code'] as String);
+      await authLocalDataSource.saveString(AuthDataConstants.name, result?['Name'] as String);
+      await authLocalDataSource.saveInt(AuthDataConstants.id, result?['Id'] as int);
 
       // Trả về kết quả thành công
-      return Success(loginSuccessDto);
+      return Success(result?['Status'] as bool? ?? false);
     } catch (e) {
       // Ghi lại lỗi
       log('$e');
@@ -71,7 +75,7 @@ class AuthRepository {
 
   Future<Result<void>> logout() async {
     try {
-      await authLocalDataSource.deleteToken();
+      // await authLocalDataSource.deleteToken();
       return Success(null);
     } catch (e) {
       log('$e');

@@ -1,16 +1,15 @@
 import 'package:bloc/bloc.dart';
-import 'package:nttcs/data/dtos/login_success_dto.dart';
 import 'package:nttcs/data/repositories/auth_repository.dart';
 import 'package:nttcs/data/result_type.dart';
 
 part 'auth_event.dart';
+
 part 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc(this.authRepository) : super(AuthInitial()) {
     on<AuthStarted>(_onStarted);
     on<AuthLoginStarted>(_onLoginStarted);
-    on<AuthRegisterStarted>(_onRegisterStarted);
     on<AuthLoginPrefilled>(_onLoginPrefilled);
     on<AuthAuthenticateStarted>(_onAuthenticateStarted);
     on<AuthLogoutStarted>(_onAuthLogoutStarted);
@@ -25,9 +24,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   void _onLoginStarted(AuthLoginStarted event, Emitter<AuthState> emit) async {
     emit(AuthLoginInProgress());
     final result = await authRepository.login(
-        username: event.username, password: event.password);
+        username: event.username, password: event.password, otp: '');
     return (switch (result) {
-      Success() => emit(AuthLoginSuccess(result as LoginSuccessDto)),
+      Success() => emit(AuthLoginSuccess(result as bool)),
       Failure() => emit(AuthLoginFailure(result.message)),
     });
   }
@@ -35,17 +34,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   void _onLoginPrefilled(
       AuthLoginPrefilled event, Emitter<AuthState> emit) async {
     emit(AuthLoginInitial(username: event.username, password: event.password));
-  }
-
-  void _onRegisterStarted(
-      AuthRegisterStarted event, Emitter<AuthState> emit) async {
-    emit(AuthRegisterInProgress());
-    final result = await authRepository.register(
-        username: event.username, password: event.password);
-    return (switch (result) {
-      Success() => emit(AuthRegisterSuccess()),
-      Failure() => emit(AuthRegisterFailure(result.message)),
-    });
   }
 
   void _onAuthenticateStarted(

@@ -1,42 +1,27 @@
-import 'get_user_success_dto.dart';
+import 'package:json_annotation/json_annotation.dart';
 
+part 'login_success_dto.g.dart';
+
+@JsonSerializable()
 class LoginSuccessDto {
   final int code;
-  final String message;
-  final String dataCode;
-  final String app;
+  final String userName;
+  final int userId;
   final String token;
-  final GetUserSuccessDto? getUserSuccessDto;
+  final bool isGoogleAuth;
+  final String message;
 
   LoginSuccessDto({
     required this.code,
-    required this.message,
-    required this.dataCode,
-    required this.app,
+    required this.userName,
+    required this.userId,
     required this.token,
-    this.getUserSuccessDto,
+    required this.isGoogleAuth,
+    required this.message,
   });
 
-  factory LoginSuccessDto.fromJson(Map<String, dynamic> json) {
-    return LoginSuccessDto(
-      code: json['Code'] as int,
-      message: json['Message'] as String,
-      dataCode: json['Data']['Code'] as String,
-      app: json['Data']['App'] as String,
-      token: json['Data']['Token'] as String,
-    );
-  }
+  factory LoginSuccessDto.fromJson(Map<String, dynamic> json) =>
+      _$LoginSuccessDtoFromJson(json);
 
-  factory LoginSuccessDto.withUserData(LoginSuccessDto loginDto, GetUserSuccessDto userDto) {
-    return LoginSuccessDto(
-      code: loginDto.code,
-      message: loginDto.message,
-      dataCode: loginDto.dataCode,
-      app: loginDto.app,
-      token: loginDto.token,
-      getUserSuccessDto: userDto,
-    );
-  }
-
-  bool get isSuccess => code == 1;
+  Map<String, dynamic> toJson() => _$LoginSuccessDtoToJson(this);
 }

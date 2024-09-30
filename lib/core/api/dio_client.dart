@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:nttcs/data/constants.dart';
 
 import 'interceptors.dart';
 
@@ -12,7 +13,7 @@ class DioClient {
 
   DioClient._internal() {
     dio = Dio(BaseOptions(
-      baseUrl: 'https://mam-cs.thongtinnguon.vn/api/',
+      baseUrl: BASE_URL,
     ));
 
     dio.interceptors.add(AppInterceptors());
@@ -24,7 +25,8 @@ class DioClient {
     _instance = value;
   }
 
-  Future<Response> get(String path, {String? token, Map<String, dynamic>? queryParameters}) async {
+  Future<Response> get(String path,
+      {String? token, Map<String, dynamic>? queryParameters}) async {
     return dio.get(
       path,
       queryParameters: queryParameters,
@@ -40,4 +42,3 @@ class DioClient {
     );
   }
 }
-

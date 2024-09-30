@@ -43,13 +43,14 @@ class MyApp extends StatelessWidget {
               ),
             ),
             BlocProvider(
-              create: (context) => ThemeBloc(ThemeState( themeType: PrefUtils().getThemeData())),
+              create: (context) =>
+                  ThemeBloc(ThemeState(themeType: PrefUtils().getThemeData())),
             ),
             BlocProvider(
               create: (context) => HomeBloc(), // Providing HomeBloc
             ),
           ],
-          child: AppContent(),
+          child: const AppContent(),
         ),
       );
     });
@@ -84,13 +85,13 @@ class _AppContentState extends State<AppContent> {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: NavigatorService.navigatorKey,
-          localizationsDelegates: [AppLocalizationDelegate()],
+          localizationsDelegates: const [AppLocalizationDelegate()],
           theme: theme,
           // Use the theme data from the ThemeBloc
           title: 'Nguồn thông tin cơ sở',
-          supportedLocales: [
-            const Locale('en', 'US'),
-            const Locale('vi', 'VI'),
+          supportedLocales: const [
+            Locale('en', 'US'),
+            Locale('vi', 'VI'),
           ],
           initialRoute: AppRoutes.initialRoute,
           routes: AppRoutes.routes,

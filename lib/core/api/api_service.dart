@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
-import 'package:nttcs/data/dtos/get_user_success_dto.dart';
 import 'package:nttcs/data/dtos/login_dto.dart';
 import 'package:nttcs/data/dtos/login_success_dto.dart';
 import 'package:nttcs/data/dtos/register_dto.dart';
+import 'package:nttcs/data/models/specific_response.dart';
+import 'package:nttcs/data/models/user.dart';
 import 'package:nttcs/data/result_type.dart';
 
 import 'dio_client.dart';
@@ -12,44 +13,40 @@ class AuthApiClient {
 
   final DioClient dio;
 
-  Future<LoginSuccessDto> login(LoginDto loginDto) async {
+  Future<Map<String, dynamic>?> login(LoginDto loginDto) async {
     try {
       // Gửi yêu cầu đăng nhập
       final response = await dio.post(
-        '/login',
+        '/Auth/KToken',
         data: loginDto.toJson(),
       );
 
-      // Phân tích kết quả đăng nhập
       final result = LoginSuccessDto.fromJson(response.data);
 
-      // Kiểm tra xem đăng nhập có thành công không
-      if (result.isSuccess) {
-        // Nếu thành công, lấy thông tin người dùng
-        final userData = await getUser(result.app, result.token);
+      if (result.code == 1) {
+        final userData = await getUser(result.token);
 
-        // Trả về kết quả đăng nhập kèm thông tin người dùng
-        return LoginSuccessDto.withUserData(result, userData);
+        return {
+          'Token': result.token,
+          'Code': userData.items.isNotEmpty ? userData.items[0].code : null,
+          'Name': userData.items.isNotEmpty ? userData.items[0].name : null,
+          'Id': userData.items.isNotEmpty ? userData.items[0].id : null,
+          'IsGoogleAuth': result.isGoogleAuth,
+          'Status': userData.status,
+        };
+      } else {
+        return null;
       }
-
-      // Nếu không thành công, trả về kết quả đăng nhập mà không có thông tin người dùng
-      return result;
     } on DioException catch (e) {
-      // Xử lý lỗi DioException
       if (e.response != null) {
-        print('DioException response data: ${e.response!.data}');
         throw Exception(e.response!.data['message']);
       } else {
-        print('DioException message: ${e.message}');
         throw Exception(e.message);
       }
     } catch (e) {
-      // Xử lý các lỗi chung khác
-      print('General exception: $e');
       throw Exception('An error occurred: $e');
     }
   }
-
 
   Future<void> register(RegisterDto registerDto) async {
     try {
@@ -59,36 +56,33 @@ class AuthApiClient {
       );
     } on DioException catch (e) {
       if (e.response != null) {
-        print('DioException response data: ${e.response!.data}');
         throw Exception(e.response!.data['message']);
       } else {
-        print('DioException message: ${e.message}');
         throw Exception(e.message);
       }
     } catch (e) {
-      print('General exception: $e');
       throw Exception('An error occurred: $e');
     }
   }
 
-  Future<GetUserSuccessDto> getUser(String id, String token) async {
+  Future<SpecificResponse<User>> getUser(String token) async {
     try {
       final response = await dio.get(
-        '/public/v2/user/$id',
+        'site',
         token: token,
       );
 
-      return GetUserSuccessDto.fromJson(response.data);
+      return SpecificResponse<User>.fromJson(
+        response.data,
+        (item) => User.fromJson(item as Map<String, dynamic>),
+      );
     } on DioException catch (e) {
       if (e.response != null) {
-        print('DioException response data: ${e.response!.data}');
         throw Exception(e.response!.data['message']);
       } else {
-        print('DioException message: ${e.message}');
         throw Exception(e.message);
       }
     } catch (e) {
-      print('General exception: $e');
       throw Exception('An error occurred: $e');
     }
   }

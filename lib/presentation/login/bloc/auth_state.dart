@@ -14,9 +14,9 @@ class AuthLoginInitial extends AuthState {
 class AuthLoginInProgress extends AuthState {}
 
 class AuthLoginSuccess extends AuthState {
-  AuthLoginSuccess(this.loginSuccessDto);
+  AuthLoginSuccess(this.status);
 
-  final LoginSuccessDto loginSuccessDto;
+  final bool status;
 }
 
 class AuthLoginFailure extends AuthState {
@@ -27,7 +27,6 @@ class AuthLoginFailure extends AuthState {
 
 class AuthRegisterInProgress extends AuthState {}
 
-class AuthRegisterSuccess extends AuthState {}
 
 class AuthRegisterFailure extends AuthState {
   AuthRegisterFailure(this.message);
