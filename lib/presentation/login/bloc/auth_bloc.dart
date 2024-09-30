@@ -10,6 +10,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc(this.authRepository) : super(AuthInitial()) {
     on<AuthStarted>(_onStarted);
     on<AuthLoginStarted>(_onLoginStarted);
+    on<AuthRegisterStarted>(_onRegisterStarted);
     on<AuthLoginPrefilled>(_onLoginPrefilled);
     on<AuthAuthenticateStarted>(_onAuthenticateStarted);
     on<AuthLogoutStarted>(_onAuthLogoutStarted);
@@ -36,6 +37,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoginInitial(username: event.username, password: event.password));
   }
 
+  void _onRegisterStarted(
+      AuthRegisterStarted event, Emitter<AuthState> emit) async {
+    emit(AuthRegisterInProgress());
+    final result = await authRepository.register(
+        username: event.username, password: event.password);
+    return (switch (result) {
+      Success() => emit(AuthRegisterSuccess()),
+      Failure() => emit(AuthRegisterFailure(result.message)),
+    });
+  }
 
   void _onAuthenticateStarted(
       AuthAuthenticateStarted event, Emitter<AuthState> emit) async {

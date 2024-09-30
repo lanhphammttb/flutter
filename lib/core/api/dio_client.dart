@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:nttcs/utils/constants.dart';
 
 import 'interceptors.dart';
 
@@ -13,7 +12,7 @@ class DioClient {
 
   DioClient._internal() {
     dio = Dio(BaseOptions(
-      baseUrl: BASE_URL,
+      baseUrl: 'https://mam-cs.thongtinnguon.vn/api/',
     ));
 
     dio.interceptors.add(AppInterceptors());

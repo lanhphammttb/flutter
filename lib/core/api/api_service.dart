@@ -3,7 +3,6 @@ import 'package:nttcs/data/dtos/get_user_success_dto.dart';
 import 'package:nttcs/data/dtos/login_dto.dart';
 import 'package:nttcs/data/dtos/login_success_dto.dart';
 import 'package:nttcs/data/dtos/register_dto.dart';
-import 'package:nttcs/data/models/BaseResponse.dart';
 import 'package:nttcs/data/result_type.dart';
 
 import 'dio_client.dart';
@@ -17,15 +16,15 @@ class AuthApiClient {
     try {
       // Gửi yêu cầu đăng nhập
       final response = await dio.post(
-        '/Auth/KToken',
+        '/login',
         data: loginDto.toJson(),
       );
 
       // Phân tích kết quả đăng nhập
-      final result = BaseResponse.fromJson(response.data);
+      final result = LoginSuccessDto.fromJson(response.data);
 
       // Kiểm tra xem đăng nhập có thành công không
-      if (result.status) {
+      if (result.isSuccess) {
         // Nếu thành công, lấy thông tin người dùng
         final userData = await getUser(result.app, result.token);
 
@@ -52,10 +51,30 @@ class AuthApiClient {
   }
 
 
+  Future<void> register(RegisterDto registerDto) async {
+    try {
+      await dio.post(
+        '/auth/register',
+        data: registerDto.toJson(),
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        print('DioException response data: ${e.response!.data}');
+        throw Exception(e.response!.data['message']);
+      } else {
+        print('DioException message: ${e.message}');
+        throw Exception(e.message);
+      }
+    } catch (e) {
+      print('General exception: $e');
+      throw Exception('An error occurred: $e');
+    }
+  }
+
   Future<GetUserSuccessDto> getUser(String id, String token) async {
     try {
       final response = await dio.get(
-        'site',
+        '/public/v2/user/$id',
         token: token,
       );
 

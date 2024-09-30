@@ -1,49 +1,100 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'blocs/authentication/authentication_bloc.dart';
-import 'core/api/api_service.dart';
-import 'core/api/dio_client.dart';
-import 'data/auth_local_data_source.dart';
-import 'data/repositories/user_repository.dart';
-import 'screens/login/login_screen.dart';
-import 'screens/home/home_screen.dart';
-import 'data/shared_preferences_helper.dart';
+import 'package:flutter/services.dart';
+import 'package:nttcs/core/api/api_service.dart';
+import 'package:nttcs/core/api/dio_client.dart';
+import 'package:nttcs/core/app_export.dart';
+import 'package:nttcs/core/config/app_routes.dart';
+import 'package:nttcs/data/auth_local_data_source.dart';
+import 'package:nttcs/data/repositories/auth_repository.dart';
+import 'package:nttcs/presentation/home/bloc/home_bloc.dart';
+import 'package:nttcs/presentation/login/bloc/auth_bloc.dart';
 
-void main() async {
+var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  String? token = await SharedPreferencesHelper.getToken();  // Kiểm tra token lưu trong SharedPreferences
-  runApp(MyApp(initialRoute: token != null ? '/home' : '/login'));
+  Future.wait([SystemChrome.setPreferredOrientations([])]).then((value) {
+    PrefUtils().init();
+    runApp(const MyApp());
+  });
 }
 
 class MyApp extends StatelessWidget {
-  final String initialRoute;
-
-  MyApp({required this.initialRoute});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final dioClient = DioClient();
-    final authApiClient = AuthApiClient(dioClient);
-
-    final userRepository = UserRepository(authApiClient: authApiClient);
-
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter BLoC App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      initialRoute: initialRoute,
-      routes: {
-        '/login': (context) => BlocProvider(
-          create: (context) => AuthenticationBloc(),
-          child: LoginScreen(userRepository: userRepository),
+    return Sizer(builder: (context, orientation, deviceType) {
+      return MultiRepositoryProvider(
+        providers: [
+          RepositoryProvider(
+            create: (context) => AuthRepository(
+              authApiClient: AuthApiClient(DioClient()),
+              authLocalDataSource:
+                  AuthLocalDataSource(PrefUtils().sharedPreferences!),
+            ),
+          ),
+        ],
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (context) => AuthBloc(
+                context.read<AuthRepository>(),
+              ),
+            ),
+            BlocProvider(
+              create: (context) => ThemeBloc(ThemeState( themeType: PrefUtils().getThemeData())),
+            ),
+            BlocProvider(
+              create: (context) => HomeBloc(), // Providing HomeBloc
+            ),
+          ],
+          child: AppContent(),
         ),
-        '/home': (context) => BlocProvider(
-          create: (context) => AuthenticationBloc(),
-          child: HomeScreen(),
-        ),
+      );
+    });
+  }
+}
+
+class AppContent extends StatefulWidget {
+  const AppContent({
+    super.key,
+  });
+
+  @override
+  State<AppContent> createState() => _AppContentState();
+}
+
+class _AppContentState extends State<AppContent> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<AuthBloc>().add(AuthAuthenticateStarted());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = context.watch<AuthBloc>().state;
+    if (authState is AuthInitial) {
+      return Container();
+    }
+
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, state) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          navigatorKey: NavigatorService.navigatorKey,
+          localizationsDelegates: [AppLocalizationDelegate()],
+          theme: theme,
+          // Use the theme data from the ThemeBloc
+          title: 'Nguồn thông tin cơ sở',
+          supportedLocales: [
+            const Locale('en', 'US'),
+            const Locale('vi', 'VI'),
+          ],
+          initialRoute: AppRoutes.initialRoute,
+          routes: AppRoutes.routes,
+        );
       },
     );
   }
