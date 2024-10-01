@@ -35,12 +35,8 @@ class AuthRepository {
       await authLocalDataSource.saveInt(AuthDataConstants.id, result?['Id'] as int);
 
       // Trả về kết quả thành công
-      return Success(result?['Status'] as bool? ?? false);
+      return Success(result?['Status']);
     } catch (e) {
-      // Ghi lại lỗi
-      log('$e');
-
-      // Trả về kết quả thất bại
       return Failure('$e');
     }
   }
@@ -79,6 +75,36 @@ class AuthRepository {
       return Success(null);
     } catch (e) {
       log('$e');
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> getDevice2() async {
+    try {
+      String token = await authLocalDataSource.getToken() as String;
+      final result = await authApiClient.getDevice2(token);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> getOverview() async {
+    try {
+      String token = await authLocalDataSource.getToken() as String;
+      final result = await authApiClient.getOverview(token);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> getLocations() async {
+    try {
+      String token = await authLocalDataSource.getToken() as String;
+      final result = await authApiClient.getLocations(token);
+      return Success(result);
+    } catch (e) {
       return Failure('$e');
     }
   }

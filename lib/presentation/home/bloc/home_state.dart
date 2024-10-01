@@ -6,6 +6,26 @@ class HomeState extends Equatable {
   List<Object> get props => [];
 }
 
+class LocationsLoading extends HomeState {}
+
+class LocationsSuccess extends HomeState {
+  final SpecificResponse<Location> locations;
+
+  const LocationsSuccess(this.locations);
+
+  @override
+  List<Object> get props => [locations];
+}
+
+class LocationsFailure extends HomeState {
+  final String error;
+
+  const LocationsFailure(this.error);
+
+  @override
+  List<Object> get props => [error];
+}
+
 class HomeInitial extends HomeState {}
 
 class SearchLoading extends HomeState {}

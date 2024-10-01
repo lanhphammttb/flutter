@@ -4,20 +4,49 @@ part 'user.g.dart';
 
 @JsonSerializable()
 class User {
+  @JsonKey(name: 'Name')
   final String name;
+
+  @JsonKey(name: 'Description')
   final String description;
+
+  @JsonKey(name: 'ParentId')
   final int parentId;
+
+  @JsonKey(name: 'Code')
   final String code;
+
+  @JsonKey(name: 'CityCode')
   final String cityCode;
+
+  @JsonKey(name: 'Type')
   final int type;
+
+  @JsonKey(name: 'LogoURL')
   final String logoURL;
+
+  @JsonKey(name: 'Order')
   final int order;
+
+  @JsonKey(name: 'Deleted')
   final bool deleted;
+
+  @JsonKey(name: 'IsSiteUser')
   final bool isSiteUser;
+
+  @JsonKey(name: 'Id')
   final int id;
+
+  @JsonKey(name: 'CreatedTime')
   final String createdTime;
+
+  @JsonKey(name: 'CreatedUser')
   final String createdUser;
+
+  @JsonKey(name: 'ModifiedTime')
   final String modifiedTime;
+
+  @JsonKey(name: 'ModifiedUser')
   final String modifiedUser;
 
   User({

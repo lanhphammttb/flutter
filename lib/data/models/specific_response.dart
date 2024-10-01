@@ -16,24 +16,25 @@ class SpecificResponse<T> extends BaseResponse {
     required int size,
     required this.items,
   }) : super(
-    totalRecord: totalRecord,
-    status: status,
-    message: message,
-    page: page,
-    size: size,
-  );
+          totalRecord: totalRecord,
+          status: status,
+          message: message,
+          page: page,
+          size: size,
+        );
 
   factory SpecificResponse.fromJson(
       Map<String, dynamic> json, T Function(Object? json) fromJsonT) {
     return SpecificResponse(
-      totalRecord: json['TotalRecord'] as int,
-      status: json['Status'] as bool,
-      message: json['Message'] as String,
-      page: json['Page'] as int,
-      size: json['Size'] as int,
-      items: (json['Items'] as List<dynamic>)
-          .map((item) => fromJsonT(item))
-          .toList(),
+      totalRecord: json['TotalRecord'] as int? ?? 0,
+      status: json['Status'] as bool? ?? false,
+      message: json['Message'] as String? ?? '',
+      page: json['Page'] as int? ?? 1,
+      size: json['Size'] as int? ?? 10,
+      items: (json['Items'] as List<dynamic>?)
+              ?.map((item) => fromJsonT(item))
+              .toList() ??
+          <T>[],
     );
   }
 }

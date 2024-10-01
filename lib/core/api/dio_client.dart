@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:nttcs/data/constants.dart';
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'interceptors.dart';
 
 class DioClient {
@@ -13,7 +12,7 @@ class DioClient {
 
   DioClient._internal() {
     dio = Dio(BaseOptions(
-      baseUrl: BASE_URL,
+      baseUrl: dotenv.env['BASE_URL']!,
     ));
 
     dio.interceptors.add(AppInterceptors());

@@ -8,18 +8,18 @@ part of 'login_success_dto.dart';
 
 LoginSuccessDto _$LoginSuccessDtoFromJson(Map<String, dynamic> json) =>
     LoginSuccessDto(
-      code: (json['Code']).toInt() as int,
-      userName: json['UserName'] as String? ?? '',
-      userId: json['UserId'] as int? ?? 0,
-      token: json['Token'] as String? ?? '',
-      isGoogleAuth: json['IsGoogleAuth'] as bool? ?? false,
-      message: json['Message'] as String? ?? '',
+      code: (json['Code'] as num).toInt(),
+      userName: json['Username'] as String,
+      userId: (json['UserId'] as num).toInt(),
+      token: json['Token'] as String,
+      isGoogleAuth: json['IsGoogleAuth'] as bool,
+      message: json['Message'] as String,
     );
 
 Map<String, dynamic> _$LoginSuccessDtoToJson(LoginSuccessDto instance) =>
     <String, dynamic>{
       'Code': instance.code,
-      'UserName': instance.userName,
+      'Username': instance.userName,
       'UserId': instance.userId,
       'Token': instance.token,
       'IsGoogleAuth': instance.isGoogleAuth,

@@ -7,6 +7,8 @@ class HomeEvent extends Equatable {
   List<Object> get props => [];
 }
 
+class FetchLocations extends HomeEvent {}
+
 class SearchTextChanged extends HomeEvent {
   final String searchText;
 
