@@ -34,35 +34,35 @@ class Location {
   @JsonKey(name: 'Attributes', defaultValue: 0)
   final int attributes;
 
-  @JsonKey(name: 'Level', defaultValue: 0)
+  @JsonKey(name: 'Level', defaultValue: 3)
   final int level;
 
   @JsonKey(name: 'LevelToText', defaultValue: "")
   final String levelToText;
 
-  @JsonKey(name: 'Longitude', defaultValue: "")
-  final String longitude;
+  @JsonKey(name: 'Longitude', defaultValue: null)
+  final String? longitude;
 
-  @JsonKey(name: 'Latitude', defaultValue: "")
-  final String latitude;
+  @JsonKey(name: 'Latitude', defaultValue: null)
+  final String? latitude;
 
   @JsonKey(name: 'TotalUsers', defaultValue: 0)
   final int totalUsers;
 
-  @JsonKey(name: 'MediaProjectCategories', defaultValue: "")
-  final String mediaProjectCategories;
+  @JsonKey(name: 'MediaProjectCategories', defaultValue: null)
+  final String? mediaProjectCategories;
 
   @JsonKey(name: 'Id', defaultValue: 0)
   final int id;
 
-  @JsonKey(name: 'CreatedTime', defaultValue: "")
-  final String createdTime;
+  @JsonKey(name: 'CreatedTime', defaultValue: null)
+  final String? createdTime;
 
   @JsonKey(name: 'CreatedUser', defaultValue: "")
   final String createdUser;
 
-  @JsonKey(name: 'ModifiedTime', defaultValue: "")
-  final String modifiedTime;
+  @JsonKey(name: 'ModifiedTime', defaultValue: null)
+  final String? modifiedTime;
 
   @JsonKey(name: 'ModifiedUser', defaultValue: "")
   final String modifiedUser;
@@ -80,14 +80,14 @@ class Location {
     required this.attributes,
     required this.level,
     required this.levelToText,
-    required this.longitude,
-    required this.latitude,
+    this.longitude,
+    this.latitude,
     required this.totalUsers,
-    required this.mediaProjectCategories,
+    this.mediaProjectCategories,
     required this.id,
-    required this.createdTime,
+    this.createdTime,
     required this.createdUser,
-    required this.modifiedTime,
+    this.modifiedTime,
     required this.modifiedUser,
   });
 

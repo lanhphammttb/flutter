@@ -69,6 +69,15 @@ class AuthRepository {
     }
   }
 
+  Future<String> getName() async {
+    try {
+      final name = await authLocalDataSource.getName();
+      return name ?? '';
+    } catch (e) {
+      return '';
+    }
+  }
+
   Future<Result<void>> logout() async {
     try {
       // await authLocalDataSource.deleteToken();

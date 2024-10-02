@@ -148,17 +148,14 @@ class AuthApiClient {
   Future<SpecificResponse<Location>> getLocations(String token) async {
     try {
       final response = await dio.get(
-        'SourceData/code',
+        'sitemap',
         token: token,
-        queryParameters: {
-          'Code': 'H39',
-          'Province': 'H39',
-        },
+        queryParameters: {'SiteId': '5'},
       );
 
       return SpecificResponse<Location>.fromJson(
         response.data,
-            (item) => Location.fromJson(item as Map<String, dynamic>),
+        (item) => Location.fromJson(item as Map<String, dynamic>),
       );
     } on DioException catch (e) {
       if (e.response != null) {

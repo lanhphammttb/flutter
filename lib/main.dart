@@ -3,7 +3,7 @@ import 'package:nttcs/gen/assets.gen.dart';
 import 'package:nttcs/start.dart';
 
 Future<void> main() async {
-  await dotenv.load(fileName: Assets.env.aEnvStaging);
+  await dotenv.load(fileName: Assets.env.aEnvLongan);
 
   startApp();
 }

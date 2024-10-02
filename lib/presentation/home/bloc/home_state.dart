@@ -1,4 +1,5 @@
 part of 'home_bloc.dart';
+
 class HomeState extends Equatable {
   const HomeState();
 
@@ -6,15 +7,17 @@ class HomeState extends Equatable {
   List<Object> get props => [];
 }
 
+class HomeInitial extends HomeState {}
+
 class LocationsLoading extends HomeState {}
 
 class LocationsSuccess extends HomeState {
-  final SpecificResponse<Location> locations;
-
-  const LocationsSuccess(this.locations);
+  final List<TreeNode> treeNodes;
+  final List<TreeNode> originalTreeNodes;
+  const LocationsSuccess(this.treeNodes, {required this.originalTreeNodes});
 
   @override
-  List<Object> get props => [locations];
+  List<Object> get props => [treeNodes, originalTreeNodes];
 }
 
 class LocationsFailure extends HomeState {
@@ -26,33 +29,20 @@ class LocationsFailure extends HomeState {
   List<Object> get props => [error];
 }
 
-class HomeInitial extends HomeState {}
+class TabIndexChanged extends HomeState {  // New state for tab index changes
+  final int tabIndex;
 
-class SearchLoading extends HomeState {}
-
-class SearchSuccess extends HomeState {
-  final List<String> results;
-
-  const SearchSuccess(this.results);
+  const TabIndexChanged(this.tabIndex);
 
   @override
-  List<Object> get props => [results];
+  List<Object> get props => [tabIndex];
 }
 
-class SearchFailure extends HomeState {
-  final String error;
+class LocationSelected extends HomeState {
+  final String locationName;
 
-  const SearchFailure(this.error);
-
-  @override
-  List<Object> get props => [error];
-}
-
-class ItemSelected extends HomeState {
-  final int selectedIndex;
-
-  const ItemSelected(this.selectedIndex);
+  const LocationSelected(this.locationName);
 
   @override
-  List<Object> get props => [selectedIndex];
+  List<Object> get props => [locationName];
 }

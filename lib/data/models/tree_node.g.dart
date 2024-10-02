@@ -1,12 +1,12 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'location.dart';
+part of 'tree_node.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-Location _$LocationFromJson(Map<String, dynamic> json) => Location(
+TreeNode _$TreeNodeFromJson(Map<String, dynamic> json) => TreeNode(
       parentId: (json['ParentId'] as num?)?.toInt() ?? 0,
       code: json['Code'] as String? ?? '',
       cityCode: json['CityCode'] as String? ?? '',
@@ -28,9 +28,13 @@ Location _$LocationFromJson(Map<String, dynamic> json) => Location(
       createdUser: json['CreatedUser'] as String? ?? '',
       modifiedTime: json['ModifiedTime'] as String?,
       modifiedUser: json['ModifiedUser'] as String? ?? '',
+      children: (json['children'] as List<dynamic>?)
+          ?.map((e) => TreeNode.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      isExpanded: json['isExpanded'] as bool?,
     );
 
-Map<String, dynamic> _$LocationToJson(Location instance) => <String, dynamic>{
+Map<String, dynamic> _$TreeNodeToJson(TreeNode instance) => <String, dynamic>{
       'ParentId': instance.parentId,
       'Code': instance.code,
       'CityCode': instance.cityCode,
@@ -52,4 +56,6 @@ Map<String, dynamic> _$LocationToJson(Location instance) => <String, dynamic>{
       'CreatedUser': instance.createdUser,
       'ModifiedTime': instance.modifiedTime,
       'ModifiedUser': instance.modifiedUser,
+      'children': instance.children.map((e) => e.toJson()).toList(),
+      'isExpanded': instance.isExpanded,
     };
