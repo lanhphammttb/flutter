@@ -1,9 +1,9 @@
 import 'package:bloc/bloc.dart';
-import 'package:nttcs/data/dtos/login_success_dto.dart';
 import 'package:nttcs/data/repositories/auth_repository.dart';
 import 'package:nttcs/data/result_type.dart';
 
 part 'auth_event.dart';
+
 part 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
@@ -24,9 +24,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   void _onLoginStarted(AuthLoginStarted event, Emitter<AuthState> emit) async {
     emit(AuthLoginInProgress());
     final result = await authRepository.login(
-        username: event.username, password: event.password);
+        username: event.username, password: event.password, otp: '');
     return (switch (result) {
-      Success() => emit(AuthLoginSuccess(result as LoginSuccessDto)),
+      Success(data: final status) => emit(AuthLoginSuccess(status as bool)),
       Failure() => emit(AuthLoginFailure(result.message)),
     });
   }
@@ -35,7 +35,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       AuthLoginPrefilled event, Emitter<AuthState> emit) async {
     emit(AuthLoginInitial(username: event.username, password: event.password));
   }
-
 
   void _onAuthenticateStarted(
       AuthAuthenticateStarted event, Emitter<AuthState> emit) async {

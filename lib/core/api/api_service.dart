@@ -1,9 +1,12 @@
 import 'package:dio/dio.dart';
-import 'package:nttcs/data/dtos/get_user_success_dto.dart';
 import 'package:nttcs/data/dtos/login_dto.dart';
 import 'package:nttcs/data/dtos/login_success_dto.dart';
 import 'package:nttcs/data/dtos/register_dto.dart';
-import 'package:nttcs/data/models/BaseResponse.dart';
+import 'package:nttcs/data/models/device2.dart';
+import 'package:nttcs/data/models/location.dart';
+import 'package:nttcs/data/models/res_overview.dart';
+import 'package:nttcs/data/models/specific_response.dart';
+import 'package:nttcs/data/models/user.dart';
 import 'package:nttcs/data/result_type.dart';
 
 import 'dio_client.dart';
@@ -13,7 +16,7 @@ class AuthApiClient {
 
   final DioClient dio;
 
-  Future<LoginSuccessDto> login(LoginDto loginDto) async {
+  Future<Map<String, dynamic>?> login(LoginDto loginDto) async {
     try {
       // Gửi yêu cầu đăng nhập
       final response = await dio.post(
@@ -21,55 +24,146 @@ class AuthApiClient {
         data: loginDto.toJson(),
       );
 
-      // Phân tích kết quả đăng nhập
-      final result = BaseResponse.fromJson(response.data);
+      final result = LoginSuccessDto.fromJson(response.data);
 
-      // Kiểm tra xem đăng nhập có thành công không
-      if (result.status) {
-        // Nếu thành công, lấy thông tin người dùng
-        final userData = await getUser(result.app, result.token);
+      if (result.code == 1) {
+        final userData = await getUser(result.token);
 
-        // Trả về kết quả đăng nhập kèm thông tin người dùng
-        return LoginSuccessDto.withUserData(result, userData);
+        return {
+          'Token': result.token,
+          'Code': userData.items.isNotEmpty ? userData.items[0].code : null,
+          'Name': userData.items.isNotEmpty ? userData.items[0].name : null,
+          'Id': userData.items.isNotEmpty ? userData.items[0].id : null,
+          'IsGoogleAuth': result.isGoogleAuth,
+          'Status': userData.status,
+        };
+      } else {
+        return null;
       }
-
-      // Nếu không thành công, trả về kết quả đăng nhập mà không có thông tin người dùng
-      return result;
     } on DioException catch (e) {
-      // Xử lý lỗi DioException
       if (e.response != null) {
-        print('DioException response data: ${e.response!.data}');
         throw Exception(e.response!.data['message']);
       } else {
-        print('DioException message: ${e.message}');
         throw Exception(e.message);
       }
     } catch (e) {
-      // Xử lý các lỗi chung khác
-      print('General exception: $e');
       throw Exception('An error occurred: $e');
     }
   }
 
+  Future<void> register(RegisterDto registerDto) async {
+    try {
+      await dio.post(
+        '/auth/register',
+        data: registerDto.toJson(),
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message']);
+      } else {
+        throw Exception(e.message);
+      }
+    } catch (e) {
+      throw Exception('An error occurred: $e');
+    }
+  }
 
-  Future<GetUserSuccessDto> getUser(String id, String token) async {
+  Future<SpecificResponse<User>> getUser(String token) async {
     try {
       final response = await dio.get(
         'site',
         token: token,
       );
 
-      return GetUserSuccessDto.fromJson(response.data);
+      return SpecificResponse<User>.fromJson(
+        response.data,
+        (item) => User.fromJson(item as Map<String, dynamic>),
+      );
     } on DioException catch (e) {
       if (e.response != null) {
-        print('DioException response data: ${e.response!.data}');
         throw Exception(e.response!.data['message']);
       } else {
-        print('DioException message: ${e.message}');
         throw Exception(e.message);
       }
     } catch (e) {
-      print('General exception: $e');
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  Future<SpecificResponse<Device2>> getDevice2(String token) async {
+    try {
+      final response = await dio.post(
+        'Device/list',
+        token: token,
+        data: {
+          'Type': "IPRADIO",
+          'Code': "H39",
+          'Province': "H39",
+          'Page': 1,
+          'Size': 1000,
+        },
+      );
+
+      return SpecificResponse<Device2>.fromJson(
+        response.data,
+        (item) => Device2.fromJson(item as Map<String, dynamic>),
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message']);
+      } else {
+        throw Exception(e.message);
+      }
+    } catch (e) {
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  Future<SpecificResponse<ResOverview>> getOverview(String token) async {
+    try {
+      final response = await dio.get(
+        'SourceData/code',
+        token: token,
+        queryParameters: {
+          'Code': 'H39',
+          'Province': 'H39',
+        },
+      );
+
+      return SpecificResponse<ResOverview>.fromJson(
+        response.data,
+        (item) => ResOverview.fromJson(item as Map<String, dynamic>),
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message']);
+      } else {
+        throw Exception(e.message);
+      }
+    } catch (e) {
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  Future<SpecificResponse<Location>> getLocations(String token) async {
+    try {
+      final response = await dio.get(
+        'sitemap',
+        token: token,
+        queryParameters: {'SiteId': '5'},
+      );
+
+      return SpecificResponse<Location>.fromJson(
+        response.data,
+        (item) => Location.fromJson(item as Map<String, dynamic>),
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message']);
+      } else {
+        throw Exception(e.message);
+      }
+    } catch (e) {
       throw Exception('An error occurred: $e');
     }
   }

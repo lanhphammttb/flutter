@@ -1,0 +1,9 @@
+targets:
+  $default:
+    sources:
+      - lib/**
+      - test/**
+      # Không thêm assets/ hoặc bất kỳ tệp .env nào vào đây để tránh bị builder xử lý
+    builders:
+      json_serializable|json_serializable:
+        enabled: true

@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:nttcs/core/api/api_service.dart';
+import 'package:nttcs/core/constants/constants.dart';
 import 'package:nttcs/data/dtos/login_success_dto.dart';
 import 'package:nttcs/data/result_type.dart';
 
@@ -17,28 +18,42 @@ class AuthRepository {
     required this.authLocalDataSource,
   });
 
-  Future<Result<void>> login({
+  Future<Result<void>> login(
+      {required String username,
+      required String password,
+      required String otp}) async {
+    try {
+      // Gửi yêu cầu đăng nhập
+      final result = await authApiClient.login(
+        LoginDto(username: username, password: password, otp: ""),
+      );
+
+      // Lưu token vào local data source
+      await authLocalDataSource.saveString(AuthDataConstants.token, result?['Token'] as String);
+      await authLocalDataSource.saveString(AuthDataConstants.code, result?['Code'] as String);
+      await authLocalDataSource.saveString(AuthDataConstants.name, result?['Name'] as String);
+      await authLocalDataSource.saveInt(AuthDataConstants.id, result?['Id'] as int);
+
+      // Trả về kết quả thành công
+      return Success(result?['Status']);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> register({
     required String username,
     required String password,
   }) async {
     try {
-      // Gửi yêu cầu đăng nhập
-      LoginSuccessDto loginSuccessDto = await authApiClient.login(
-        LoginDto(username: username, password: password, otp: ''),
+      await authApiClient.register(
+        RegisterDto(username: username, password: password),
       );
-
-      // Lưu token vào local data source
-      await authLocalDataSource.saveToken(loginSuccessDto.token);
-
-      // Trả về kết quả thành công
-      return Success(loginSuccessDto);
     } catch (e) {
-      // Ghi lại lỗi
       log('$e');
-
-      // Trả về kết quả thất bại
       return Failure('$e');
     }
+    return Success(null);
   }
 
   Future<Result<String?>> getToken() async {
@@ -54,12 +69,51 @@ class AuthRepository {
     }
   }
 
+  Future<String> getName() async {
+    try {
+      final name = await authLocalDataSource.getName();
+      return name ?? '';
+    } catch (e) {
+      return '';
+    }
+  }
+
   Future<Result<void>> logout() async {
     try {
-      await authLocalDataSource.deleteToken();
+      // await authLocalDataSource.deleteToken();
       return Success(null);
     } catch (e) {
       log('$e');
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> getDevice2() async {
+    try {
+      String token = await authLocalDataSource.getToken() as String;
+      final result = await authApiClient.getDevice2(token);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> getOverview() async {
+    try {
+      String token = await authLocalDataSource.getToken() as String;
+      final result = await authApiClient.getOverview(token);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> getLocations() async {
+    try {
+      String token = await authLocalDataSource.getToken() as String;
+      final result = await authApiClient.getLocations(token);
+      return Success(result);
+    } catch (e) {
       return Failure('$e');
     }
   }

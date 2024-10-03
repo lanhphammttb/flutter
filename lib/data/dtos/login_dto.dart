@@ -9,7 +9,8 @@ class LoginDto {
     required this.otp,
   });
 
-  Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() =>
+      {
         'username': username,
         'password': password,
         'otp': otp,
