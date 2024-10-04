@@ -1,3 +1,4 @@
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:nttcs/data/models/location.dart';
@@ -5,6 +6,7 @@ import 'package:nttcs/data/models/specific_response.dart';
 import 'package:nttcs/data/models/tree_node.dart';
 import 'package:nttcs/data/repositories/auth_repository.dart';
 import 'package:nttcs/data/result_type.dart';
+import 'package:nttcs/presentation/device/bloc/device_bloc.dart';
 
 part 'home_event.dart';
 
@@ -86,7 +88,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   void _onTabChanged(TabChanged event, Emitter<HomeState> emit) {
-    emit(TabIndexChanged(event.tabIndex));  // Emit new tab index
+      emit(TabIndexChanged(event.tabIndex));
   }
 
   void _onSelectLocation(SelectLocation event, Emitter<HomeState> emit) {

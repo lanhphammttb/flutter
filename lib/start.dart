@@ -6,16 +6,18 @@ import 'package:nttcs/core/app_export.dart';
 import 'package:nttcs/core/config/app_routes.dart';
 import 'package:nttcs/data/auth_local_data_source.dart';
 import 'package:nttcs/data/repositories/auth_repository.dart';
+import 'package:nttcs/presentation/create_schedule/bloc/create_schedule_bloc.dart';
 import 'package:nttcs/presentation/device/bloc/device_bloc.dart';
 import 'package:nttcs/presentation/home/bloc/home_bloc.dart';
 import 'package:nttcs/presentation/login/bloc/auth_bloc.dart';
 import 'package:nttcs/presentation/overview/bloc/overview_bloc.dart';
+import 'package:nttcs/presentation/schedule/bloc/schedule_bloc.dart';
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 void startApp() {
   WidgetsFlutterBinding.ensureInitialized();
-  Future.wait([SystemChrome.setPreferredOrientations([])]).then((value) {
+  SystemChrome.setPreferredOrientations([]).then((value) {
     PrefUtils().init();
     runApp(const MyApp());
   });
@@ -63,6 +65,17 @@ class MyApp extends StatelessWidget {
                 context.read<AuthRepository>(),
               ), // Providing HomeBloc
             ),
+
+            BlocProvider(
+              create: (context) => ScheduleBloc(
+                context.read<AuthRepository>(),
+              ), // Providing HomeBloc
+            ),
+            BlocProvider(
+              create: (context) => CreateScheduleBloc(
+                context.read<AuthRepository>(),
+              ), // Providing HomeBloc
+            )
           ],
           child: const AppContent(),
         ),

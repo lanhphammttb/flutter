@@ -7,11 +7,11 @@ part of 'base_response.dart';
 // **************************************************************************
 
 BaseResponse _$BaseResponseFromJson(Map<String, dynamic> json) => BaseResponse(
-      totalRecord: (json['TotalRecord'] as num).toInt(),
-      status: json['Status'] as bool,
-      message: json['Message'] as String,
-      page: (json['Page'] as num).toInt(),
-      size: (json['Size'] as num).toInt(),
+      totalRecord: (json['TotalRecord'] as num?)?.toInt() ?? 0,
+      status: json['Status'] as bool? ?? false,
+      message: json['Message'] as String? ?? '',
+      page: (json['Page'] as num?)?.toInt() ?? 1,
+      size: (json['Size'] as num?)?.toInt() ?? 10,
     );
 
 Map<String, dynamic> _$BaseResponseToJson(BaseResponse instance) =>

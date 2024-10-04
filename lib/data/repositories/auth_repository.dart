@@ -3,6 +3,8 @@ import 'dart:developer';
 import 'package:nttcs/core/api/api_service.dart';
 import 'package:nttcs/core/constants/constants.dart';
 import 'package:nttcs/data/dtos/login_success_dto.dart';
+import 'package:nttcs/data/models/device.dart';
+import 'package:nttcs/data/models/schedule_date.dart';
 import 'package:nttcs/data/result_type.dart';
 
 import '../auth_local_data_source.dart';
@@ -29,10 +31,14 @@ class AuthRepository {
       );
 
       // Lưu token vào local data source
-      await authLocalDataSource.saveString(AuthDataConstants.token, result?['Token'] as String);
-      await authLocalDataSource.saveString(AuthDataConstants.code, result?['Code'] as String);
-      await authLocalDataSource.saveString(AuthDataConstants.name, result?['Name'] as String);
-      await authLocalDataSource.saveInt(AuthDataConstants.id, result?['Id'] as int);
+      await authLocalDataSource.saveString(
+          AuthDataConstants.token, result?['Token'] as String);
+      await authLocalDataSource.saveString(
+          AuthDataConstants.code, result?['Code'] as String);
+      await authLocalDataSource.saveString(
+          AuthDataConstants.name, result?['Name'] as String);
+      await authLocalDataSource.saveInt(
+          AuthDataConstants.id, result?['Id'] as int);
 
       // Trả về kết quả thành công
       return Success(result?['Status']);
@@ -112,6 +118,28 @@ class AuthRepository {
     try {
       String token = await authLocalDataSource.getToken() as String;
       final result = await authApiClient.getLocations(token);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> getSchedules() async {
+    try {
+      String token = await authLocalDataSource.getToken() as String;
+      final result = await authApiClient.getSchedules(token);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> createSchedule(int locationSelected, String name,
+      List<ScheduleDate> scheduleDates, List<Device> devices, int id) async {
+    try {
+      String token = await authLocalDataSource.getToken() as String;
+      final result =
+          await authApiClient.createSchedule(token, locationSelected, name, scheduleDates, devices, id);
       return Success(result);
     } catch (e) {
       return Failure('$e');

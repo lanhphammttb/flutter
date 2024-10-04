@@ -1,26 +1,26 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'specific_response.dart';
+part of 'specific_status_reponse.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-SpecificResponse<T> _$SpecificResponseFromJson<T>(
+SpecificStatusResponse<T> _$SpecificStatusResponseFromJson<T>(
   Map<String, dynamic> json,
   T Function(Object? json) fromJsonT,
 ) =>
-    SpecificResponse<T>(
-      totalRecord: (json['TotalRecord'] as num?)?.toInt() ?? 0,
+    SpecificStatusResponse<T>(
       status: json['Status'] as bool? ?? false,
       message: json['Message'] as String? ?? '',
+      totalRecord: (json['TotalRecord'] as num?)?.toInt() ?? 0,
       page: (json['Page'] as num?)?.toInt() ?? 1,
       size: (json['Size'] as num?)?.toInt() ?? 10,
-      items: (json['Items'] as List<dynamic>).map(fromJsonT).toList(),
+      items: _$nullableGenericFromJson(json['Items'], fromJsonT),
     );
 
-Map<String, dynamic> _$SpecificResponseToJson<T>(
-  SpecificResponse<T> instance,
+Map<String, dynamic> _$SpecificStatusResponseToJson<T>(
+  SpecificStatusResponse<T> instance,
   Object? Function(T value) toJsonT,
 ) =>
     <String, dynamic>{
@@ -29,5 +29,17 @@ Map<String, dynamic> _$SpecificResponseToJson<T>(
       'Message': instance.message,
       'Page': instance.page,
       'Size': instance.size,
-      'Items': instance.items.map(toJsonT).toList(),
+      'Items': _$nullableGenericToJson(instance.items, toJsonT),
     };
+
+T? _$nullableGenericFromJson<T>(
+  Object? input,
+  T Function(Object? json) fromJson,
+) =>
+    input == null ? null : fromJson(input);
+
+Object? _$nullableGenericToJson<T>(
+  T? input,
+  Object? Function(T value) toJson,
+) =>
+    input == null ? null : toJson(input);

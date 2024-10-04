@@ -50,7 +50,7 @@ class Device2 {
   final dynamic speakers;
 
   @JsonKey(name: 'Schedule', defaultValue: null)
-  final Schedule? schedule;
+  final DeviceSchedule? schedule;
 
   @JsonKey(name: 'ThoiDiemBatDau', fromJson: _stringToInt, defaultValue: 0)
   final int thoiDiemBatDau;
@@ -143,21 +143,21 @@ class Device2 {
 }
 
 @JsonSerializable()
-class Schedule {
+class DeviceSchedule {
   @JsonKey(name: 'Id', defaultValue: "")
   final String id;
 
   @JsonKey(name: 'Name', defaultValue: "")
   final String name;
 
-  Schedule({
+  DeviceSchedule({
     required this.id,
     required this.name,
   });
 
   // Phương thức tự động sinh ra từ json_annotation
-  factory Schedule.fromJson(Map<String, dynamic> json) => _$ScheduleFromJson(json);
-  Map<String, dynamic> toJson() => _$ScheduleToJson(this);
+  factory DeviceSchedule.fromJson(Map<String, dynamic> json) => _$DeviceScheduleFromJson(json);
+  Map<String, dynamic> toJson() => _$DeviceScheduleToJson(this);
 }
 
 @JsonSerializable()

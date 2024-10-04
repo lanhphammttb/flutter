@@ -26,7 +26,7 @@ Device2 _$Device2FromJson(Map<String, dynamic> json) => Device2(
       speakers: json['Speakers'],
       schedule: json['Schedule'] == null
           ? null
-          : Schedule.fromJson(json['Schedule'] as Map<String, dynamic>),
+          : DeviceSchedule.fromJson(json['Schedule'] as Map<String, dynamic>),
       thoiDiemBatDau: json['ThoiDiemBatDau'] == null
           ? 0
           : Device2._stringToInt(json['ThoiDiemBatDau']),
@@ -73,12 +73,14 @@ Map<String, dynamic> _$Device2ToJson(Device2 instance) => <String, dynamic>{
       'ThongTinThietBi': instance.thongTinThietBi?.toJson(),
     };
 
-Schedule _$ScheduleFromJson(Map<String, dynamic> json) => Schedule(
+DeviceSchedule _$DeviceScheduleFromJson(Map<String, dynamic> json) =>
+    DeviceSchedule(
       id: json['Id'] as String? ?? '',
       name: json['Name'] as String? ?? '',
     );
 
-Map<String, dynamic> _$ScheduleToJson(Schedule instance) => <String, dynamic>{
+Map<String, dynamic> _$DeviceScheduleToJson(DeviceSchedule instance) =>
+    <String, dynamic>{
       'Id': instance.id,
       'Name': instance.name,
     };

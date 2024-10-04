@@ -29,7 +29,7 @@ class LocationsFailure extends HomeState {
   List<Object> get props => [error];
 }
 
-class TabIndexChanged extends HomeState {  // New state for tab index changes
+class TabIndexChanged extends HomeState {
   final int tabIndex;
 
   const TabIndexChanged(this.tabIndex);

@@ -4,19 +4,19 @@ part 'base_response.g.dart';
 
 @JsonSerializable()
 class BaseResponse {
-  @JsonKey(name: 'TotalRecord')
+  @JsonKey(name: 'TotalRecord', defaultValue: 0)
   final int totalRecord;
 
-  @JsonKey(name: 'Status')
+  @JsonKey(name: 'Status', defaultValue: false)
   final bool status;
 
-  @JsonKey(name: 'Message')
+  @JsonKey(name: 'Message', defaultValue: '')
   final String message;
 
-  @JsonKey(name: 'Page')
+  @JsonKey(name: 'Page', defaultValue: 1)
   final int page;
 
-  @JsonKey(name: 'Size')
+  @JsonKey(name: 'Size', defaultValue: 10)
   final int size;
 
   BaseResponse({
