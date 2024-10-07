@@ -165,4 +165,15 @@ class AuthRepository {
       return Failure('$e');
     }
   }
+
+  Future<Result<void>> controlDevice(int maLenh, int thamSo) async {
+    try {
+      String token = await authLocalDataSource.getToken() as String;
+      int siteId = await authLocalDataSource.getSiteId() as int;
+      final result = await authApiClient.controlDevice(token, siteId, maLenh, thamSo);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
 }

@@ -17,3 +17,21 @@ class DeviceError extends DeviceState {
 
   DeviceError(this.message);
 }
+
+class DeviceVolumePreview extends DeviceState {
+  final int volume;
+
+  DeviceVolumePreview(this.volume);
+}
+
+class DeviceVolumeChangedSuccess extends DeviceState {
+  final SpecificResponse<Device2> device;
+
+  DeviceVolumeChangedSuccess(this.device);
+}
+
+class DeviceVolumeChangedError extends DeviceState {
+  final String message;
+
+  DeviceVolumeChangedError(this.message);
+}

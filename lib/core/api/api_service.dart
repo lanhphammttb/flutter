@@ -310,4 +310,35 @@ class AuthApiClient {
     }
   }
 
+  Future<SpecificStatusResponse<dynamic>> controlDevice(String token, int siteId, int maLenh, int thamSo) async {
+    try {
+      final response = await dio.post(
+        'Device/command',
+        token: token,
+        data: {
+          'Type': 'IPRADIO',
+          'SiteMapId': 754,
+          'SiteId': siteId,
+          'MaLenh': maLenh,
+          'ThamSo': thamSo,
+          'Otp': '',
+          'CumLoaID': [1],
+        },
+      );
+
+      return SpecificStatusResponse<dynamic>.fromJson(
+        response.data,
+            (item) => item,
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message']);
+      } else {
+        throw Exception(e.message);
+      }
+    } catch (e) {
+      throw Exception('An error occurred: $e');
+    }
+  }
+
 }

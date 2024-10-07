@@ -87,28 +87,26 @@ class _DeviceScreenState extends State<DeviceScreen> {
           ElevatedButton(
             onPressed: () {
               CustomBottomSheet(
+
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      // Thanh trượt âm lượng
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: Row(
                           children: [
                             Expanded(
                               child: Slider(
-                                value: 0,
+                                value: BlocProvider.of<DeviceBloc>(context).,
                                 min: 0,
                                 max: 100,
-                                onChanged: (value) {
-                                  // Logic xử lý thay đổi giá trị âm lượng
-                                },
+                                onChanged: (value) => context.read<DeviceBloc>().add(DeviceVolumeChanged(1, value)),
                               ),
                             ),
                             const SizedBox(width: 8),
                             ElevatedButton.icon(
                               onPressed: () {
-                                // Logic xử lý khi bấm vào nút Âm lượng
+                                context.read<DeviceBloc>().add(CommitVolumeChange("device_id_here"));
                               },
                               icon: const Icon(Icons.volume_up, color: Colors.white),
                               label: const Text('Âm lượng', style: TextStyle(color: Colors.white)),
@@ -122,26 +120,26 @@ class _DeviceScreenState extends State<DeviceScreen> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                         child: GridView.count(
-                          crossAxisCount: crossAxisCount, // Số lượng cột linh hoạt
+                          crossAxisCount: MediaQuery.of(context).size.width > 414 ? 4 : 3,
                           crossAxisSpacing: 4,
                           mainAxisSpacing: 4,
                           shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
+                          physics: const NeverScrollableScrollPhysics(), // Vô hiệu hóa cuộn của GridView riêng
                           children: [
                             _buildControlButton('Khởi động lại', Icons.refresh, Colors.blue),
-                            _buildControlButton2('Bật công suất', Assets.images.icHotspotOn, Colors.green),
+                            _buildControlButton2('Bật công suất', Assets.images.icHotspotOn, Colors.blue),
                             _buildControlButton2('Tắt công suất', Assets.images.icHotspotOff, Colors.red),
                             _buildControlButton('Phát tiếp', Icons.play_arrow, Colors.blue),
-                            _buildControlButton('Tạm dừng', Icons.pause, Colors.orange),
-                            _buildControlButton('Bản tin tiếp', Icons.fast_forward, Colors.purple),
-                            _buildControlButton('Dừng phát', Icons.stop, Colors.red),
+                            _buildControlButton('Tạm dừng', Icons.pause, Colors.red),
+                            _buildControlButton('Bản tin tiếp', Icons.fast_forward, Colors.blue),
+                            _buildControlButton('Dừng phát', Icons.stop_circle, Colors.red),
                           ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                height: bottomSheetHeight,
+                height: 510.v,
               ).show(context);
 
             },
