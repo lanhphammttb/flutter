@@ -5,11 +5,14 @@ extension ImageTypeExtension on String {
   ImageType get imageType {
     if (this.endsWith('.svg')) {
       return ImageType.svg;
-    } else {
+    } else if (this.endsWith('.png') || this.endsWith('.jpg') || this.endsWith('.jpeg')) {
       return ImageType.png;
+    } else {
+      return ImageType.unknown;
     }
   }
 }
+
 
 enum ImageType { svg, png, unknown }
 

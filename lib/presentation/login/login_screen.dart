@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nttcs/core/app_export.dart';
 import 'package:nttcs/core/config/app_routes.dart';
+import 'package:nttcs/gen/assets.gen.dart';
 
 import 'bloc/auth_bloc.dart';
 
@@ -23,10 +24,10 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     final _authState = context.read<AuthBloc>().state;
     _usernameController = TextEditingController(
-      text: _authState is AuthLoginInitial ? _authState.username : '',
+      text: _authState is AuthLoginInitial ? _authState.username : 'quantrivienlongan',
     );
     _passwordController = TextEditingController(
-      text: _authState is AuthLoginInitial ? _authState.password : '',
+      text: _authState is AuthLoginInitial ? _authState.password : 'LongAn@123',
     );
   }
 
@@ -149,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: <Widget>[
                           Center(
                             child: CustomImageView(
-                              imagePath: ImageConstant.logoLogin,
+                              imagePath: Assets.images.logoVtcTrans.path,
                               height: 180.v,
                               width: 200.h,
                             ),

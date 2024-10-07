@@ -5,7 +5,7 @@ part 'specific_status_reponse.g.dart';
 
 @JsonSerializable(genericArgumentFactories: true)
 class SpecificStatusResponse<T> extends BaseResponse {
-  @JsonKey(name: 'Items')
+  @JsonKey(name: 'Data')
   final T? items;
 
   SpecificStatusResponse({

@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nttcs/presentation/device/bloc/device_bloc.dart';
 import 'package:nttcs/presentation/device/device_screen.dart';
+import 'package:nttcs/presentation/information/bloc/information_bloc.dart';
 import 'package:nttcs/presentation/information/information_screen.dart';
+import 'package:nttcs/presentation/news/bloc/news_bloc.dart';
 import 'package:nttcs/presentation/news/news_screen.dart';
 import 'package:nttcs/presentation/overview/overview_screen.dart';
 import 'package:nttcs/presentation/schedule/bloc/schedule_bloc.dart';
 import 'package:nttcs/presentation/schedule/schedule_screen.dart';
+import 'package:nttcs/widgets/custom_bottom_sheet.dart';
 import 'package:nttcs/widgets/search_field.dart';
 import 'package:nttcs/widgets/tree_node_widget.dart';
 import 'bloc/home_bloc.dart';
@@ -38,6 +41,11 @@ class _HomeScreenState extends State<HomeScreen> {
       case 2:
         _callScheduleApi(context);
         break;
+      case 3:
+        _callNewsApi(context);
+        break;
+      case 4:
+        _callInformationApi(context);
       default:
         break;
     }
@@ -53,135 +61,110 @@ class _HomeScreenState extends State<HomeScreen> {
     scheduleBloc.add(FetchSchedule());
   }
 
+  void _callNewsApi(BuildContext context) {
+    final newsBloc = context.read<NewsBloc>();
+    newsBloc.add(FetchNews());
+  }
+
+  void _callInformationApi(BuildContext context) {
+    final informationBloc = context.read<InformationBloc>();
+    informationBloc.add(FetchInformation());
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: _buildAppBar(context),
-        body: BlocBuilder<HomeBloc, HomeState>(
-          builder: (context, state) {
-            int currentIndex = state is TabIndexChanged ? state.tabIndex : 0;
-            return IndexedStack(
-              index: currentIndex,
-              children: _pages,
-            );
-          },
-        ),
-        bottomNavigationBar: _buildBottomNavigationBar(context),
+    return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        // Kích thước mặc định của AppBar
+        child: _buildAppBar(context), // Trả về widget từ _buildAppBar
       ),
-    );
-  }
-
-  AppBar _buildAppBar(BuildContext context) {
-    return AppBar(
-      automaticallyImplyLeading: false,
-      backgroundColor: Colors.blue,
-      elevation: 0,
-      title: BlocBuilder<HomeBloc, HomeState>(
+      body: BlocBuilder<HomeBloc, HomeState>(
         builder: (context, state) {
-          // Lấy giá trị locationName
-          final locationText =
-              state is LocationSelected ? state.locationName : 'Loading...';
-          return GestureDetector(
-              onTap: () {
-                _showBottomSheet(context);
-                _callApiInBottomSheet(context);
-              },
-              child: Row(
-                children: [
-                  Text(
-                    locationText,
-                    style: const TextStyle(color: Colors.white, fontSize: 20),
-                  ),
-                  const Icon(Icons.arrow_drop_down, color: Colors.white),
-                ],
-              ));
+          int currentIndex = state is TabIndexChanged ? state.tabIndex : 0;
+          return IndexedStack(
+            index: currentIndex,
+            children: _pages,
+          );
         },
       ),
+      bottomNavigationBar: _buildBottomNavigationBar(context),
     );
   }
 
-  void _callApiInBottomSheet(BuildContext context) {
-    // Chỉ gọi API nếu chưa có dữ liệu
-    // final currentState = context.read<HomeBloc>().state;
-    // if (currentState is! LocationsSuccess) {
-    //
-    // }
-    context
-        .read<HomeBloc>()
-        .add(FetchLocations()); // Gọi API chỉ khi chưa có dữ liệu
-  }
+  Widget _buildAppBar(BuildContext context) {
+    return BlocBuilder<HomeBloc, HomeState>(
+      builder: (context, state) {
+        int currentIndex = state is TabIndexChanged ? state.tabIndex : 0;
+        if (currentIndex == 4) {
+          // Trả về null để ẩn AppBar khi currentIndex == 4
+          return SizedBox.shrink(); // Trả về một widget rỗng
+        }
 
-  void _showBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.87,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(8.0),
-              topRight: Radius.circular(8.0),
-            ),
-          ),
-          child: Column(
-            children: [
-              _buildDraggableIndicator(),
-              Expanded(
-                child: DraggableScrollableSheet(
-                  expand: false,
-                  initialChildSize: 1.0,
-                  minChildSize: 0.1,
-                  maxChildSize: 1.0,
-                  builder: (BuildContext context,
-                      ScrollController scrollController) {
-                    return Column(
-                      children: [
-                        _buildSearchField(context),
-                        Expanded(
-                          child: BlocBuilder<HomeBloc, HomeState>(
-                            builder: (context, state) {
-                              if (state is LocationsLoading) {
-                                return const Center(
-                                    child: CircularProgressIndicator());
-                              } else if (state is LocationsSuccess) {
-                                return TreeNodeWidget(
-                                  treeNodes: state.treeNodes,
-                                  onItemClick: (node) {
-                                    context
-                                        .read<HomeBloc>()
-                                        .add(SelectLocation(node.name));
-                                    context
-                                        .read<HomeBloc>()
-                                        .add(ExpandNode(node));
-                                    Navigator.pop(
-                                        context); // Đóng BottomSheet sau khi chọn
-                                  },
-                                );
-                              } else if (state is LocationsFailure) {
-                                return Center(
-                                    child: Text(
-                                        'Failed to load locations: ${state.error}'));
-                              } else {
-                                return const Center(
-                                    child: Text('No data available'));
-                              }
-                            },
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+        final locationText =
+            state is LocationSelected ? state.locationName : 'Loading...';
+        return AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.blue,
+          elevation: 0,
+          title: GestureDetector(
+            onTap: () {
+              CustomBottomSheet(
+                child: Column(
+                  children: [
+                    _buildSearchField(context),
+                    Expanded(
+                      child: BlocBuilder<HomeBloc, HomeState>(
+                        builder: (context, state) {
+                          if (state is LocationsLoading) {
+                            return const Center(child: CircularProgressIndicator());
+                          } else if (state is LocationsSuccess) {
+                            return TreeNodeWidget(
+                              treeNodes: state.treeNodes,
+                              onItemClick: (node) {
+                                // Gọi hành động khi nhấn vào mục trong danh sách
+                                context.read<HomeBloc>().add(SelectLocation(node.name));
+                                context.read<HomeBloc>().add(ExpandNode(node));
+                                Navigator.pop(context); // Đóng BottomSheet sau khi chọn
+                              },
+                            );
+                          } else if (state is LocationsFailure) {
+                            return Center(child: Text('Failed to load locations: ${state.error}'));
+                          } else {
+                            return const Center(child: Text('No data available'));
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              ).show(context);
+
+              // Đảm bảo gọi hàm này sau khi showModalBottomSheet đã được hiển thị
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _callApiInBottomSheet(context);
+              });
+            },
+
+            child: Row(
+              children: [
+                Text(
+                  locationText,
+                  style: const TextStyle(color: Colors.white, fontSize: 20),
+                ),
+                const Icon(Icons.arrow_drop_down, color: Colors.white),
+              ],
+            ),
           ),
         );
       },
     );
+  }
+
+  void _callApiInBottomSheet(BuildContext context) {
+    context
+        .read<HomeBloc>()
+        .add(FetchLocations()); // Gọi API chỉ khi chưa có dữ liệu
   }
 
   Widget _buildSearchField(BuildContext context) {
@@ -191,18 +174,6 @@ class _HomeScreenState extends State<HomeScreen> {
           context.read<HomeBloc>().add(SearchTextChanged(value)),
       onClear: () => context.read<HomeBloc>().add(SearchTextChanged('')),
       onFilter: () {},
-    );
-  }
-
-  Widget _buildDraggableIndicator() {
-    return Container(
-      width: 40,
-      height: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[300],
-        borderRadius: BorderRadius.circular(8.0),
-      ),
     );
   }
 

@@ -2,8 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:nttcs/data/dtos/login_dto.dart';
 import 'package:nttcs/data/dtos/login_success_dto.dart';
 import 'package:nttcs/data/dtos/register_dto.dart';
+import 'package:nttcs/data/models/content.dart';
 import 'package:nttcs/data/models/device.dart';
 import 'package:nttcs/data/models/device2.dart';
+import 'package:nttcs/data/models/information.dart';
 import 'package:nttcs/data/models/schedule.dart';
 import 'package:nttcs/data/models/location.dart';
 import 'package:nttcs/data/models/res_overview.dart';
@@ -260,6 +262,50 @@ class AuthApiClient {
       );
     } catch (e) {
       // Xử lý lỗi trong quá trình gọi API hoặc chuyển đổi dữ liệu
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  Future<SpecificResponse<Content>> getNews(String token) async {
+    try {
+      final response = await dio.get(
+        'content/publish/list',
+        token: token,
+        queryParameters: {
+          'contentType': 3,
+          'code': 'H39',
+          'page': 1,
+          'size': 1000,
+        },
+      );
+
+      return SpecificResponse<Content>.fromJson(
+        response.data,
+            (item) => Content.fromJson(item as Map<String, dynamic>),
+      );
+    } catch (e) {
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  Future<SpecificStatusResponse<Information>> getInformation(String token) async {
+    try {
+      final response = await dio.get(
+        'User/info',
+        token: token
+      );
+
+      return SpecificStatusResponse<Information>.fromJson(
+        response.data,
+        (item) => Information.fromJson(item as Map<String, dynamic>),
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message']);
+      } else {
+        throw Exception(e.message);
+      }
+    } catch (e) {
       throw Exception('An error occurred: $e');
     }
   }

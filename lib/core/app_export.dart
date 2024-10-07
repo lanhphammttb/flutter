@@ -4,7 +4,6 @@ export 'package:nttcs/core/theme/bloc/theme_bloc.dart';
 export 'package:nttcs/core/theme/theme_helper.dart';
 export 'package:nttcs/core/utils/navigator_service.dart';
 export 'package:nttcs/widgets/custom_image_view.dart';
-export 'package:nttcs/core/utils/image_constant.dart';
 export 'package:nttcs/localization/app_locatization.dart';
 export 'package:nttcs/core/theme/custom_text_style.dart';
 export 'package:nttcs/core/utils/size_utils.dart';

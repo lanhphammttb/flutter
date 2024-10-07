@@ -145,4 +145,24 @@ class AuthRepository {
       return Failure('$e');
     }
   }
+
+  Future<Result<void>> getNews() async {
+    try {
+      String token = await authLocalDataSource.getToken() as String;
+      final result = await authApiClient.getNews(token);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> getInformation() async {
+    try {
+      String token = await authLocalDataSource.getToken() as String;
+      final result = await authApiClient.getInformation(token);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
 }

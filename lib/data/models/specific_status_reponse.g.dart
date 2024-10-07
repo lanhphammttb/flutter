@@ -16,7 +16,7 @@ SpecificStatusResponse<T> _$SpecificStatusResponseFromJson<T>(
       totalRecord: (json['TotalRecord'] as num?)?.toInt() ?? 0,
       page: (json['Page'] as num?)?.toInt() ?? 1,
       size: (json['Size'] as num?)?.toInt() ?? 10,
-      items: _$nullableGenericFromJson(json['Items'], fromJsonT),
+      items: _$nullableGenericFromJson(json['Data'], fromJsonT),
     );
 
 Map<String, dynamic> _$SpecificStatusResponseToJson<T>(
@@ -29,7 +29,7 @@ Map<String, dynamic> _$SpecificStatusResponseToJson<T>(
       'Message': instance.message,
       'Page': instance.page,
       'Size': instance.size,
-      'Items': _$nullableGenericToJson(instance.items, toJsonT),
+      'Data': _$nullableGenericToJson(instance.items, toJsonT),
     };
 
 T? _$nullableGenericFromJson<T>(

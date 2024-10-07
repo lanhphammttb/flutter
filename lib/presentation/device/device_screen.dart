@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nttcs/data/models/device2.dart';
+import 'package:nttcs/widgets/custom_bottom_sheet.dart';
+import 'package:nttcs/widgets/custom_image_view.dart';
 import 'bloc/device_bloc.dart';
 import 'package:intl/intl.dart';
-
+import 'package:nttcs/core/app_export.dart';
+import 'package:nttcs/gen/assets.gen.dart';
 class DeviceScreen extends StatefulWidget {
   const DeviceScreen({super.key});
 
@@ -83,7 +86,64 @@ class _DeviceScreenState extends State<DeviceScreen> {
         children: [
           ElevatedButton(
             onPressed: () {
-              // Hành động khi nhấn nút điều khiển
+              CustomBottomSheet(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Thanh trượt âm lượng
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Slider(
+                                value: 0,
+                                min: 0,
+                                max: 100,
+                                onChanged: (value) {
+                                  // Logic xử lý thay đổi giá trị âm lượng
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                // Logic xử lý khi bấm vào nút Âm lượng
+                              },
+                              icon: const Icon(Icons.volume_up, color: Colors.white),
+                              label: const Text('Âm lượng', style: TextStyle(color: Colors.white)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                        child: GridView.count(
+                          crossAxisCount: crossAxisCount, // Số lượng cột linh hoạt
+                          crossAxisSpacing: 4,
+                          mainAxisSpacing: 4,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: [
+                            _buildControlButton('Khởi động lại', Icons.refresh, Colors.blue),
+                            _buildControlButton2('Bật công suất', Assets.images.icHotspotOn, Colors.green),
+                            _buildControlButton2('Tắt công suất', Assets.images.icHotspotOff, Colors.red),
+                            _buildControlButton('Phát tiếp', Icons.play_arrow, Colors.blue),
+                            _buildControlButton('Tạm dừng', Icons.pause, Colors.orange),
+                            _buildControlButton('Bản tin tiếp', Icons.fast_forward, Colors.purple),
+                            _buildControlButton('Dừng phát', Icons.stop, Colors.red),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                height: bottomSheetHeight,
+              ).show(context);
+
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
@@ -316,4 +376,40 @@ class _DeviceScreenState extends State<DeviceScreen> {
       ),
     );
   }
+
+  Widget _buildControlButton(String label, IconData icon, Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: color, size: 32),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w500),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildControlButton2(String label, String svgPath, Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CustomImageView(
+          imagePath: svgPath,
+          height: 32,
+          width: 32,
+          color: color,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w500),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
 }
+

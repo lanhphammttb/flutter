@@ -9,7 +9,9 @@ import 'package:nttcs/data/repositories/auth_repository.dart';
 import 'package:nttcs/presentation/create_schedule/bloc/create_schedule_bloc.dart';
 import 'package:nttcs/presentation/device/bloc/device_bloc.dart';
 import 'package:nttcs/presentation/home/bloc/home_bloc.dart';
+import 'package:nttcs/presentation/information/bloc/information_bloc.dart';
 import 'package:nttcs/presentation/login/bloc/auth_bloc.dart';
+import 'package:nttcs/presentation/news/bloc/news_bloc.dart';
 import 'package:nttcs/presentation/overview/bloc/overview_bloc.dart';
 import 'package:nttcs/presentation/schedule/bloc/schedule_bloc.dart';
 
@@ -73,6 +75,16 @@ class MyApp extends StatelessWidget {
             ),
             BlocProvider(
               create: (context) => CreateScheduleBloc(
+                context.read<AuthRepository>(),
+              ), // Providing HomeBloc
+            ),
+            BlocProvider(
+              create: (context) => NewsBloc(
+                context.read<AuthRepository>(),
+              ), // Providing HomeBloc
+            ),
+            BlocProvider(
+              create: (context) => InformationBloc(
                 context.read<AuthRepository>(),
               ), // Providing HomeBloc
             )
