@@ -37,6 +37,8 @@ dependencies:
   cupertino_icons: ^1.0.6
   json_annotation: ^4.9.0
   intl: ^0.19.0
+  text_marquee: ^0.0.2
+  flutter_slidable: ^3.1.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

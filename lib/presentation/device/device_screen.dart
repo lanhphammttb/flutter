@@ -7,6 +7,8 @@ import 'bloc/device_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:nttcs/core/app_export.dart';
 import 'package:nttcs/gen/assets.gen.dart';
+import 'package:text_marquee/text_marquee.dart';
+
 class DeviceScreen extends StatefulWidget {
   const DeviceScreen({super.key});
 
@@ -17,7 +19,9 @@ class DeviceScreen extends StatefulWidget {
 class _DeviceScreenState extends State<DeviceScreen> {
   final TextEditingController _controller = TextEditingController();
   String _searchQuery = '';
-  String _filter = 'all'; // Biến để lưu trữ trạng thái bộ lọc
+  String _filter = 'all';
+  List<String> _selectedItems = []; // Danh sách các item đã được chọn
+  bool _isSelectAll = false; // Trạng thái nút chọn tất cả
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +30,24 @@ class _DeviceScreenState extends State<DeviceScreen> {
         children: [
           _buildControlPanel(),
           _buildSearchField(),
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Đã chọn: ${_selectedItems.length}',
+                    style: TextStyle(fontSize: 16)),
+                TextButton(
+                  onPressed: _toggleSelectAll,
+                  child: Text(
+                    _isSelectAll ? 'Bỏ chọn tất cả' : 'Chọn tất cả',
+                    style: TextStyle(color: Colors.blue),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: BlocBuilder<DeviceBloc, DeviceState>(
               builder: (context, state) {
@@ -33,18 +55,18 @@ class _DeviceScreenState extends State<DeviceScreen> {
                   return const Center(child: CircularProgressIndicator());
                 } else if (state is DeviceLoaded) {
                   final filteredItems = state.data.items.where((device) {
-                    // Lọc thiết bị theo truy vấn tìm kiếm
-                    final matchesSearch = device.tenThietBi?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false;
-
-                    // Lọc thiết bị theo trạng thái
+                    final matchesSearch = device.tenThietBi
+                            ?.toLowerCase()
+                            .contains(_searchQuery.toLowerCase()) ??
+                        false;
                     if (_filter == 'all') {
-                      return matchesSearch; // Hiển thị tất cả
+                      return matchesSearch;
                     } else if (_filter == 'playing') {
-                      return matchesSearch && device.dangPhat; // Chỉ hiển thị thiết bị đang phát
+                      return matchesSearch && device.dangPhat;
                     } else if (_filter == 'connected') {
-                      return matchesSearch && !device.matKetNoi; // Chỉ hiển thị thiết bị đang kết nối
+                      return matchesSearch && !device.matKetNoi;
                     } else if (_filter == 'disconnected') {
-                      return matchesSearch && device.matKetNoi; // Chỉ hiển thị thiết bị mất kết nối
+                      return matchesSearch && device.matKetNoi;
                     }
                     return false;
                   }).toList();
@@ -57,16 +79,18 @@ class _DeviceScreenState extends State<DeviceScreen> {
                     itemCount: filteredItems.length,
                     itemBuilder: (context, index) {
                       final device = filteredItems[index];
-                      final formattedDate = DateFormat('HH:mm - dd/MM/yyyy').format(
-                        DateTime.fromMillisecondsSinceEpoch(device.thoiDiemBatDau * 1000),
+                      final formattedDate =
+                          DateFormat('HH:mm - dd/MM/yyyy').format(
+                        DateTime.fromMillisecondsSinceEpoch(
+                            device.thoiDiemBatDau * 1000),
                       );
-
                       return _buildDeviceCard(device, formattedDate);
                     },
                   );
                 } else if (state is DeviceError) {
                   return Center(
-                    child: Text('Lỗi: ${state.message}', style: const TextStyle(color: Colors.red)),
+                    child: Text('Lỗi: ${state.message}',
+                        style: const TextStyle(color: Colors.red)),
                   );
                 }
                 return const Center(child: Text('Không có dữ liệu.'));
@@ -78,6 +102,89 @@ class _DeviceScreenState extends State<DeviceScreen> {
     );
   }
 
+  // Hàm để xây dựng mỗi item với checkbox
+  Widget _buildDeviceCard(Device2 device, String formattedDate) {
+    final isSelected = _selectedItems.contains(device.maThietBi);
+    return InkWell(
+      onTap: () => _toggleSelectItem(device.maThietBi!),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 1.0),
+        // Chỉ cần khoảng cách trên dưới
+        child: Container(
+          color: Colors.white, // Đặt nền trắng để trông đơn giản hơn
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.volume_up, size: 24, color: Colors.blue),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      device.tenThietBi ?? 'Thiết bị không xác định',
+                      style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 24,
+                    // Kích thước chiều rộng cố định cho vị trí của biểu tượng
+                    height: 24,
+                    child: isSelected
+                        ? Icon(Icons.check_circle,
+                            color: Colors.green, size: 24)
+                        : null, // Nếu không có icon, giữ khoảng trống cố định
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _buildDeviceInfo(device),
+              _buildDeviceStatus(device),
+              const SizedBox(height: 8),
+              Text(
+                formattedDate,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Hàm chuyển đổi trạng thái chọn item
+  void _toggleSelectItem(String itemId) {
+    final state = BlocProvider.of<DeviceBloc>(context).state;
+    if (state is DeviceLoaded) {
+      setState(() {
+        if (_selectedItems.contains(itemId)) {
+          _selectedItems.remove(itemId);
+        } else {
+          _selectedItems.add(itemId);
+        }
+        _isSelectAll = _selectedItems.length == state.data.items.length;
+      });
+    }
+  }
+
+  void _toggleSelectAll() {
+    final state = BlocProvider.of<DeviceBloc>(context).state;
+    if (state is DeviceLoaded) {
+      setState(() {
+        if (_isSelectAll) {
+          _selectedItems.clear();
+        } else {
+          _selectedItems =
+              state.data.items.map((item) => item.maThietBi!).toList();
+        }
+        _isSelectAll = !_isSelectAll;
+      });
+    }
+  }
+
   Widget _buildControlPanel() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -87,7 +194,6 @@ class _DeviceScreenState extends State<DeviceScreen> {
           ElevatedButton(
             onPressed: () {
               CustomBottomSheet(
-
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
@@ -97,19 +203,26 @@ class _DeviceScreenState extends State<DeviceScreen> {
                           children: [
                             Expanded(
                               child: Slider(
-                                value: BlocProvider.of<DeviceBloc>(context).,
+                                value: 50,
                                 min: 0,
                                 max: 100,
-                                onChanged: (value) => context.read<DeviceBloc>().add(DeviceVolumeChanged(1, value)),
+                                onChanged: (value) => context
+                                    .read<DeviceBloc>()
+                                    .add(DeviceVolumeChanged(
+                                        "device_id_here", value.toInt())),
                               ),
                             ),
                             const SizedBox(width: 8),
                             ElevatedButton.icon(
                               onPressed: () {
-                                context.read<DeviceBloc>().add(CommitVolumeChange("device_id_here"));
+                                context
+                                    .read<DeviceBloc>()
+                                    .add(CommitVolumeChange("device_id_here"));
                               },
-                              icon: const Icon(Icons.volume_up, color: Colors.white),
-                              label: const Text('Âm lượng', style: TextStyle(color: Colors.white)),
+                              icon: const Icon(Icons.volume_up,
+                                  color: Colors.white),
+                              label: const Text('Âm lượng',
+                                  style: TextStyle(color: Colors.white)),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue,
                               ),
@@ -120,19 +233,27 @@ class _DeviceScreenState extends State<DeviceScreen> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                         child: GridView.count(
-                          crossAxisCount: MediaQuery.of(context).size.width > 414 ? 4 : 3,
+                          crossAxisCount:
+                              MediaQuery.of(context).size.width > 414 ? 4 : 3,
                           crossAxisSpacing: 4,
                           mainAxisSpacing: 4,
                           shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(), // Vô hiệu hóa cuộn của GridView riêng
+                          physics: const NeverScrollableScrollPhysics(),
                           children: [
-                            _buildControlButton('Khởi động lại', Icons.refresh, Colors.blue),
-                            _buildControlButton2('Bật công suất', Assets.images.icHotspotOn, Colors.blue),
-                            _buildControlButton2('Tắt công suất', Assets.images.icHotspotOff, Colors.red),
-                            _buildControlButton('Phát tiếp', Icons.play_arrow, Colors.blue),
-                            _buildControlButton('Tạm dừng', Icons.pause, Colors.red),
-                            _buildControlButton('Bản tin tiếp', Icons.fast_forward, Colors.blue),
-                            _buildControlButton('Dừng phát', Icons.stop_circle, Colors.red),
+                            _buildControlButton(
+                                'Khởi động lại', Icons.refresh, Colors.blue),
+                            _buildControlButton2('Bật công suất',
+                                Assets.images.icHotspotOn, Colors.blue),
+                            _buildControlButton2('Tắt công suất',
+                                Assets.images.icHotspotOff, Colors.red),
+                            _buildControlButton(
+                                'Phát tiếp', Icons.play_arrow, Colors.blue),
+                            _buildControlButton(
+                                'Tạm dừng', Icons.pause, Colors.red),
+                            _buildControlButton('Bản tin tiếp',
+                                Icons.fast_forward, Colors.blue),
+                            _buildControlButton(
+                                'Dừng phát', Icons.stop_circle, Colors.red),
                           ],
                         ),
                       ),
@@ -141,7 +262,6 @@ class _DeviceScreenState extends State<DeviceScreen> {
                 ),
                 height: 510.v,
               ).show(context);
-
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
@@ -159,7 +279,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
             ),
-            child: const Text('Phát khẩn', style: TextStyle(color: Colors.white)),
+            child:
+                const Text('Phát khẩn', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -186,7 +307,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
           controller: _controller,
           onChanged: (value) {
             setState(() {
-              _searchQuery = value; // Cập nhật giá trị tìm kiếm
+              _searchQuery = value;
             });
           },
           decoration: InputDecoration(
@@ -200,14 +321,14 @@ class _DeviceScreenState extends State<DeviceScreen> {
               children: [
                 _controller.text.isNotEmpty
                     ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.grey),
-                  onPressed: () {
-                    _controller.clear();
-                    setState(() {
-                      _searchQuery = ''; // Xóa giá trị tìm kiếm
-                    });
-                  },
-                )
+                        icon: const Icon(Icons.clear, color: Colors.grey),
+                        onPressed: () {
+                          _controller.clear();
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                        },
+                      )
                     : const SizedBox.shrink(),
                 IconButton(
                   icon: const Icon(Icons.filter_list, color: Colors.blue),
@@ -247,7 +368,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
                   groupValue: _filter,
                   onChanged: (value) {
                     setState(() {
-                      _filter = value!; // Cập nhật giá trị bộ lọc
+                      _filter = value!;
                     });
                     Navigator.pop(context);
                   },
@@ -299,56 +420,16 @@ class _DeviceScreenState extends State<DeviceScreen> {
     );
   }
 
-  Widget _buildDeviceCard(Device2 device, String formattedDate) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Card(
-        elevation: 2,
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDeviceHeader(device),
-              const SizedBox(height: 8),
-              _buildDeviceInfo(device),
-              const SizedBox(height: 8),
-              _buildDeviceStatus(device),
-              const SizedBox(height: 8),
-              Text(
-                formattedDate,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDeviceHeader(Device2 device) {
-    return Row(
-      children: [
-        const Icon(Icons.volume_up, size: 24, color: Colors.blue),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            device.tenThietBi ?? 'Thiết bị không xác định',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildDeviceInfo(Device2 device) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildInfoText('Mã thiết bị: ${device.maThietBi ?? 'Không xác định'}'),
-        _buildInfoText('Nhà cung cấp: ${device.maNhaCungCap ?? 'Không xác định'}'),
+        _buildInfoText(
+            'Nhà cung cấp: ${device.maNhaCungCap ?? 'Không xác định'}'),
         _buildInfoText('Địa bàn: ${device.tenNguon ?? 'Không xác định'}'),
-        _buildInfoText('Lịch phát: ${device.noiDungPhat?.isNotEmpty == true ? device.noiDungPhat : 'Chưa lập lịch'}'),
+        _buildInfoText(
+            'Lịch phát: ${device.noiDungPhat.isNotEmpty == true && device.noiDungPhat != ' ' ? device.noiDungPhat : 'Chưa lập lịch'}'),
         _buildInfoText('Âm lượng: ${device.amLuong ?? 'Không xác định'}'),
       ],
     );
@@ -360,19 +441,32 @@ class _DeviceScreenState extends State<DeviceScreen> {
       child: Text(
         text,
         style: const TextStyle(fontSize: 14),
+        overflow: TextOverflow.ellipsis,
+        softWrap: false, // Giới hạn chỉ hiển thị một dòng
       ),
     );
   }
 
   Widget _buildDeviceStatus(Device2 device) {
-    return Text(
-      device.dangPhat ? 'Đang phát' : 'Không phát',
-      style: TextStyle(
-        fontSize: 14,
-        color: device.dangPhat ? Colors.green : Colors.red,
-        fontWeight: FontWeight.bold,
-      ),
-    );
+    return device.dangPhat
+        ? TextMarquee(
+            device.noiDungPhat,
+            spaceSize: 72,
+            curve: Curves.easeInBack,
+            style: const TextStyle(
+              color: Colors.green,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          )
+        : const Text(
+            'Không phát',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          );
   }
 
   Widget _buildControlButton(String label, IconData icon, Color color) {
@@ -383,7 +477,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
         const SizedBox(height: 8),
         Text(
           label,
-          style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w500),
+          style: TextStyle(
+              fontSize: 14, color: color, fontWeight: FontWeight.w500),
           textAlign: TextAlign.center,
         ),
       ],
@@ -403,11 +498,11 @@ class _DeviceScreenState extends State<DeviceScreen> {
         const SizedBox(height: 8),
         Text(
           label,
-          style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w500),
+          style: TextStyle(
+              fontSize: 14, color: color, fontWeight: FontWeight.w500),
           textAlign: TextAlign.center,
         ),
       ],
     );
   }
 }
-

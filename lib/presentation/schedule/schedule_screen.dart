@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:nttcs/data/models/schedule.dart';
 import 'bloc/schedule_bloc.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -233,27 +234,92 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   Widget _buildScheduleCard(Schedule schedule, String createdTime, String modifiedTime) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Card(
-        elevation: 2,
+    return Slidable(
+      key: ValueKey(schedule.id),
+      endActionPane: ActionPane(
+        motion: const DrawerMotion(),
+        children: [
+          CustomSlidableAction(
+            onPressed: (context) {
+              // Hành động cho nút xóa
+            },
+            padding: const EdgeInsets.symmetric(vertical: 1.0),
+            backgroundColor: Colors.red, // Màu nền đỏ cho nút xóa
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.delete, color: Colors.white, size: 24),
+                SizedBox(height: 4),
+                Text(
+                  'Xóa',
+                  style: TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          CustomSlidableAction(
+            onPressed: (context) {
+              // Hành động cho nút phát lịch
+            },
+            backgroundColor: Colors.orange,
+            padding: const EdgeInsets.symmetric(vertical: 1.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.sync, color: Colors.white, size: 28),
+                SizedBox(height: 4),
+                Text(
+                  'Phát lịch',
+                  style: TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          CustomSlidableAction(
+            onPressed: (context) {
+              // Hành động cho nút sửa
+            },
+            backgroundColor: Colors.blue,
+            padding: const EdgeInsets.symmetric(vertical: 1.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.edit, color: Colors.white, size: 28),
+                SizedBox(height: 4),
+                Text(
+                  'Sửa',
+                  style: TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      child: InkWell(
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildScheduleHeader(schedule),
-              const SizedBox(height: 8),
-              _buildScheduleInfo(schedule),
-              Text(
-                'Ngày cập nhật: ${modifiedTime}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+          padding: const EdgeInsets.all(1.0),
+          child: Container(
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildScheduleHeader(schedule),
+                  const SizedBox(height: 8),
+                  _buildScheduleInfo(schedule),
+                  Text(
+                    'Ngày cập nhật: $modifiedTime',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  Text(
+                    'Ngày tạo: $createdTime',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
               ),
-              Text(
-                'Ngày tạo: ${createdTime}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
+            ),
           ),
         ),
       ),

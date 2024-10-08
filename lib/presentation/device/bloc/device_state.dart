@@ -29,9 +29,3 @@ class DeviceVolumeChangedSuccess extends DeviceState {
 
   DeviceVolumeChangedSuccess(this.device);
 }
-
-class DeviceVolumeChangedError extends DeviceState {
-  final String message;
-
-  DeviceVolumeChangedError(this.message);
-}
