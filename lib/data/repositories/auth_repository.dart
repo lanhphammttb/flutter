@@ -30,18 +30,7 @@ class AuthRepository {
         LoginDto(username: username, password: password, otp: ""),
       );
 
-      // Lưu token vào local data source
-      await authLocalDataSource.saveString(
-          AuthDataConstants.token, result?['Token'] as String);
-      await authLocalDataSource.saveString(
-          AuthDataConstants.code, result?['Code'] as String);
-      await authLocalDataSource.saveString(
-          AuthDataConstants.name, result?['Name'] as String);
-      await authLocalDataSource.saveInt(
-          AuthDataConstants.id, result?['Id'] as int);
-
-      // Trả về kết quả thành công
-      return Success(result?['Status']);
+      return Success(result);
     } catch (e) {
       return Failure('$e');
     }
@@ -94,6 +83,15 @@ class AuthRepository {
     }
   }
 
+  Future<Result<void>> getDevice(int siteMapId, int page) async {
+    try {
+      final result = await authApiClient.getDevice(siteMapId, page);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
+
   Future<Result<void>> getDevice2() async {
     try {
       String token = await authLocalDataSource.getToken() as String;
@@ -106,8 +104,7 @@ class AuthRepository {
 
   Future<Result<void>> getOverview() async {
     try {
-      String token = await authLocalDataSource.getToken() as String;
-      final result = await authApiClient.getOverview(token);
+      final result = await authApiClient.getOverview();
       return Success(result);
     } catch (e) {
       return Failure('$e');
@@ -175,5 +172,9 @@ class AuthRepository {
     } catch (e) {
       return Failure('$e');
     }
+  }
+
+  void saveSelectCode(String selectCode) {
+    authLocalDataSource.saveString(AuthDataConstants.selectCode, selectCode);
   }
 }

@@ -59,10 +59,12 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
       body: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(
         builder: (context, state) {
           if (state is CreateScheduleInitial) {
-            context
-                .read<CreateScheduleBloc>()
-                .add(InitializeCreateScheduleEvent());
+            // Chỉ gọi sự kiện khi cần thiết, tránh gọi lại nhiều lần khi quay lại từ các màn hình khác
+            if (!context.read<CreateScheduleBloc>().isInitialized) {
+              context.read<CreateScheduleBloc>().add(InitializeCreateScheduleEvent());
+            }
           }
+
           if (state is CreateScheduleLoading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is CreateScheduleLoaded) {
@@ -70,6 +72,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
           } else if (state is CreateScheduleUpdated) {
             return _buildCreateScheduleForm(context, state);
           }
+
           return const Center(child: Text('Đang tải...'));
         },
       ),
@@ -129,20 +132,21 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
           ),
         ),
         // Địa điểm phát
-        _buildOptionTile(
-          context,
-          title: 'Địa điểm phát',
-          subtitle: 'Địa điểm đã chọn: ${state.location}',
-          onTap: () => Navigator.pushNamed(context, '/choice-place'),
-        ),
+        _buildOptionTile(context,
+            title: 'Địa điểm phát',
+            subtitle: 'Địa điểm đã chọn: ${state.location}', onTap: () {
+          context
+              .read<CreateScheduleBloc>()
+              .add(FetchLocationsEvent()); // Gọi API chỉ khi chưa có dữ liệu
+          Navigator.pushNamed(context, '/choice-place');
+        }),
         // Thiết bị phát
-        _buildOptionTile(
-          context,
-          title: 'Thiết bị phát',
-          subtitle: 'Đã chọn: ${state.device}',
-          onTap: () =>
-              context.read<CreateScheduleBloc>().add(SelectDeviceEvent([])),
-        ),
+        _buildOptionTile(context,
+            title: 'Thiết bị phát',
+            subtitle: 'Đã chọn: ${state.device}', onTap: () {
+          context.read<CreateScheduleBloc>().add(FetchDevicesEvent());
+          Navigator.pushNamed(context, '/choice-device');
+        }),
         // Ngày phát
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),

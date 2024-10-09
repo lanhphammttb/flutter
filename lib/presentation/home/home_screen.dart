@@ -6,6 +6,7 @@ import 'package:nttcs/presentation/information/bloc/information_bloc.dart';
 import 'package:nttcs/presentation/information/information_screen.dart';
 import 'package:nttcs/presentation/news/bloc/news_bloc.dart';
 import 'package:nttcs/presentation/news/news_screen.dart';
+import 'package:nttcs/presentation/overview/bloc/overview_bloc.dart';
 import 'package:nttcs/presentation/overview/overview_screen.dart';
 import 'package:nttcs/presentation/schedule/bloc/schedule_bloc.dart';
 import 'package:nttcs/presentation/schedule/schedule_screen.dart';
@@ -22,6 +23,16 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late HomeBloc homeBloc;
+  bool isLocationLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    homeBloc = context.read<HomeBloc>();
+    homeBloc.add(SelectLocation(''));
+  }
+
   final List<Widget> _pages = const <Widget>[
     OverviewScreen(),
     DeviceScreen(),
@@ -31,44 +42,23 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   void _onItemTapped(BuildContext context, int index) {
-    context.read<HomeBloc>().add(TabChanged(index));
+    homeBloc.add(TabChanged(index));
 
-    // Gọi API tương ứng với mỗi tab
     switch (index) {
-      case 1:
-        _callDeviceApi(context);
+      case 1 :
+        context.read<DeviceBloc>().add(FetchDevices());
         break;
       case 2:
-        _callScheduleApi(context);
+        context.read<ScheduleBloc>().add(FetchSchedule());
         break;
       case 3:
-        _callNewsApi(context);
+        context.read<NewsBloc>().add(FetchNews());
         break;
       case 4:
-        _callInformationApi(context);
+        context.read<InformationBloc>().add(FetchInformation());
       default:
         break;
     }
-  }
-
-  void _callDeviceApi(BuildContext context) {
-    final deviceBloc = context.read<DeviceBloc>();
-    deviceBloc.add(FetchDevices());
-  }
-
-  void _callScheduleApi(BuildContext context) {
-    final scheduleBloc = context.read<ScheduleBloc>();
-    scheduleBloc.add(FetchSchedule());
-  }
-
-  void _callNewsApi(BuildContext context) {
-    final newsBloc = context.read<NewsBloc>();
-    newsBloc.add(FetchNews());
-  }
-
-  void _callInformationApi(BuildContext context) {
-    final informationBloc = context.read<InformationBloc>();
-    informationBloc.add(FetchInformation());
   }
 
   @override
@@ -76,17 +66,39 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
-        // Kích thước mặc định của AppBar
         child: _buildAppBar(context), // Trả về widget từ _buildAppBar
       ),
-      body: BlocBuilder<HomeBloc, HomeState>(
-        builder: (context, state) {
-          int currentIndex = state is TabIndexChanged ? state.tabIndex : 0;
-          return IndexedStack(
-            index: currentIndex,
-            children: _pages,
-          );
+      body: BlocListener<HomeBloc, HomeState>(
+        listener: (context, state) {
+          if (state is LocationSelected || state is TabIndexChanged) {
+            // Gọi lại các sự kiện fetch dữ liệu nếu locationId hoặc tabIndex thay đổi
+            switch (state.tabIndex) {
+              case 0:
+                context.read<OverviewBloc>().add(FetchOverview());
+                break;
+              case 1:
+                // context.read<DeviceBloc>().add(FetchDevices(locationId: state.locationName));
+                break;
+              case 2:
+                // context.read<ScheduleBloc>().add(FetchSchedule(locationId: state.locationName));
+                break;
+              case 3:
+                // context.read<NewsBloc>().add(FetchNews(locationId: state.locationName));
+                break;
+              case 4:
+                // context.read<InformationBloc>().add(FetchInformation(locationId: state.locationName));
+                break;
+            }
+          }
         },
+        child: BlocBuilder<HomeBloc, HomeState>(
+          builder: (context, state) {
+            return IndexedStack(
+              index: state.tabIndex,
+              children: _pages,
+            );
+          },
+        ),
       ),
       bottomNavigationBar: _buildBottomNavigationBar(context),
     );
@@ -95,14 +107,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildAppBar(BuildContext context) {
     return BlocBuilder<HomeBloc, HomeState>(
       builder: (context, state) {
-        int currentIndex = state is TabIndexChanged ? state.tabIndex : 0;
+        int currentIndex = state.tabIndex;
         if (currentIndex == 4) {
-          // Trả về null để ẩn AppBar khi currentIndex == 4
-          return SizedBox.shrink(); // Trả về một widget rỗng
+          return SizedBox.shrink();
         }
 
         final locationText =
-            state is LocationSelected ? state.locationName : 'Loading...';
+            state.locationName.isEmpty ? 'Loading...' : state.locationName;
         return AppBar(
           automaticallyImplyLeading: false,
           backgroundColor: Colors.blue,
@@ -117,21 +128,27 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: BlocBuilder<HomeBloc, HomeState>(
                         builder: (context, state) {
                           if (state is LocationsLoading) {
-                            return const Center(child: CircularProgressIndicator());
-                          } else if (state is LocationsSuccess) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          } else if (state is LocationsSuccess || state.treeNodes.isNotEmpty) {
+                            isLocationLoaded = true;
                             return TreeNodeWidget(
                               treeNodes: state.treeNodes,
                               onItemClick: (node) {
-                                // Gọi hành động khi nhấn vào mục trong danh sách
-                                context.read<HomeBloc>().add(SelectLocation(node.name));
-                                context.read<HomeBloc>().add(ExpandNode(node));
-                                Navigator.pop(context); // Đóng BottomSheet sau khi chọn
+                                homeBloc.add(
+                                    SelectLocation(node.name, location: node));
+                                homeBloc.add(ExpandNode(node));
+                                Navigator.pop(
+                                    context); // Đóng BottomSheet sau khi chọn
                               },
                             );
                           } else if (state is LocationsFailure) {
-                            return Center(child: Text('Failed to load locations: ${state.error}'));
+                            return Center(
+                                child: Text(
+                                    'Failed to load locations: ${state.error}'));
                           } else {
-                            return const Center(child: Text('No data available'));
+                            return const Center(
+                                child: Text('No data available'));
                           }
                         },
                       ),
@@ -140,12 +157,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ).show(context);
 
-              // Đảm bảo gọi hàm này sau khi showModalBottomSheet đã được hiển thị
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                _callApiInBottomSheet(context);
+                if (!isLocationLoaded) {
+                  homeBloc.add(FetchLocations());
+                }
               });
             },
-
             child: Row(
               children: [
                 Text(
@@ -161,18 +178,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _callApiInBottomSheet(BuildContext context) {
-    context
-        .read<HomeBloc>()
-        .add(FetchLocations()); // Gọi API chỉ khi chưa có dữ liệu
-  }
-
   Widget _buildSearchField(BuildContext context) {
     return SearchField(
       controller: TextEditingController(),
-      onChanged: (value) =>
-          context.read<HomeBloc>().add(SearchTextChanged(value)),
-      onClear: () => context.read<HomeBloc>().add(SearchTextChanged('')),
+      onChanged: (value) => homeBloc.add(SearchTextChanged(value)),
+      onClear: () => homeBloc.add(SearchTextChanged('')),
       onFilter: () {},
     );
   }
@@ -180,14 +190,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildBottomNavigationBar(BuildContext context) {
     return BlocBuilder<HomeBloc, HomeState>(
       builder: (context, state) {
-        final currentIndex = state is TabIndexChanged ? state.tabIndex : 0;
         return BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
           selectedItemColor: Colors.blue,
           unselectedItemColor: Colors.grey,
-          currentIndex: currentIndex,
+          currentIndex: state.tabIndex,
           onTap: (index) => _onItemTapped(context, index),
-          // Dispatch tab change event
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
               icon: Icon(Icons.home),

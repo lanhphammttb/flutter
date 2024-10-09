@@ -1,10 +1,13 @@
 part of 'home_bloc.dart';
 
-class HomeEvent extends Equatable {
-  const HomeEvent();
+abstract class HomeEvent extends Equatable {
+  final String locationName;
+  final int tabIndex;
+
+  const HomeEvent({this.locationName = '', this.tabIndex = 0});
 
   @override
-  List<Object> get props => [];
+  List<Object> get props => [locationName];
 }
 
 class FetchLocations extends HomeEvent {}
@@ -27,20 +30,19 @@ class ExpandNode extends HomeEvent {
   List<Object> get props => [node];
 }
 
-class TabChanged extends HomeEvent {  // New event for tab changes
-  final int tabIndex;
-
-  const TabChanged(this.tabIndex);
+class TabChanged extends HomeEvent {
+  const TabChanged(int index) : super(tabIndex: index);
 
   @override
   List<Object> get props => [tabIndex];
 }
 
-class SelectLocation extends HomeEvent {  // New event for selecting a location
-  final String locationName;
+class SelectLocation extends HomeEvent {
+  final TreeNode? location;
 
-  const SelectLocation(this.locationName);
+  const SelectLocation(String value, {this.location})
+      : super(locationName: value);
 
   @override
-  List<Object> get props => [locationName];
+  List<Object> get props => [locationName, location ?? ''];
 }

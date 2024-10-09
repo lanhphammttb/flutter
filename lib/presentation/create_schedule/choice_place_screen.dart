@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nttcs/widgets/search_field.dart';
+import 'package:nttcs/widgets/tree_node_widget.dart';
+
+import 'bloc/create_schedule_bloc.dart';
 class ChoicePlaceScreen extends StatefulWidget {
   const ChoicePlaceScreen({Key? key}) : super(key: key);
 
@@ -61,34 +64,36 @@ class _ChoicePlaceScreenState extends State<ChoicePlaceScreen> {
               style: const TextStyle(color: Colors.blue, fontSize: 16),
             ),
           ),
-          Column(
-            children: [
-              _buildSearchField(context),
-              Expanded(
-                child: BlocBuilder<HomeBloc, HomeState>(
-                  builder: (context, state) {
-                    if (state is LocationsLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (state is LocationsSuccess) {
-                      return TreeNodeWidget(
-                        treeNodes: state.treeNodes,
-                        onItemClick: (node) {
-                          // Gọi hành động khi nhấn vào mục trong danh sách
-                          context.read<HomeBloc>().add(SelectLocation(node.name));
-                          context.read<HomeBloc>().add(ExpandNode(node));
-                          Navigator.pop(context); // Đóng BottomSheet sau khi chọn
-                        },
-                      );
-                    } else if (state is LocationsFailure) {
-                      return Center(child: Text('Failed to load locations: ${state.error}'));
-                    } else {
-                      return const Center(child: Text('No data available'));
-                    }
-                  },
+          Expanded(
+            child: Column(
+              children: [
+                _buildSearchField(context),
+                Expanded(
+                  child: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(
+                    builder: (context, state) {
+                      if (state is LocationsLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (state is LocationsSuccess) {
+                        return TreeNodeWidget(
+                          treeNodes: state.treeNodes,
+                          onItemClick: (node) {
+                            // Gọi hành động khi nhấn vào mục trong danh sách
+                            context.read<CreateScheduleBloc>().add(SelectLocationEvent(node.name));
+                            context.read<CreateScheduleBloc>().add(ExpandNodeEvent(node));
+                          },
+                        );
+                      } else if (state is LocationsFailure) {
+                        return Center(child: Text('Failed to load locations: ${state.error}'));
+                      } else {
+                        return const Center(child: Text('No data available'));
+                      }
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            )
           )
+
         ],
       ),
     );
@@ -98,8 +103,8 @@ class _ChoicePlaceScreenState extends State<ChoicePlaceScreen> {
     return SearchField(
       controller: TextEditingController(),
       onChanged: (value) =>
-          context.read<HomeBloc>().add(SearchTextChanged(value)),
-      onClear: () => context.read<HomeBloc>().add(SearchTextChanged('')),
+          context.read<CreateScheduleBloc>().add(SearchTextChanged(value)),
+      onClear: () => context.read<CreateScheduleBloc>().add(SearchTextChanged('')),
       onFilter: () {},
     );
   }

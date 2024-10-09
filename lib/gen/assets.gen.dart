@@ -34,6 +34,10 @@ class $AssetsImagesGen {
   /// File path: assets/images/ic_search.svg
   String get icSearch => 'assets/images/ic_search.svg';
 
+  /// File path: assets/images/ic_speaker_on.png
+  AssetGenImage get icSpeakerOn =>
+      const AssetGenImage('assets/images/ic_speaker_on.png');
+
   /// File path: assets/images/image_not_found.png
   AssetGenImage get imageNotFound =>
       const AssetGenImage('assets/images/image_not_found.png');
@@ -43,8 +47,14 @@ class $AssetsImagesGen {
       const AssetGenImage('assets/images/logo_vtc_trans.png');
 
   /// List of all assets
-  List<dynamic> get values =>
-      [icHotspotOff, icHotspotOn, icSearch, imageNotFound, logoVtcTrans];
+  List<dynamic> get values => [
+        icHotspotOff,
+        icHotspotOn,
+        icSearch,
+        icSpeakerOn,
+        imageNotFound,
+        logoVtcTrans
+      ];
 }
 
 class Assets {

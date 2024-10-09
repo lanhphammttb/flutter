@@ -1,6 +1,11 @@
 part of 'create_schedule_bloc.dart';
 
-abstract class CreateScheduleState {}
+ class CreateScheduleState extends Equatable{
+  const CreateScheduleState();
+
+  @override
+  List<Object> get props => [];
+ }
 
 class CreateScheduleInitial extends CreateScheduleState {}
 
@@ -62,3 +67,48 @@ class RemoveDateState extends CreateScheduleState {
 }
 
 class ScheduleSaved extends CreateScheduleState {}
+
+class LocationsLoading extends CreateScheduleState {}
+
+class LocationsSuccess extends CreateScheduleState {
+  final List<TreeNode> treeNodes;
+  final List<TreeNode> originalTreeNodes;
+  const LocationsSuccess(this.treeNodes, {required this.originalTreeNodes});
+
+  @override
+  List<Object> get props => [treeNodes, originalTreeNodes];
+}
+
+class LocationsFailure extends CreateScheduleState {
+  final String error;
+
+  const LocationsFailure(this.error);
+
+  @override
+  List<Object> get props => [error];
+}
+
+class LocationSelected extends CreateScheduleState {
+  final String locationName;
+
+  const LocationSelected(this.locationName);
+
+  @override
+  List<Object> get props => [locationName];
+}
+
+class DeviceLoadingState extends CreateScheduleState {}
+
+class DeviceLoadedState extends CreateScheduleState {
+  final List<Device> devices;
+  final List<int> selectedDeviceIds;
+  final bool isAllSelected;
+
+  DeviceLoadedState({required this.devices, required this.selectedDeviceIds, this.isAllSelected = false});
+}
+
+class DeviceErrorState extends CreateScheduleState {
+  final String error;
+
+  DeviceErrorState(this.error);
+}

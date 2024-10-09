@@ -4,4 +4,5 @@ class AuthDataConstants {
   static const name = 'Name';
   static const id = 'Id';
   static const isGoogleAuth = 'IsGoogleAuth';
+  static const selectCode = 'SelectCode';
 }

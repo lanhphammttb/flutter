@@ -4,70 +4,70 @@ part 'device.g.dart';
 
 @JsonSerializable()
 class Device {
-  @JsonKey(name: 'Name')
+  @JsonKey(name: 'Name', defaultValue: '')
   final String name;
 
-  @JsonKey(name: 'IMEI')
+  @JsonKey(name: 'IMEI', defaultValue: '')
   final String imei;
 
-  @JsonKey(name: 'Type')
+  @JsonKey(name: 'Type', defaultValue: 0)
   final int type;
 
-  @JsonKey(name: 'Latitude')
+  @JsonKey(name: 'Latitude', defaultValue: '')
   final String latitude;
 
-  @JsonKey(name: 'Longitude')
+  @JsonKey(name: 'Longitude', defaultValue: '')
   final String longitude;
 
-  @JsonKey(name: 'SIM')
+  @JsonKey(name: 'SIM', defaultValue: '')
   final String sim;
 
-  @JsonKey(name: 'Version')
+  @JsonKey(name: 'Version', defaultValue: '')
   final String version;
 
-  @JsonKey(name: 'PrivateKey')
+  @JsonKey(name: 'PrivateKey', defaultValue: '')
   final String privateKey;
 
-  @JsonKey(name: 'SendToProvince')
+  @JsonKey(name: 'SendToProvince', defaultValue: false)
   final bool sendToProvince;
 
-  @JsonKey(name: 'Loudspeaker')
+  @JsonKey(name: 'Loudspeaker', defaultValue: 0)
   final int loudspeaker;
 
-  @JsonKey(name: 'Volume')
+  @JsonKey(name: 'Volume', defaultValue: '')
   final String volume;
 
-  @JsonKey(name: 'Order')
+  @JsonKey(name: 'Order', defaultValue: 0)
   final int order;
 
-  @JsonKey(name: 'SiteMapId')
+  @JsonKey(name: 'SiteMapId', defaultValue: 0)
   final int siteMapId;
 
-  @JsonKey(name: 'SiteMapName')
+  @JsonKey(name: 'SiteMapName', defaultValue: '')
   final String siteMapName;
 
-  @JsonKey(name: 'SiteId')
+  @JsonKey(name: 'SiteId', defaultValue: 0)
   final int siteId;
 
-  @JsonKey(name: 'Deleted')
+  @JsonKey(name: 'Deleted', defaultValue: false)
   final bool deleted;
 
-  @JsonKey(name: 'HeartbeatTime')
+  @JsonKey(name: 'HeartbeatTime', defaultValue: '')
   final String heartbeatTime;
 
-  @JsonKey(name: 'Id')
+  @JsonKey(name: 'Id', defaultValue: 0)
   final int id;
 
-  @JsonKey(name: 'CreatedTime')
+  @JsonKey(name: 'CreatedTime', defaultValue: '')
   final String createdTime;
 
-  @JsonKey(name: 'CreatedUser')
+  @JsonKey(name: 'CreatedUser', defaultValue: '')
   final String createdUser;
 
-  @JsonKey(name: 'ModifiedTime')
+  @JsonKey(name: 'ModifiedTime', defaultValue: '')
   final String modifiedTime;
 
-  @JsonKey(name: 'ModifiedUser')
+  @JsonKey(name: 'ModifiedUser', defaultValue: '')
   final String modifiedUser;
 
   Device({

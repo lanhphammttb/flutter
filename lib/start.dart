@@ -35,7 +35,7 @@ class MyApp extends StatelessWidget {
         providers: [
           RepositoryProvider(
             create: (context) => AuthRepository(
-              authApiClient: AuthApiClient(DioClient()),
+              authApiClient: AuthApiClient(DioClient(), AuthLocalDataSource(PrefUtils().sharedPreferences!)),
               authLocalDataSource:
                   AuthLocalDataSource(PrefUtils().sharedPreferences!),
             ),

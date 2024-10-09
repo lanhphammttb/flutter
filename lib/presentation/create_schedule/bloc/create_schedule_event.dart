@@ -1,19 +1,30 @@
 part of 'create_schedule_bloc.dart';
 
-abstract class CreateScheduleEvent {}
+ class CreateScheduleEvent extends Equatable{
+  const CreateScheduleEvent();
+
+  @override
+  List<Object> get props => [];
+ }
 
 class CreateSchedule extends CreateScheduleEvent {}
 class InitializeCreateScheduleEvent extends CreateScheduleEvent {}
 class SelectLocationEvent extends CreateScheduleEvent {
-  final int location;
-  SelectLocationEvent(this.location);
+  final String locationName;
+  SelectLocationEvent(this.locationName);
 }
 
 class SelectDeviceEvent extends CreateScheduleEvent {
-  final List<Device> devices;
-  SelectDeviceEvent(this.devices);
+  final Device device;
+
+  SelectDeviceEvent(this.device);
 }
 
+class ToggleSelectAllDevicesEvent extends CreateScheduleEvent {
+  final bool selectAll;
+
+  ToggleSelectAllDevicesEvent(this.selectAll);
+}
 class AddDateEvent extends CreateScheduleEvent {
   final DateTime date;
   AddDateEvent(this.date);
@@ -36,3 +47,25 @@ class UpdatePlaylist extends CreateScheduleEvent {
   final String time;
   UpdatePlaylist(this.dateIndex, this.timeIndex, this.time);
 }
+
+class FetchLocationsEvent extends CreateScheduleEvent {}
+
+class SearchTextChanged extends CreateScheduleEvent {
+  final String searchText;
+
+  const SearchTextChanged(this.searchText);
+
+  @override
+  List<Object> get props => [searchText];
+}
+
+class ExpandNodeEvent extends CreateScheduleEvent {
+  final TreeNode node;
+
+  const ExpandNodeEvent(this.node);
+
+  @override
+  List<Object> get props => [node];
+}
+
+class FetchDevicesEvent extends CreateScheduleEvent{}

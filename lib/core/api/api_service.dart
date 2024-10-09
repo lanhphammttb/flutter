@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:nttcs/data/auth_local_data_source.dart';
 import 'package:nttcs/data/dtos/login_dto.dart';
 import 'package:nttcs/data/dtos/login_success_dto.dart';
 import 'package:nttcs/data/dtos/register_dto.dart';
@@ -15,15 +16,16 @@ import 'package:nttcs/data/models/specific_response.dart';
 import 'package:nttcs/data/models/specific_status_reponse.dart';
 import 'package:nttcs/data/models/user.dart';
 import 'package:nttcs/data/result_type.dart';
-
+import 'package:nttcs/core/constants/constants.dart';
 import 'dio_client.dart';
 
 class AuthApiClient {
-  AuthApiClient(this.dio);
+  AuthApiClient(this.dio, this.authLocalDataSource);
 
   final DioClient dio;
+  final AuthLocalDataSource authLocalDataSource;
 
-  Future<Map<String, dynamic>?> login(LoginDto loginDto) async {
+  Future<bool> login(LoginDto loginDto) async {
     try {
       // Gửi yêu cầu đăng nhập
       final response = await dio.post(
@@ -36,16 +38,24 @@ class AuthApiClient {
       if (result.code == 1) {
         final userData = await getUser(result.token);
 
-        return {
-          'Token': result.token,
-          'Code': userData.items.isNotEmpty ? userData.items[0].code : null,
-          'Name': userData.items.isNotEmpty ? userData.items[0].name : null,
-          'Id': userData.items.isNotEmpty ? userData.items[0].id : null,
-          'IsGoogleAuth': result.isGoogleAuth,
-          'Status': userData.status,
-        };
+        await authLocalDataSource.saveString(
+            AuthDataConstants.token, result.token);
+        await authLocalDataSource.saveString(
+            AuthDataConstants.code,
+            userData.items.isNotEmpty
+                ? userData.items[0].code
+                : null as String);
+        await authLocalDataSource.saveString(
+            AuthDataConstants.name,
+            userData.items.isNotEmpty
+                ? userData.items[0].name
+                : null as String);
+        await authLocalDataSource.saveInt(AuthDataConstants.id,
+            userData.items.isNotEmpty ? userData.items[0].id : null as int);
+
+        return userData.status;
       } else {
-        return null;
+        return false;
       }
     } on DioException catch (e) {
       if (e.response != null) {
@@ -82,9 +92,45 @@ class AuthApiClient {
         token: token,
       );
 
-      return SpecificResponse<User>.fromJson(
+      final result = SpecificResponse<User>.fromJson(
         response.data,
         (item) => User.fromJson(item as Map<String, dynamic>),
+      );
+
+      if (result.items.isNotEmpty) {
+        authLocalDataSource.saveString(
+          AuthDataConstants.selectCode,
+          result.items[0].code,
+        );
+      }
+
+      return result;
+    } on DioException catch (e) {
+      // Xử lý lỗi từ DioException
+      final errorMessage = e.response?.data['message'] ?? e.message;
+      throw Exception(errorMessage);
+    } catch (e) {
+      // Xử lý lỗi chung
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  Future<SpecificResponse<Device>> getDevice(int siteMapId, int page) async {
+    try {
+      String token = await authLocalDataSource.getToken() as String;
+      int siteId = await authLocalDataSource.getSiteId() as int;
+      final response =
+          await dio.get('Device/sitemapid', token: token, queryParameters: {
+        'SiteMapId': siteMapId,
+        'SiteId': siteId,
+        'Type': 'IPRADIO',
+        'Page': page,
+        'Size': 1000
+      });
+
+      return SpecificResponse<Device>.fromJson(
+        response.data,
+        (item) => Device.fromJson(item as Map<String, dynamic>),
       );
     } on DioException catch (e) {
       if (e.response != null) {
@@ -126,14 +172,17 @@ class AuthApiClient {
     }
   }
 
-  Future<SpecificResponse<ResOverview>> getOverview(String token) async {
+  Future<SpecificResponse<ResOverview>> getOverview() async {
     try {
+      String token = await authLocalDataSource.getToken() as String;
+      String code = await authLocalDataSource.getCode() as String;
+      String selectCode = await authLocalDataSource.getSelectCode() as String;
       final response = await dio.get(
         'SourceData/code',
         token: token,
         queryParameters: {
-          'Code': 'H39',
-          'Province': 'H39',
+          'Code': selectCode,
+          'Province': code,
         },
       );
 
@@ -211,7 +260,8 @@ class AuthApiClient {
 
       // Map schedule dates to the required format
       List<ScheduleDate> formatSchedules = scheduleDates.map((scheduleDate) {
-        List<SchedulePlaylistTime> playlistTimes = scheduleDate.schedulePlaylistTimes.map((playlistTime) {
+        List<SchedulePlaylistTime> playlistTimes =
+            scheduleDate.schedulePlaylistTimes.map((playlistTime) {
           List<Playlist> playlists = playlistTime.playlists.map((playlist) {
             return Playlist(
               id: playlist.id,
@@ -258,7 +308,7 @@ class AuthApiClient {
       // Xử lý phản hồi từ API
       return SpecificStatusResponse<Schedule>.fromJson(
         response.data,
-            (item) => Schedule.fromJson(item as Map<String, dynamic>),
+        (item) => Schedule.fromJson(item as Map<String, dynamic>),
       );
     } catch (e) {
       // Xử lý lỗi trong quá trình gọi API hoặc chuyển đổi dữ liệu
@@ -281,19 +331,17 @@ class AuthApiClient {
 
       return SpecificResponse<Content>.fromJson(
         response.data,
-            (item) => Content.fromJson(item as Map<String, dynamic>),
+        (item) => Content.fromJson(item as Map<String, dynamic>),
       );
     } catch (e) {
       throw Exception('An error occurred: $e');
     }
   }
 
-  Future<SpecificStatusResponse<Information>> getInformation(String token) async {
+  Future<SpecificStatusResponse<Information>> getInformation(
+      String token) async {
     try {
-      final response = await dio.get(
-        'User/info',
-        token: token
-      );
+      final response = await dio.get('User/info', token: token);
 
       return SpecificStatusResponse<Information>.fromJson(
         response.data,
@@ -310,7 +358,8 @@ class AuthApiClient {
     }
   }
 
-  Future<SpecificStatusResponse<dynamic>> controlDevice(String token, int siteId, int maLenh, int thamSo) async {
+  Future<SpecificStatusResponse<dynamic>> controlDevice(
+      String token, int siteId, int maLenh, int thamSo) async {
     try {
       final response = await dio.post(
         'Device/command',
@@ -328,7 +377,7 @@ class AuthApiClient {
 
       return SpecificStatusResponse<dynamic>.fromJson(
         response.data,
-            (item) => item,
+        (item) => item,
       );
     } on DioException catch (e) {
       if (e.response != null) {
@@ -340,5 +389,4 @@ class AuthApiClient {
       throw Exception('An error occurred: $e');
     }
   }
-
 }
