@@ -14,27 +14,27 @@ class AuthLocalDataSource {
     await sf.setInt(key, value);
   }
 
-  Future<String?> getToken() async {
-    return sf.getString(AuthDataConstants.token);
+  String? getToken()  {
+    return sf.getString(Constants.token);
   }
 
-  Future<String?> getName() async {
-    return sf.getString(AuthDataConstants.name);
+  String? getName() {
+    return sf.getString(Constants.name);
   }
 
   Future<int?> getSiteId() async{
-    return sf.getInt(AuthDataConstants.id);
+    return sf.getInt(Constants.id);
   }
 
-  Future<String?> getSelectCode() async {
-    return sf.getString(AuthDataConstants.selectCode);
+  String? getSelectCode()  {
+    return sf.getString(Constants.selectCode);
   }
 
-  Future<String?> getCode() async {
-    return sf.getString(AuthDataConstants.code);
+  String? getCode()  {
+    return sf.getString(Constants.code);
   }
 //
 // Future<void> deleteToken() async {
-//   await sf.remove(AuthDataConstants.tokenKey);
+//   await sf.remove(Constants.tokenKey);
 // }
 }

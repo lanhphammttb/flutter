@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(
             'username'.tr,
-            style: CustomTextStyles.titleSmallInter,
+            style: CustomTextStyles.bodyMediumBlack900,
           ),
           CustomTextFormField(
             controller: _usernameController,
@@ -76,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 24),
           Text(
             'password'.tr,
-            style: CustomTextStyles.titleSmallInter,
+            style: CustomTextStyles.bodyMediumBlack900,
           ),
           CustomTextFormField(
             controller: _passwordController,
@@ -84,7 +84,8 @@ class _LoginScreenState extends State<LoginScreen> {
             suffix: IconButton(
               icon: Icon(
                 _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                color: Colors.grey,
+                color: appTheme.gray_border,
+                size: 24,
               ),
               onPressed: () {
                 setState(() {
@@ -160,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               children: [
                                 Text(
                                   'title1'.tr.toUpperCase(),
-                                  style: CustomTextStyles.titleMediumBlue800,
+                                  style: CustomTextStyles.titleLargeBlue800,
                                 ),
                                 Text(
                                   'title2'.tr.toUpperCase(),

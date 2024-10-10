@@ -14,13 +14,19 @@ class CreateScheduleLoading extends CreateScheduleState {}
 class CreateScheduleLoaded extends CreateScheduleState {
   final SpecificResponse<Schedule> data;
 
-  CreateScheduleLoaded(this.data);
+  const CreateScheduleLoaded(this.data);
+
+  @override
+  List<Object> get props => [data];
 }
 
 class CreateScheduleError extends CreateScheduleState {
   final String message;
 
-  CreateScheduleError(this.message);
+  const CreateScheduleError(this.message);
+
+  @override
+  List<Object> get props => [message];
 }
 
 // Thêm trạng thái cập nhật
@@ -29,17 +35,23 @@ class CreateScheduleUpdated extends CreateScheduleState {
   final String device;
   final List<DateTime> selectedDates;
 
-  CreateScheduleUpdated({
+  const CreateScheduleUpdated({
     required this.location,
     required this.device,
     required this.selectedDates,
   });
+
+  @override
+  List<Object> get props => [location, device, selectedDates];
 }
 
 class SelectLocationState extends CreateScheduleState {
   final int location;
 
-  SelectLocationState(this.location);
+  const SelectLocationState(this.location);
+
+  @override
+  List<Object> get props => [location];
 }
 
 class SelectDeviceState extends CreateScheduleState {

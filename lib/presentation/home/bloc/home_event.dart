@@ -31,10 +31,10 @@ class ExpandNode extends HomeEvent {
 }
 
 class TabChanged extends HomeEvent {
-  const TabChanged(int index) : super(tabIndex: index);
+  const TabChanged(int index, String? value) : super(tabIndex: index, locationName: value ?? '');
 
   @override
-  List<Object> get props => [tabIndex];
+  List<Object> get props => [tabIndex, locationName];
 }
 
 class SelectLocation extends HomeEvent {

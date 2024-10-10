@@ -1,5 +1,15 @@
 part of 'overview_bloc.dart';
 
-abstract class OverviewEvent {}
+abstract class OverviewEvent extends Equatable {
+  const OverviewEvent();
 
-class FetchOverview extends OverviewEvent {}
+  @override
+  List<Object> get props => [];
+}
+
+class FetchOverview extends OverviewEvent {
+  const FetchOverview();
+
+  @override
+  List<Object> get props => [];
+}

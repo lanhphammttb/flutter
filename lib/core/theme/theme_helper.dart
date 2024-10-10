@@ -22,10 +22,12 @@ class ThemeHelper {
 
     // Tùy chỉnh ColorScheme bằng cách sử dụng copyWith để điều chỉnh các màu cụ thể
     var customColorScheme = generatedColorScheme.copyWith(
-        // secondaryContainer: Color(0xFF6C757D),
-        // onPrimary: Colors.white,
-        onPrimaryContainer: Colors.blue[900],
-        // background: Color(0xFFFFFFFF)  // Màu nền tùy chỉnh
+      primary: LightCodeColors().primary,
+      primaryContainer: LightCodeColors().blue900,
+      onPrimary: Colors.white,
+      secondary: LightCodeColors().blue700,
+      background: LightCodeColors().bg_gray,
+      surface: LightCodeColors().white,  // Màu nền tùy chỉnh
         );
 
     return ThemeData(
@@ -48,7 +50,11 @@ class LightCodeColors {
 
   get white => Colors.white;
 
-  get gray => Colors.grey[700];
+  get gray => const Color(0xFF6C757D);
+
+  get gray_border => const Color(0xFFB3B6B8);
 
   get bg_gray => Colors.grey[100];
+
+  get primary => const Color(0xFF275CAA);
 }

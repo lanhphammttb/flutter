@@ -4,9 +4,9 @@ import 'package:nttcs/core/app_export.dart';
 
 extension TextFormFieldStyleHelper on CustomTextFormField {
   static OutlineInputBorder get outLineGray => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(3.h),
+      borderRadius: BorderRadius.circular(8.h),
       borderSide: BorderSide(
-        color: appTheme.gray,
+        color: appTheme.gray_border,
         width: 1,
       ));
 }

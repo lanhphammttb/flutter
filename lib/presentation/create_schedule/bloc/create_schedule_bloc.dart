@@ -141,7 +141,7 @@ class CreateScheduleBloc
     final result = await authRepository.getDevice(754, 1);
     switch (result) {
       case Success(data: final data as SpecificResponse<Device>):
-        devices = data.items as List<Device>;
+        devices = data.items;
         emit(DeviceLoadedState(
             devices: devices, selectedDeviceIds: selectedDeviceIds));
         break;

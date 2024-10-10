@@ -101,11 +101,11 @@ class _ChoicePlaceScreenState extends State<ChoicePlaceScreen> {
 
   Widget _buildSearchField(BuildContext context) {
     return SearchField(
+      hintSearch: 'Tìm kiếm địa điểm',
       controller: TextEditingController(),
       onChanged: (value) =>
           context.read<CreateScheduleBloc>().add(SearchTextChanged(value)),
       onClear: () => context.read<CreateScheduleBloc>().add(SearchTextChanged('')),
-      onFilter: () {},
     );
   }
 }

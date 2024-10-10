@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nttcs/core/app_export.dart';
 import 'package:nttcs/presentation/device/bloc/device_bloc.dart';
 import 'package:nttcs/presentation/device/device_screen.dart';
-import 'package:nttcs/presentation/information/bloc/information_bloc.dart';
 import 'package:nttcs/presentation/information/information_screen.dart';
-import 'package:nttcs/presentation/news/bloc/news_bloc.dart';
 import 'package:nttcs/presentation/news/news_screen.dart';
 import 'package:nttcs/presentation/overview/bloc/overview_bloc.dart';
 import 'package:nttcs/presentation/overview/overview_screen.dart';
-import 'package:nttcs/presentation/schedule/bloc/schedule_bloc.dart';
 import 'package:nttcs/presentation/schedule/schedule_screen.dart';
 import 'package:nttcs/widgets/custom_bottom_sheet.dart';
 import 'package:nttcs/widgets/search_field.dart';
 import 'package:nttcs/widgets/tree_node_widget.dart';
+
 import 'bloc/home_bloc.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -30,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     homeBloc = context.read<HomeBloc>();
-    homeBloc.add(SelectLocation(''));
+    homeBloc.add(TabChanged(0, ''));
   }
 
   final List<Widget> _pages = const <Widget>[
@@ -40,26 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
     NewsScreen(),
     InformationScreen(),
   ];
-
-  void _onItemTapped(BuildContext context, int index) {
-    homeBloc.add(TabChanged(index));
-
-    switch (index) {
-      case 1 :
-        context.read<DeviceBloc>().add(FetchDevices());
-        break;
-      case 2:
-        context.read<ScheduleBloc>().add(FetchSchedule());
-        break;
-      case 3:
-        context.read<NewsBloc>().add(FetchNews());
-        break;
-      case 4:
-        context.read<InformationBloc>().add(FetchInformation());
-      default:
-        break;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 context.read<OverviewBloc>().add(FetchOverview());
                 break;
               case 1:
-                // context.read<DeviceBloc>().add(FetchDevices(locationId: state.locationName));
+                context.read<DeviceBloc>().add(FetchDevices());
                 break;
               case 2:
                 // context.read<ScheduleBloc>().add(FetchSchedule(locationId: state.locationName));
@@ -116,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
             state.locationName.isEmpty ? 'Loading...' : state.locationName;
         return AppBar(
           automaticallyImplyLeading: false,
-          backgroundColor: Colors.blue,
+          backgroundColor: Theme.of(context).colorScheme.primary,
           elevation: 0,
           title: GestureDetector(
             onTap: () {
@@ -130,7 +109,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           if (state is LocationsLoading) {
                             return const Center(
                                 child: CircularProgressIndicator());
-                          } else if (state is LocationsSuccess || state.treeNodes.isNotEmpty) {
+                          } else if (state is LocationsSuccess ||
+                              state.treeNodes.isNotEmpty) {
                             isLocationLoaded = true;
                             return TreeNodeWidget(
                               treeNodes: state.treeNodes,
@@ -169,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   locationText,
                   style: const TextStyle(color: Colors.white, fontSize: 20),
                 ),
-                const Icon(Icons.arrow_drop_down, color: Colors.white),
+                const Icon(Icons.keyboard_arrow_down_outlined, color: Colors.white),
               ],
             ),
           ),
@@ -180,10 +160,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSearchField(BuildContext context) {
     return SearchField(
+      hintSearch: 'Nhập tên địa điểm...',
       controller: TextEditingController(),
       onChanged: (value) => homeBloc.add(SearchTextChanged(value)),
       onClear: () => homeBloc.add(SearchTextChanged('')),
-      onFilter: () {},
     );
   }
 
@@ -192,10 +172,10 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, state) {
         return BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
-          selectedItemColor: Colors.blue,
+          selectedItemColor: Theme.of(context).colorScheme.primary,
           unselectedItemColor: Colors.grey,
           currentIndex: state.tabIndex,
-          onTap: (index) => _onItemTapped(context, index),
+          onTap: (index) => homeBloc.add(TabChanged(index, state.locationName)),
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
               icon: Icon(Icons.home),

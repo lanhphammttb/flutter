@@ -8,6 +8,7 @@ class CustomElevatedButton extends BaseButton {
       this.decoration,
       this.leftIcon,
       this.rightIcon,
+      this.backgroundColor,
       EdgeInsets? margin,
       VoidCallback? onPressed,
       ButtonStyle? buttonStyle,
@@ -31,6 +32,7 @@ class CustomElevatedButton extends BaseButton {
   final BoxDecoration? decoration;
   final Widget? leftIcon;
   final Widget? rightIcon;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -42,12 +44,19 @@ class CustomElevatedButton extends BaseButton {
   }
 
   Widget get buildElevatedButtonWidget => Container(
-        height: this.height ?? 40.v,
-        width: this.width ?? double.maxFinite,
-        margin: margin,
+        height: height ?? 40.v,
+        margin: margin ?? EdgeInsets.zero,
         decoration: decoration,
         child: ElevatedButton(
-          style: buttonStyle,
+          style: buttonStyle ??
+              ElevatedButton.styleFrom(
+                backgroundColor: backgroundColor ?? appTheme.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8), // Thêm padding ngang
+                elevation: 0,  // Đặt độ cao của nút thành 0 để bỏ đổ bóng
+              ),
           onPressed: isDisable ?? false ? null : onPressed ?? () {},
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -55,8 +64,8 @@ class CustomElevatedButton extends BaseButton {
             children: [
               leftIcon ?? const SizedBox.shrink(),
               Text(
-                text,
-                style: buttonTextStyle ?? theme.textTheme.titleMedium,
+                ' $text ',
+                style: buttonTextStyle ?? CustomTextStyles.textButton,
               ),
               rightIcon ?? const SizedBox.shrink()
             ],

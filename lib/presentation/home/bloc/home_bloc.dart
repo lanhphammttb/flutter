@@ -83,19 +83,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   void _onTabChanged(TabChanged event, Emitter<HomeState> emit) {
-    emit(TabIndexChanged(event.tabIndex, state.locationName, state.treeNodes));
+     selectedLocation = state.locationName.isNotEmpty
+        ? state.locationName
+        : authRepository.getName();
+    emit(TabIndexChanged(event.tabIndex, selectedLocation!, state.treeNodes));
   }
 
-  Future<void> _onSelectLocation(
-      SelectLocation event, Emitter<HomeState> emit) async {
-    selectedLocation = event.locationName.isEmpty
-        ? await authRepository.getName()
-        : event.locationName;
-
-    if (selectedLocation != null){
+  void _onSelectLocation(SelectLocation event, Emitter<HomeState> emit) {
+    if (state.locationName.isNotEmpty) {
       authRepository.saveSelectCode(event.location!.code);
     }
 
-    emit(LocationSelected(selectedLocation!, state.tabIndex, state.treeNodes));
+    emit(LocationSelected(event.locationName, state.tabIndex, state.treeNodes));
   }
 }

@@ -13,9 +13,15 @@ class DioClient {
   DioClient._internal() {
     dio = Dio(BaseOptions(
       baseUrl: dotenv.env['BASE_URL']!,
+      connectTimeout: const Duration(minutes: 30),
+      receiveTimeout: const Duration(minutes: 30),
+      headers: {
+        'Connection': 'keep-alive',
+      },
     ));
 
     dio.interceptors.add(AppInterceptors());
+    // dio.interceptors.add(CacheInterceptor());
   }
 
   static DioClient get instance => _instance;

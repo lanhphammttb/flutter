@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:nttcs/data/models/schedule.dart';
+import 'package:nttcs/widgets/custom_elevated_button.dart';
 import 'bloc/schedule_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
@@ -32,8 +33,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 } else if (state is ScheduleLoaded) {
                   final filteredItems = state.data.items.where((schedule) {
                     final matchesSearch = schedule.name
-                        ?.toLowerCase()
-                        .contains(_searchQuery.toLowerCase()) ??
+                            ?.toLowerCase()
+                            .contains(_searchQuery.toLowerCase()) ??
                         false;
 
                     if (_filter == 'all') {
@@ -56,9 +57,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     itemCount: filteredItems.length,
                     itemBuilder: (context, index) {
                       final schedule = filteredItems[index];
-                      final createdTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(schedule.createdTime!));
-                      final modifiedTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(schedule.modifiedTime!));
-                      return _buildScheduleCard(schedule, createdTime, modifiedTime);
+                      final createdTime = DateFormat('HH:mm - dd/MM/yyyy')
+                          .format(DateTime.parse(schedule.createdTime!));
+                      final modifiedTime = DateFormat('HH:mm - dd/MM/yyyy')
+                          .format(DateTime.parse(schedule.modifiedTime!));
+                      return _buildScheduleCard(
+                          schedule, createdTime, modifiedTime);
                     },
                   );
                 } else if (state is ScheduleError) {
@@ -82,18 +86,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          ElevatedButton(
+          CustomElevatedButton(
             onPressed: () {
               // ở đây mở ra screen create schedule để tạo lịch phát
               Navigator.pushNamed(context, '/create-schedule');
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-            ),
-            child: const Text(
-              'Lập lịch',
-              style: TextStyle(color: Colors.white),
-            ),
+            text: 'Lập lịch',
+            leftIcon: const Icon(Icons.add_rounded, color: Colors.white),
           ),
         ],
       ),
@@ -134,14 +133,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               children: [
                 _controller.text.isNotEmpty
                     ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.grey),
-                  onPressed: () {
-                    _controller.clear();
-                    setState(() {
-                      _searchQuery = ''; // Xóa giá trị tìm kiếm
-                    });
-                  },
-                )
+                        icon: const Icon(Icons.clear, color: Colors.grey),
+                        onPressed: () {
+                          _controller.clear();
+                          setState(() {
+                            _searchQuery = ''; // Xóa giá trị tìm kiếm
+                          });
+                        },
+                      )
                     : const SizedBox.shrink(),
                 IconButton(
                   icon: const Icon(Icons.filter_list, color: Colors.blue),
@@ -233,7 +232,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  Widget _buildScheduleCard(Schedule schedule, String createdTime, String modifiedTime) {
+  Widget _buildScheduleCard(
+      Schedule schedule, String createdTime, String modifiedTime) {
     return Slidable(
       key: ValueKey(schedule.id),
       endActionPane: ActionPane(
@@ -353,7 +353,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-
   Widget _buildInfoText(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4.0),
@@ -361,8 +360,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         text: TextSpan(
           children: [
             TextSpan(
-              text: '$label: ',  // Chữ in đậm
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
+              text: '$label: ', // Chữ in đậm
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black),
             ),
             TextSpan(
               text: value, // Giá trị không in đậm
@@ -397,7 +399,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       ),
       child: Text(
         statusText,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        style:
+            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       ),
     );
   }

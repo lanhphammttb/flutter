@@ -23,32 +23,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   void _onLoginStarted(AuthLoginStarted event, Emitter<AuthState> emit) async {
     emit(AuthLoginInProgress());
-    final result = await authRepository.login(
-        username: event.username, password: event.password, otp: '');
+    final result = await authRepository.login(username: event.username, password: event.password, otp: '');
     return (switch (result) {
       Success(data: final status) => emit(AuthLoginSuccess(status as bool)),
       Failure() => emit(AuthLoginFailure(result.message)),
     });
   }
 
-  void _onLoginPrefilled(
-      AuthLoginPrefilled event, Emitter<AuthState> emit) async {
+  void _onLoginPrefilled(AuthLoginPrefilled event, Emitter<AuthState> emit) async {
     emit(AuthLoginInitial(username: event.username, password: event.password));
   }
 
-  void _onAuthenticateStarted(
-      AuthAuthenticateStarted event, Emitter<AuthState> emit) async {
+  void _onAuthenticateStarted(AuthAuthenticateStarted event, Emitter<AuthState> emit) async {
     final result = await authRepository.getToken();
     return (switch (result) {
-      Success(data: final token) when token != null =>
-        emit(AuthAuthenticateSuccess(token)),
+      Success(data: final token) when token != null => emit(AuthAuthenticateSuccess(token)),
       Success() => emit(AuthAuthenticateUnauthenticated()),
       Failure() => emit(AuthAuthenticateFailure(result.message)),
     });
   }
 
-  void _onAuthLogoutStarted(
-      AuthLogoutStarted event, Emitter<AuthState> emit) async {
+  void _onAuthLogoutStarted(AuthLogoutStarted event, Emitter<AuthState> emit) async {
     final result = await authRepository.logout();
     return (switch (result) {
       Success() => emit(AuthLogoutSuccess()),

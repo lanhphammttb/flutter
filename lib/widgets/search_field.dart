@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:nttcs/core/app_export.dart';
 
 class SearchField extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
-  final VoidCallback onFilter;
+  final VoidCallback? onFilter;
+  final String hintSearch;
 
-  const SearchField({
-    Key? key,
-    required this.controller,
-    required this.onChanged,
-    required this.onClear,
-    required this.onFilter,
-  }) : super(key: key);
+  const SearchField(
+      {Key? key,
+      required this.controller,
+      required this.onChanged,
+      required this.onClear,
+      this.onFilter,
+      required this.hintSearch})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -20,45 +23,45 @@ class SearchField extends StatelessWidget {
       padding: const EdgeInsets.all(8.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(8.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          color: Colors.white, // Đặt màu nền của Container là trắng
+          borderRadius: BorderRadius.circular(4.0), // Bo góc cho Container
+          border: Border.all(color: appTheme.gray_border), // Viền màu xám
         ),
-        child: TextField(
-          controller: controller,
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            hintText: 'Search...',
-            border: InputBorder.none,
-            filled: true,
-            contentPadding: const EdgeInsets.all(12.0),
-            prefixIcon: const Icon(Icons.search, color: Colors.blue),
-            suffixIcon: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                controller.text.isNotEmpty
-                    ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.grey),
-                  onPressed: onClear,
-                )
-                    : const SizedBox.shrink(),
-                IconButton(
-                  icon: const Icon(Icons.filter_list, color: Colors.blue),
-                  onPressed: onFilter,
-                ),
-              ],
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(4.0), // Bo góc giống như Container
+          child: TextField(
+            controller: controller,
+            onChanged: onChanged,
+            decoration: InputDecoration(
+              hintText: hintSearch,
+              border: InputBorder.none,
+              filled: true,
+              fillColor: Colors.white, // Màu nền bên trong TextField là trắng
+              contentPadding: const EdgeInsets.all(12.0),
+              prefixIcon: const Icon(Icons.search, color: Colors.grey),
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  controller.text.isNotEmpty
+                      ? IconButton(
+                    icon: const Icon(Icons.clear, color: Colors.grey),
+                    onPressed: onClear,
+                  )
+                      : const SizedBox.shrink(),
+                  if (onFilter != null)
+                    IconButton(
+                      icon: const Icon(Icons.filter_list, color: Colors.blue),
+                      onPressed: onFilter,
+                    ),
+                ],
+              ),
+              hintStyle: const TextStyle(color: Colors.grey),
             ),
-            hintStyle: const TextStyle(color: Colors.grey),
           ),
         ),
       ),
     );
   }
+
+
 }

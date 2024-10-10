@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:nttcs/core/constants/constants.dart';
 import 'package:nttcs/data/auth_local_data_source.dart';
 import 'package:nttcs/data/dtos/login_dto.dart';
 import 'package:nttcs/data/dtos/login_success_dto.dart';
@@ -7,16 +8,15 @@ import 'package:nttcs/data/models/content.dart';
 import 'package:nttcs/data/models/device.dart';
 import 'package:nttcs/data/models/device2.dart';
 import 'package:nttcs/data/models/information.dart';
-import 'package:nttcs/data/models/schedule.dart';
 import 'package:nttcs/data/models/location.dart';
 import 'package:nttcs/data/models/res_overview.dart';
+import 'package:nttcs/data/models/schedule.dart';
 import 'package:nttcs/data/models/schedule_date.dart';
 import 'package:nttcs/data/models/schedule_request.dart';
 import 'package:nttcs/data/models/specific_response.dart';
 import 'package:nttcs/data/models/specific_status_reponse.dart';
 import 'package:nttcs/data/models/user.dart';
-import 'package:nttcs/data/result_type.dart';
-import 'package:nttcs/core/constants/constants.dart';
+
 import 'dio_client.dart';
 
 class AuthApiClient {
@@ -38,20 +38,13 @@ class AuthApiClient {
       if (result.code == 1) {
         final userData = await getUser(result.token);
 
+        await authLocalDataSource.saveString(Constants.token, result.token);
         await authLocalDataSource.saveString(
-            AuthDataConstants.token, result.token);
+            Constants.code, userData.items.isNotEmpty ? userData.items[0].code : '');
         await authLocalDataSource.saveString(
-            AuthDataConstants.code,
-            userData.items.isNotEmpty
-                ? userData.items[0].code
-                : null as String);
-        await authLocalDataSource.saveString(
-            AuthDataConstants.name,
-            userData.items.isNotEmpty
-                ? userData.items[0].name
-                : null as String);
-        await authLocalDataSource.saveInt(AuthDataConstants.id,
-            userData.items.isNotEmpty ? userData.items[0].id : null as int);
+            Constants.name, userData.items.isNotEmpty ? userData.items[0].name : '');
+        await authLocalDataSource.saveInt(
+            Constants.id, userData.items.isNotEmpty ? userData.items[0].id : 0);
 
         return userData.status;
       } else {
@@ -99,7 +92,7 @@ class AuthApiClient {
 
       if (result.items.isNotEmpty) {
         authLocalDataSource.saveString(
-          AuthDataConstants.selectCode,
+          Constants.selectCode,
           result.items[0].code,
         );
       }
@@ -117,15 +110,14 @@ class AuthApiClient {
 
   Future<SpecificResponse<Device>> getDevice(int siteMapId, int page) async {
     try {
-      String token = await authLocalDataSource.getToken() as String;
-      int siteId = await authLocalDataSource.getSiteId() as int;
-      final response =
-          await dio.get('Device/sitemapid', token: token, queryParameters: {
+      String token = authLocalDataSource.getToken() as String;
+      int siteId = authLocalDataSource.getSiteId() as int;
+      final response = await dio.get('Device/sitemapid', token: token, queryParameters: {
         'SiteMapId': siteMapId,
         'SiteId': siteId,
         'Type': 'IPRADIO',
         'Page': page,
-        'Size': 1000
+        'Size': Constants.pageSize
       });
 
       return SpecificResponse<Device>.fromJson(
@@ -143,17 +135,20 @@ class AuthApiClient {
     }
   }
 
-  Future<SpecificResponse<Device2>> getDevice2(String token) async {
+  Future<SpecificResponse<Device2>> getDevice2(int page) async {
     try {
+      String token = authLocalDataSource.getToken() as String;
+      String code = authLocalDataSource.getCode() as String;
+      String selectCode = authLocalDataSource.getSelectCode() as String;
       final response = await dio.post(
         'Device/list',
         token: token,
         data: {
           'Type': "IPRADIO",
-          'Code': "H39",
-          'Province': "H39",
-          'Page': 1,
-          'Size': 1000,
+          'Code': selectCode,
+          'Province': code,
+          'Page': page,
+          'Size': Constants.pageSize,
         },
       );
 
@@ -174,9 +169,9 @@ class AuthApiClient {
 
   Future<SpecificResponse<ResOverview>> getOverview() async {
     try {
-      String token = await authLocalDataSource.getToken() as String;
-      String code = await authLocalDataSource.getCode() as String;
-      String selectCode = await authLocalDataSource.getSelectCode() as String;
+      String token = authLocalDataSource.getToken() as String;
+      String code = authLocalDataSource.getCode() as String;
+      String selectCode = authLocalDataSource.getSelectCode() as String;
       final response = await dio.get(
         'SourceData/code',
         token: token,
@@ -247,21 +242,14 @@ class AuthApiClient {
     }
   }
 
-  Future<SpecificStatusResponse<Schedule>> createSchedule(
-      String token,
-      int locationSelected,
-      String name,
-      List<ScheduleDate> scheduleDates,
-      List<Device> devices,
-      int id) async {
+  Future<SpecificStatusResponse<Schedule>> createSchedule(String token, int locationSelected, String name,
+      List<ScheduleDate> scheduleDates, List<Device> devices, int id) async {
     try {
       // Map devices to device IDs
       List<int> deviceIds = devices.map((device) => device.id).toList();
 
-      // Map schedule dates to the required format
       List<ScheduleDate> formatSchedules = scheduleDates.map((scheduleDate) {
-        List<SchedulePlaylistTime> playlistTimes =
-            scheduleDate.schedulePlaylistTimes.map((playlistTime) {
+        List<SchedulePlaylistTime> playlistTimes = scheduleDate.schedulePlaylistTimes.map((playlistTime) {
           List<Playlist> playlists = playlistTime.playlists.map((playlist) {
             return Playlist(
               id: playlist.id,
@@ -338,8 +326,7 @@ class AuthApiClient {
     }
   }
 
-  Future<SpecificStatusResponse<Information>> getInformation(
-      String token) async {
+  Future<SpecificStatusResponse<Information>> getInformation(String token) async {
     try {
       final response = await dio.get('User/info', token: token);
 
@@ -358,8 +345,7 @@ class AuthApiClient {
     }
   }
 
-  Future<SpecificStatusResponse<dynamic>> controlDevice(
-      String token, int siteId, int maLenh, int thamSo) async {
+  Future<SpecificStatusResponse<dynamic>> controlDevice(String token, int siteId, int maLenh, int thamSo) async {
     try {
       final response = await dio.post(
         'Device/command',

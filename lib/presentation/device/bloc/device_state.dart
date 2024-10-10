@@ -1,31 +1,47 @@
 part of 'device_bloc.dart';
 
-abstract class DeviceState {}
+abstract class DeviceState extends Equatable{
+  const DeviceState();
+  @override
+  List<Object> get props => [];
+}
 
 class DeviceInitial extends DeviceState {}
 
 class DeviceLoading extends DeviceState {}
 
 class DeviceLoaded extends DeviceState {
-  final SpecificResponse<Device2> data;
+  final List<Device2> data;
+  final bool isLoadingMore;
+  const DeviceLoaded(this.data , {this.isLoadingMore = false});
 
-  DeviceLoaded(this.data);
+  @override
+  List<Object> get props => [data, isLoadingMore];
 }
 
 class DeviceError extends DeviceState {
   final String message;
 
-  DeviceError(this.message);
+  const DeviceError(this.message);
+
+  @override
+  List<Object> get props => [message];
 }
 
 class DeviceVolumePreview extends DeviceState {
   final int volume;
 
-  DeviceVolumePreview(this.volume);
+  const DeviceVolumePreview(this.volume);
+
+  @override
+  List<Object> get props => [volume];
 }
 
 class DeviceVolumeChangedSuccess extends DeviceState {
   final SpecificResponse<Device2> device;
 
-  DeviceVolumeChangedSuccess(this.device);
+  const DeviceVolumeChangedSuccess(this.device);
+
+  @override
+  List<Object> get props => [device];
 }
