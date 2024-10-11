@@ -45,3 +45,38 @@ class CacheInterceptor extends Interceptor {
     super.onError(err, handler);
   }
 }
+
+class RetryInterceptor extends Interceptor {
+  final Dio dio;
+  RetryInterceptor(this.dio);
+
+  @override
+  Future onError(DioException err, ErrorInterceptorHandler handler) async {
+    if (_shouldRetry(err)) {
+      try {
+        return dio.request(
+          err.requestOptions.path,
+          options: Options(
+            method: err.requestOptions.method,
+            headers: err.requestOptions.headers,
+          ),
+          data: err.requestOptions.data,
+          queryParameters: err.requestOptions.queryParameters,
+        );
+      } catch (e) {
+        return super.onError(err, handler); // Nếu retry thất bại thì xử lý lỗi bình thường
+      }
+    }
+    return super.onError(err, handler);
+  }
+
+  bool _shouldRetry(DioException err) {
+    return err.type == DioExceptionType.connectionTimeout ||
+        err.type == DioExceptionType.receiveTimeout ||
+        err.type == DioExceptionType.connectionError ||
+        err.type == DioExceptionType.sendTimeout ||
+        err.type == DioExceptionType.cancel ||
+        err.type == DioExceptionType.unknown;
+  }
+}
+

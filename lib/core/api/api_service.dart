@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:nttcs/core/constants/constants.dart';
 import 'package:nttcs/data/auth_local_data_source.dart';
@@ -39,12 +41,9 @@ class AuthApiClient {
         final userData = await getUser(result.token);
 
         await authLocalDataSource.saveString(Constants.token, result.token);
-        await authLocalDataSource.saveString(
-            Constants.code, userData.items.isNotEmpty ? userData.items[0].code : '');
-        await authLocalDataSource.saveString(
-            Constants.name, userData.items.isNotEmpty ? userData.items[0].name : '');
-        await authLocalDataSource.saveInt(
-            Constants.id, userData.items.isNotEmpty ? userData.items[0].id : 0);
+        await authLocalDataSource.saveString(Constants.code, userData.items.isNotEmpty ? userData.items[0].code : '');
+        await authLocalDataSource.saveString(Constants.name, userData.items.isNotEmpty ? userData.items[0].name : '');
+        await authLocalDataSource.saveInt(Constants.id, userData.items.isNotEmpty ? userData.items[0].id : 0);
 
         return userData.status;
       } else {
@@ -112,13 +111,8 @@ class AuthApiClient {
     try {
       String token = authLocalDataSource.getToken() as String;
       int siteId = authLocalDataSource.getSiteId() as int;
-      final response = await dio.get('Device/sitemapid', token: token, queryParameters: {
-        'SiteMapId': siteMapId,
-        'SiteId': siteId,
-        'Type': 'IPRADIO',
-        'Page': page,
-        'Size': Constants.pageSize
-      });
+      final response = await dio.get('Device/sitemapid',
+          token: token, queryParameters: {'SiteMapId': siteMapId, 'SiteId': siteId, 'Type': 'IPRADIO', 'Page': page, 'Size': Constants.pageSize});
 
       return SpecificResponse<Device>.fromJson(
         response.data,
@@ -135,7 +129,7 @@ class AuthApiClient {
     }
   }
 
-  Future<SpecificResponse<Device2>> getDevice2(int page) async {
+  Future<SpecificResponse<Device2>> getDevice2(int page, int reload) async {
     try {
       String token = authLocalDataSource.getToken() as String;
       String code = authLocalDataSource.getCode() as String;
@@ -148,7 +142,7 @@ class AuthApiClient {
           'Code': selectCode,
           'Province': code,
           'Page': page,
-          'Size': Constants.pageSize,
+          'Size': Constants.pageSize * reload,
         },
       );
 
@@ -169,9 +163,11 @@ class AuthApiClient {
 
   Future<SpecificResponse<ResOverview>> getOverview() async {
     try {
+      final stopwatch = Stopwatch()..start();
       String token = authLocalDataSource.getToken() as String;
       String code = authLocalDataSource.getCode() as String;
       String selectCode = authLocalDataSource.getSelectCode() as String;
+
       final response = await dio.get(
         'SourceData/code',
         token: token,
@@ -181,6 +177,7 @@ class AuthApiClient {
         },
       );
 
+      log('API call duration: ${stopwatch.elapsedMicroseconds} µs');
       return SpecificResponse<ResOverview>.fromJson(
         response.data,
         (item) => ResOverview.fromJson(item as Map<String, dynamic>),
@@ -219,17 +216,19 @@ class AuthApiClient {
     }
   }
 
-  Future<SpecificResponse<Schedule>> getSchedules(String token) async {
+  Future<SpecificResponse<Schedule>> getSchedules(int page, int reload) async {
     try {
+      String token = authLocalDataSource.getToken() as String;
+      int id = authLocalDataSource.getSiteId() as int;
       final response = await dio.post(
         'Schedule/data',
         token: token,
         data: {
           'Type': 'IPRADIO',
-          'SiteId': '5',
+          'SiteId': id,
           'SiteMapIds': [769, 770, 771, 772, 773, 774, 775, 776, 777, 778],
-          'Page': 1,
-          'Size': 1000,
+          'Page': page,
+          'Size': Constants.pageSize * reload,
         },
       );
 
@@ -242,8 +241,8 @@ class AuthApiClient {
     }
   }
 
-  Future<SpecificStatusResponse<Schedule>> createSchedule(String token, int locationSelected, String name,
-      List<ScheduleDate> scheduleDates, List<Device> devices, int id) async {
+  Future<SpecificStatusResponse<Schedule>> createSchedule(
+      String token, int locationSelected, String name, List<ScheduleDate> scheduleDates, List<Device> devices, int id) async {
     try {
       // Map devices to device IDs
       List<int> deviceIds = devices.map((device) => device.id).toList();

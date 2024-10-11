@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nttcs/core/constants/constants.dart';
 import 'package:nttcs/data/models/device2.dart';
@@ -16,41 +18,51 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
   int _currentPage = 1;
   int totalPage = 1;
 
-  DeviceBloc(this.authRepository) : super(DeviceInitial()) {
+  DeviceBloc(this.authRepository) : super(const DeviceState()) {
     on<FetchDevices>(_onFetchDevices);
     on<DeviceVolumeChanged>(_onDeviceVolumeChanged);
     on<CommitVolumeChange>(_onCommitVolumeChange);
+
+    Timer.periodic(const Duration(minutes: 1), (timer) {
+      add(const FetchDevices(2));
+    });
   }
 
   Future<void> _onFetchDevices(FetchDevices event, Emitter<DeviceState> emit) async {
-    if (event.isLoadMore) {
-      if (_currentPage > totalPage || state is DeviceLoading ) {
-        return;
-      }
-      if (state is DeviceLoaded) {
-        final currentState = state as DeviceLoaded;
-        emit(DeviceLoaded(currentState.data, isLoadingMore: true));
-      }
-    } else {
-      _currentPage = 1;
-      emit(DeviceLoading());
+    switch (event.isMoreOrRefresh) {
+      case 0:
+        emit(state.copyWith(status: DeviceStatus.loading));
+        break;
+      case 1:
+        if (_currentPage > totalPage || totalPage == 1 || state.status == DeviceStatus.loading) {
+          return;
+        }
+        if (state.status == DeviceStatus.success) {
+          emit(state.copyWith(
+            isMoreOrRefresh: event.isMoreOrRefresh,
+            status: DeviceStatus.success,
+          ));
+        }
+        break;
+      case 2:
+        break;
     }
-    final result = await authRepository.getDevice2(_currentPage);
+
+    final result = await authRepository.getDevice2(event.isMoreOrRefresh == 1 ? _currentPage : 1, event.isMoreOrRefresh == 1 ? 1 : _currentPage);
     switch (result) {
       case Success(data: final data as SpecificResponse<Device2>):
         totalPage = (data.totalRecord + Constants.pageSize - 1) ~/ Constants.pageSize;
-        _currentPage++;
-        List<Device2> currentDevices = [];
-        if (state is DeviceLoaded) {
-          currentDevices = (state as DeviceLoaded).data;
-        }
+        if (event.isMoreOrRefresh == 1 || _currentPage == 1) _currentPage++;
+        final newDevices = event.isMoreOrRefresh == 1 ? state.data + data.items : data.items;
 
-        List<Device2> newDevices = List<Device2>.from(currentDevices)..addAll(data.items);
-
-        emit(DeviceLoaded(newDevices));
+        emit(state.copyWith(
+          data: newDevices,
+          isMoreOrRefresh: event.isMoreOrRefresh,
+          status: DeviceStatus.success,
+        ));
         break;
       case Failure(message: final error):
-        emit(DeviceError(error));
+        emit(state.copyWith(status: DeviceStatus.failure, message: error));
         break;
     }
   }
@@ -58,19 +70,29 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
   Future<void> _onDeviceVolumeChanged(DeviceVolumeChanged event, Emitter<DeviceState> emit) async {
     if (event.deviceId.isNotEmpty) {
       _tempVolume = event.volume;
-      emit(DeviceVolumePreview(_tempVolume));
+      emit(state.copyWith(volumePreview: event.volume));
     } else {
-      emit(DeviceError('Thiết bị không xác định'));
+      emit(state.copyWith(
+        status: DeviceStatus.failure,
+        message: 'Failed to fetch devices',
+      ));
     }
   }
 
   Future<void> _onCommitVolumeChange(CommitVolumeChange event, Emitter<DeviceState> emit) async {
-    emit(DeviceLoading());
+    emit(state.copyWith(status: DeviceStatus.loading));
+
     final result = await authRepository.controlDevice(0, _tempVolume);
     if (result is Success) {
-      emit(DeviceVolumeChangedSuccess(result.data as SpecificResponse<Device2>));
+      emit(state.copyWith(
+        status: DeviceStatus.success,
+        message: 'Volume change committed',
+      ));
     } else if (result is Failure) {
-      emit(DeviceError(result.message));
+      emit(state.copyWith(
+        status: DeviceStatus.failure,
+        message: 'Failed to commit volume change',
+      ));
     }
   }
 }

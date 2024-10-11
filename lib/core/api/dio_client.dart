@@ -3,7 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'interceptors.dart';
 
 class DioClient {
-  static DioClient _instance = DioClient._internal();
+  static final DioClient _instance = DioClient._internal();
   late Dio dio;
 
   factory DioClient() {
@@ -22,13 +22,11 @@ class DioClient {
 
     dio.interceptors.add(AppInterceptors());
     // dio.interceptors.add(CacheInterceptor());
+    dio.interceptors.add(RetryInterceptor(dio));
   }
 
   static DioClient get instance => _instance;
 
-  static set instance(DioClient value) {
-    _instance = value;
-  }
 
   Future<Response> get(String path,
       {String? token, Map<String, dynamic>? queryParameters}) async {

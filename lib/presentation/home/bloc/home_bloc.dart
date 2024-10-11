@@ -1,4 +1,4 @@
-import "package:equatable/equatable.dart";
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nttcs/data/models/location.dart';
 import 'package:nttcs/data/models/specific_response.dart';
@@ -12,9 +12,8 @@ part 'home_state.dart';
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final AuthRepository authRepository;
-  String? selectedLocation; // Thêm biến cục bộ này để lưu selectedLocation
 
-  HomeBloc(this.authRepository) : super(HomeInitial()) {
+  HomeBloc(this.authRepository) : super(const HomeState()) {
     on<FetchLocations>(_onFetchLocations);
     on<SearchTextChanged>(_onSearchTextChanged);
     on<ExpandNode>(_onExpandNode);
@@ -22,53 +21,38 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<SelectLocation>(_onSelectLocation);
   }
 
-  Future<void> _onFetchLocations(
-      FetchLocations event, Emitter<HomeState> emit) async {
-    emit(LocationsLoading(state.locationName, state.tabIndex, state.treeNodes));
+  Future<void> _onFetchLocations(FetchLocations event, Emitter<HomeState> emit) async {
+    emit(state.copyWith(status: HomeStatus.loading));
 
     try {
       final result = await authRepository.getLocations();
-
       if (result is Success) {
         final data = result.data as SpecificResponse<Location>;
         List<TreeNode> treeNodes = TreeNode.buildTree(data.items);
-        emit(LocationsSuccess(state.locationName, state.tabIndex,
-            treeNodes: treeNodes, originalTreeNodes: treeNodes));
+        emit(state.copyWith(
+          status: HomeStatus.success,
+          treeNodes: treeNodes,
+          originalTreeNodes: treeNodes,
+        ));
       } else if (result is Failure) {
-        emit(LocationsFailure(result.message));
+        emit(state.copyWith(status: HomeStatus.failure, error: result.message));
       }
     } catch (error) {
-      emit(LocationsFailure(error.toString()));
+      emit(state.copyWith(status: HomeStatus.failure, error: error.toString()));
     }
   }
 
   void _onSearchTextChanged(SearchTextChanged event, Emitter<HomeState> emit) {
-    final currentState = state;
-    if (currentState is LocationsSuccess) {
-      final originalNodes = currentState.originalTreeNodes;
-
-      if (event.searchText.isEmpty) {
-        emit(LocationsSuccess(state.locationName, state.tabIndex,
-            treeNodes: originalNodes, originalTreeNodes: originalNodes));
-      } else {
-        List<TreeNode> filteredNodes =
-            TreeNode.trimTreeDFS(originalNodes, event.searchText);
-
-        emit(LocationsSuccess(state.locationName, state.tabIndex,
-            treeNodes: filteredNodes, originalTreeNodes: originalNodes));
-      }
+    if (state.originalTreeNodes != null) {
+      final filteredNodes = event.searchText.isEmpty ? state.originalTreeNodes! : TreeNode.trimTreeDFS(state.originalTreeNodes!, event.searchText);
+      emit(state.copyWith(treeNodes: filteredNodes));
     }
   }
 
   void _onExpandNode(ExpandNode event, Emitter<HomeState> emit) {
-    final currentState = state;
-    if (currentState is LocationsSuccess) {
-      List<TreeNode> updatedNodes = List.from(currentState.treeNodes);
-      _toggleExpansion(event.node, updatedNodes);
-      emit(LocationsSuccess(state.locationName, state.tabIndex,
-          treeNodes: updatedNodes,
-          originalTreeNodes: currentState.originalTreeNodes));
-    }
+    List<TreeNode> updatedNodes = List.from(state.treeNodes);
+    _toggleExpansion(event.node, updatedNodes);
+    emit(state.copyWith(treeNodes: updatedNodes));
   }
 
   void _toggleExpansion(TreeNode node, List<TreeNode> nodes) {
@@ -83,17 +67,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   void _onTabChanged(TabChanged event, Emitter<HomeState> emit) {
-     selectedLocation = state.locationName.isNotEmpty
-        ? state.locationName
-        : authRepository.getName();
-    emit(TabIndexChanged(event.tabIndex, selectedLocation!, state.treeNodes));
+    emit(state.copyWith(tabIndex: event.tabIndex));
   }
 
   void _onSelectLocation(SelectLocation event, Emitter<HomeState> emit) {
-    if (state.locationName.isNotEmpty) {
-      authRepository.saveSelectCode(event.location!.code);
+    final location = authRepository.getName();
+    if (event.locationNode != null) {
+      authRepository.saveSelectCode(event.locationNode!.code);
     }
-
-    emit(LocationSelected(event.locationName, state.tabIndex, state.treeNodes));
+    emit(state.copyWith(locationName: event.locationNode != null ? event.locationNode?.name : location, locationNode: event.locationNode));
   }
 }

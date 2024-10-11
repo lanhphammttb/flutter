@@ -34,15 +34,12 @@ class _DeviceScreenState extends State<DeviceScreen> {
   void initState() {
     super.initState();
     deviceBloc = context.read<DeviceBloc>();
-    Timer.periodic(const Duration(minutes: 1), (timer) {
-      deviceBloc.add(const FetchDevices(isLoadMore: false));
-    });
     _scrollController.addListener(_onScroll);
   }
 
   void _onScroll() {
-    if (_scrollController.position.extentAfter < 200 && deviceBloc.state is DeviceLoaded) {
-      deviceBloc.add(const FetchDevices(isLoadMore: true));
+    if (_scrollController.position.extentAfter < 200 && deviceBloc.state.status == DeviceStatus.success) {
+      deviceBloc.add(const FetchDevices(1));
     }
   }
 
@@ -78,23 +75,10 @@ class _DeviceScreenState extends State<DeviceScreen> {
           Expanded(
             child: BlocBuilder<DeviceBloc, DeviceState>(
               builder: (context, state) {
-                if (state is DeviceLoading) {
+                if (state.status == DeviceStatus.loading) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (state is DeviceLoaded) {
-                  final filteredItems = state.data.where((device) {
-                    final matchesSearch =
-                        device.tenThietBi?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false;
-                    if (_filter == 'all') {
-                      return matchesSearch;
-                    } else if (_filter == 'playing') {
-                      return matchesSearch && device.dangPhat;
-                    } else if (_filter == 'connected') {
-                      return matchesSearch && !device.matKetNoi;
-                    } else if (_filter == 'disconnected') {
-                      return matchesSearch && device.matKetNoi;
-                    }
-                    return false;
-                  }).toList();
+                } else if (state.status == DeviceStatus.success) {
+                  final filteredItems = _getFilteredItems(state.data);
 
                   if (filteredItems.isEmpty) {
                     return const Center(child: Text('Không có thiết bị nào.'));
@@ -102,7 +86,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
 
                   return ListView.builder(
                     controller: _scrollController,
-                    itemCount: filteredItems.length + (state.isLoadingMore ? 1 : 0),
+                    itemCount: filteredItems.length + (state.isMoreOrRefresh == 1 ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == filteredItems.length) {
                         return _buildShimmer(); // Hiển thị shimmer khi đang tải thêm
@@ -114,7 +98,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
                       return _buildDeviceCard(device, formattedDate);
                     },
                   );
-                } else if (state is DeviceError) {
+                } else if (state.status == DeviceStatus.failure) {
                   return Center(
                     child: Text('Lỗi: ${state.message}', style: const TextStyle(color: Colors.red)),
                   );
@@ -126,6 +110,22 @@ class _DeviceScreenState extends State<DeviceScreen> {
         ],
       ),
     );
+  }
+
+  List<Device2> _getFilteredItems(List<Device2> data) {
+    return data.where((device) {
+      final matchesSearch = device.tenThietBi?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false;
+      switch (_filter) {
+        case 'playing':
+          return matchesSearch && device.dangPhat;
+        case 'connected':
+          return matchesSearch && !device.matKetNoi;
+        case 'disconnected':
+          return matchesSearch && device.matKetNoi;
+        default:
+          return matchesSearch;
+      }
+    }).toList();
   }
 
   Widget _buildShimmer() {
@@ -150,7 +150,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
   Widget _buildDeviceCard(Device2 device, String formattedDate) {
     final isSelected = _selectedItems.contains(device.maThietBi);
     return InkWell(
-      onTap: () => _toggleSelectItem(device.maThietBi!),
+      onTap: () => _toggleSelectItem(device.maThietBi),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 1.0),
         // Chỉ cần khoảng cách trên dưới
@@ -195,7 +195,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
   // Hàm chuyển đổi trạng thái chọn item
   void _toggleSelectItem(String itemId) {
     final state = BlocProvider.of<DeviceBloc>(context).state;
-    if (state is DeviceLoaded) {
+    if (state.status == DeviceStatus.success) {
       setState(() {
         if (_selectedItems.contains(itemId)) {
           _selectedItems.remove(itemId);
@@ -209,7 +209,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
 
   void _toggleSelectAll() {
     final state = BlocProvider.of<DeviceBloc>(context).state;
-    if (state is DeviceLoaded) {
+    if (state.status == DeviceStatus.success) {
       setState(() {
         if (_isSelectAll) {
           _selectedItems.clear();

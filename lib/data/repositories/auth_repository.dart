@@ -83,9 +83,9 @@ class AuthRepository {
     }
   }
 
-  Future<Result<void>> getDevice2(int page) async {
+  Future<Result<void>> getDevice2(int page, int reload) async {
     try {
-      final result = await authApiClient.getDevice2(page);
+      final result = await authApiClient.getDevice2(page, reload);
       return Success(result);
     } catch (e) {
       return Failure('$e');
@@ -111,10 +111,9 @@ class AuthRepository {
     }
   }
 
-  Future<Result<void>> getSchedules() async {
+  Future<Result<void>> getSchedules(int page, int reload) async {
     try {
-      String token =  authLocalDataSource.getToken() as String;
-      final result = await authApiClient.getSchedules(token);
+      final result = await authApiClient.getSchedules(page, reload);
       return Success(result);
     } catch (e) {
       return Failure('$e');

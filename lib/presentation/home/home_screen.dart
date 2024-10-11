@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:nttcs/core/app_export.dart';
 import 'package:nttcs/presentation/device/bloc/device_bloc.dart';
 import 'package:nttcs/presentation/device/device_screen.dart';
 import 'package:nttcs/presentation/information/information_screen.dart';
 import 'package:nttcs/presentation/news/news_screen.dart';
 import 'package:nttcs/presentation/overview/bloc/overview_bloc.dart';
 import 'package:nttcs/presentation/overview/overview_screen.dart';
+import 'package:nttcs/presentation/schedule/bloc/schedule_bloc.dart';
 import 'package:nttcs/presentation/schedule/schedule_screen.dart';
 import 'package:nttcs/widgets/custom_bottom_sheet.dart';
 import 'package:nttcs/widgets/search_field.dart';
@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     homeBloc = context.read<HomeBloc>();
-    homeBloc.add(TabChanged(0, ''));
+    homeBloc.add(const SelectLocation(locationName: ''));
   }
 
   final List<Widget> _pages = const <Widget>[
@@ -45,29 +45,27 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: _buildAppBar(context), // Trả về widget từ _buildAppBar
+        child: _buildAppBar(context),
       ),
       body: BlocListener<HomeBloc, HomeState>(
+        listenWhen: (previous, current) {
+          return previous.locationName != current.locationName || previous.tabIndex != current.tabIndex;
+        },
         listener: (context, state) {
-          if (state is LocationSelected || state is TabIndexChanged) {
-            // Gọi lại các sự kiện fetch dữ liệu nếu locationId hoặc tabIndex thay đổi
-            switch (state.tabIndex) {
-              case 0:
-                context.read<OverviewBloc>().add(FetchOverview());
-                break;
-              case 1:
-                context.read<DeviceBloc>().add(FetchDevices());
-                break;
-              case 2:
-                // context.read<ScheduleBloc>().add(FetchSchedule(locationId: state.locationName));
-                break;
-              case 3:
-                // context.read<NewsBloc>().add(FetchNews(locationId: state.locationName));
-                break;
-              case 4:
-                // context.read<InformationBloc>().add(FetchInformation(locationId: state.locationName));
-                break;
-            }
+          switch (state.tabIndex) {
+            case 0:
+              context.read<OverviewBloc>().add(const FetchOverview());
+              break;
+            case 1:
+              context.read<DeviceBloc>().add(const FetchDevices(0));
+              break;
+            case 2:
+              context.read<ScheduleBloc>().add(FetchSchedule());
+              break;
+            case 3:
+              break;
+            case 4:
+              break;
           }
         },
         child: BlocBuilder<HomeBloc, HomeState>(
@@ -91,8 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
           return SizedBox.shrink();
         }
 
-        final locationText =
-            state.locationName.isEmpty ? 'Loading...' : state.locationName;
+        final locationText = state.locationName.isEmpty ? 'Loading...' : state.locationName;
         return AppBar(
           automaticallyImplyLeading: false,
           backgroundColor: Theme.of(context).colorScheme.primary,
@@ -106,29 +103,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child: BlocBuilder<HomeBloc, HomeState>(
                         builder: (context, state) {
-                          if (state is LocationsLoading) {
-                            return const Center(
-                                child: CircularProgressIndicator());
-                          } else if (state is LocationsSuccess ||
-                              state.treeNodes.isNotEmpty) {
+                          if (state.status == HomeStatus.loading) {
+                            return const Center(child: CircularProgressIndicator());
+                          } else if (state.status == HomeStatus.success && state.treeNodes.isNotEmpty) {
                             isLocationLoaded = true;
                             return TreeNodeWidget(
                               treeNodes: state.treeNodes,
                               onItemClick: (node) {
-                                homeBloc.add(
-                                    SelectLocation(node.name, location: node));
+                                homeBloc.add(SelectLocation(locationNode: node));
                                 homeBloc.add(ExpandNode(node));
-                                Navigator.pop(
-                                    context); // Đóng BottomSheet sau khi chọn
+                                Navigator.pop(context);
                               },
                             );
-                          } else if (state is LocationsFailure) {
-                            return Center(
-                                child: Text(
-                                    'Failed to load locations: ${state.error}'));
+                          } else if (state.status == HomeStatus.failure) {
+                            return Center(child: Text('Failed to load locations: ${state.error}'));
                           } else {
-                            return const Center(
-                                child: Text('No data available'));
+                            return const Center(child: Text('No data available'));
                           }
                         },
                       ),
@@ -145,10 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             child: Row(
               children: [
-                Text(
-                  locationText,
-                  style: const TextStyle(color: Colors.white, fontSize: 20),
-                ),
+                Text(locationText, style: const TextStyle(color: Colors.white, fontSize: 20)),
                 const Icon(Icons.keyboard_arrow_down_outlined, color: Colors.white),
               ],
             ),
@@ -175,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
           selectedItemColor: Theme.of(context).colorScheme.primary,
           unselectedItemColor: Colors.grey,
           currentIndex: state.tabIndex,
-          onTap: (index) => homeBloc.add(TabChanged(index, state.locationName)),
+          onTap: (index) => homeBloc.add(TabChanged(index)),
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
               icon: Icon(Icons.home),

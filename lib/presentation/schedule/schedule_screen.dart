@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:nttcs/data/models/schedule.dart';
+import 'package:nttcs/widgets/custom_bottom_sheet.dart';
 import 'package:nttcs/widgets/custom_elevated_button.dart';
+import 'package:nttcs/widgets/search_field.dart';
 import 'bloc/schedule_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
@@ -32,10 +34,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   return const Center(child: CircularProgressIndicator());
                 } else if (state is ScheduleLoaded) {
                   final filteredItems = state.data.items.where((schedule) {
-                    final matchesSearch = schedule.name
-                            ?.toLowerCase()
-                            .contains(_searchQuery.toLowerCase()) ??
-                        false;
+                    final matchesSearch = schedule.name?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false;
 
                     if (_filter == 'all') {
                       return matchesSearch; // Hiển thị tất cả
@@ -57,18 +56,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     itemCount: filteredItems.length,
                     itemBuilder: (context, index) {
                       final schedule = filteredItems[index];
-                      final createdTime = DateFormat('HH:mm - dd/MM/yyyy')
-                          .format(DateTime.parse(schedule.createdTime!));
-                      final modifiedTime = DateFormat('HH:mm - dd/MM/yyyy')
-                          .format(DateTime.parse(schedule.modifiedTime!));
-                      return _buildScheduleCard(
-                          schedule, createdTime, modifiedTime);
+                      final createdTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(schedule.createdTime!));
+                      final modifiedTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(schedule.modifiedTime!));
+                      return _buildScheduleCard(schedule, createdTime, modifiedTime);
                     },
                   );
                 } else if (state is ScheduleError) {
                   return Center(
-                    child: Text('Lỗi: ${state.message}',
-                        style: const TextStyle(color: Colors.red)),
+                    child: Text('Lỗi: ${state.message}', style: const TextStyle(color: Colors.red)),
                   );
                 }
                 return const Center(child: Text('Không có dữ liệu.'));
@@ -100,140 +95,87 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   Widget _buildSearchField() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(8.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: TextField(
-          controller: _controller,
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value; // Cập nhật giá trị tìm kiếm
-            });
-          },
-          decoration: InputDecoration(
-            hintText: 'Tìm kiếm...',
-            border: InputBorder.none,
-            filled: true,
-            contentPadding: const EdgeInsets.all(12.0),
-            prefixIcon: const Icon(Icons.search, color: Colors.blue),
-            suffixIcon: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _controller.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.grey),
-                        onPressed: () {
-                          _controller.clear();
-                          setState(() {
-                            _searchQuery = ''; // Xóa giá trị tìm kiếm
-                          });
-                        },
-                      )
-                    : const SizedBox.shrink(),
-                IconButton(
-                  icon: const Icon(Icons.filter_list, color: Colors.blue),
-                  onPressed: _showFilterBottomSheet,
-                ),
-              ],
-            ),
-            hintStyle: const TextStyle(color: Colors.grey),
-          ),
-        ),
-      ),
+    return SearchField(
+      controller: _controller,
+      hintSearch: 'Tìm kiếm lịch phát...',
+      onChanged: (value) {
+        setState(() {
+          _searchQuery = value;
+        });
+      },
+      onClear: () {
+        setState(() {
+          _controller.clear();
+          _searchQuery = '';
+        });
+      },
+      onFilter: _showFilterBottomSheet,
     );
   }
 
   void _showFilterBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16.0),
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            color: Colors.white,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Chọn trạng thái:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    CustomBottomSheet(
+        height: 270,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('Tất cả'),
+              leading: Radio<String>(
+                value: 'all',
+                groupValue: _filter,
+                onChanged: (value) {
+                  setState(() {
+                    _filter = value!; // Cập nhật giá trị bộ lọc
+                  });
+                  Navigator.pop(context);
+                },
               ),
-              const SizedBox(height: 20),
-              ListTile(
-                title: const Text('Tất cả'),
-                leading: Radio<String>(
-                  value: 'all',
-                  groupValue: _filter,
-                  onChanged: (value) {
-                    setState(() {
-                      _filter = value!; // Cập nhật giá trị bộ lọc
-                    });
-                    Navigator.pop(context);
-                  },
-                ),
+            ),
+            ListTile(
+              title: const Text('Bản nháp'),
+              leading: Radio<String>(
+                value: 'draft',
+                groupValue: _filter,
+                onChanged: (value) {
+                  setState(() {
+                    _filter = value!;
+                  });
+                  Navigator.pop(context);
+                },
               ),
-              ListTile(
-                title: const Text('Bản nháp'),
-                leading: Radio<String>(
-                  value: 'draft',
-                  groupValue: _filter,
-                  onChanged: (value) {
-                    setState(() {
-                      _filter = value!;
-                    });
-                    Navigator.pop(context);
-                  },
-                ),
+            ),
+            ListTile(
+              title: const Text('Đang sử dụng'),
+              leading: Radio<String>(
+                value: 'used',
+                groupValue: _filter,
+                onChanged: (value) {
+                  setState(() {
+                    _filter = value!;
+                  });
+                  Navigator.pop(context);
+                },
               ),
-              ListTile(
-                title: const Text('Đang sử dụng'),
-                leading: Radio<String>(
-                  value: 'used',
-                  groupValue: _filter,
-                  onChanged: (value) {
-                    setState(() {
-                      _filter = value!;
-                    });
-                    Navigator.pop(context);
-                  },
-                ),
+            ),
+            ListTile(
+              title: const Text('Đã hủy'),
+              leading: Radio<String>(
+                value: 'cancelled',
+                groupValue: _filter,
+                onChanged: (value) {
+                  setState(() {
+                    _filter = value!;
+                  });
+                  Navigator.pop(context);
+                },
               ),
-              ListTile(
-                title: const Text('Đã hủy'),
-                leading: Radio<String>(
-                  value: 'cancelled',
-                  groupValue: _filter,
-                  onChanged: (value) {
-                    setState(() {
-                      _filter = value!;
-                    });
-                    Navigator.pop(context);
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+            ),
+          ],
+        )).show(context);
   }
 
-  Widget _buildScheduleCard(
-      Schedule schedule, String createdTime, String modifiedTime) {
+  Widget _buildScheduleCard(Schedule schedule, String createdTime, String modifiedTime) {
     return Slidable(
       key: ValueKey(schedule.id),
       endActionPane: ActionPane(
@@ -332,8 +274,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         Expanded(
           child: Text(
             schedule.name ?? 'Lịch không xác định',
-            style: const TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue),
           ),
         ),
         const SizedBox(width: 8),
@@ -361,10 +302,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           children: [
             TextSpan(
               text: '$label: ', // Chữ in đậm
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
             ),
             TextSpan(
               text: value, // Giá trị không in đậm
@@ -399,8 +337,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       ),
       child: Text(
         statusText,
-        style:
-            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       ),
     );
   }

@@ -1,20 +1,19 @@
 part of 'device_bloc.dart';
 
-abstract class DeviceEvent extends Equatable{
+abstract class DeviceEvent extends Equatable {
   const DeviceEvent();
   @override
   List<Object> get props => [];
 }
 
 class FetchDevices extends DeviceEvent {
-  final bool isLoadMore;
+  final int isMoreOrRefresh; // 0: call first, 1: load more, 2: refresh
 
-  const FetchDevices({this.isLoadMore = false});
+  const FetchDevices(this.isMoreOrRefresh);
 
   @override
-  List<Object> get props => [isLoadMore];
+  List<Object> get props => [isMoreOrRefresh];
 }
-
 
 class DeviceVolumeChanged extends DeviceEvent {
   final String deviceId;

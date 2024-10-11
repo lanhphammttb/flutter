@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:nttcs/core/app_export.dart';
-import 'dart:async';
+
 import 'bloc/overview_bloc.dart';
 
 class OverviewScreen extends StatelessWidget {
@@ -12,14 +11,7 @@ class OverviewScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocListener<OverviewBloc, OverviewState>(
-        listener: (context, state) {
-          if (state is OverviewLoaded || state is OverviewUpdating) {
-            // Start the timer to fetch data periodically
-            Timer.periodic(const Duration(minutes: 1), (timer) {
-              context.read<OverviewBloc>().add(const FetchOverview());
-            });
-          }
-        },
+        listener: (context, state) {},
         child: RefreshIndicator(
           onRefresh: () async {
             context.read<OverviewBloc>().add(const FetchOverview());
@@ -29,9 +21,7 @@ class OverviewScreen extends StatelessWidget {
               if (state is OverviewLoading) {
                 return const Center(child: CircularProgressIndicator());
               } else if (state is OverviewLoaded || state is OverviewUpdating) {
-                final data = (state is OverviewLoaded)
-                    ? state.data
-                    : (state as OverviewUpdating).data;
+                final data = (state is OverviewLoaded) ? state.data : (state as OverviewUpdating).data;
                 return ListView(
                   children: [
                     Padding(
@@ -93,32 +83,33 @@ class OverviewScreen extends StatelessWidget {
     required String title,
     required String value,
   }) {
-    return Container(
-      key: ValueKey(title),  // Thêm key để tối ưu render
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
+    return RepaintBoundary(
+        key: ValueKey(title),
+        child: Container(
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: Colors.white, size: 30),
-              const SizedBox(width: 16),
+              Row(
+                children: [
+                  Icon(icon, color: Colors.white, size: 30),
+                  const SizedBox(width: 16),
+                  Text(
+                    title.tr.toUpperCase(),
+                    style: CustomTextStyles.titleOverview,
+                  ),
+                ],
+              ),
               Text(
-                title.tr.toUpperCase(),
-                style: CustomTextStyles.titleOverview,
+                value,
+                style: CustomTextStyles.countOverview,
               ),
             ],
           ),
-          Text(
-            value,
-            style: CustomTextStyles.countOverview,
-          ),
-        ],
-      ),
-    );
+        ));
   }
 }

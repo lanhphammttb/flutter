@@ -1,47 +1,39 @@
 part of 'device_bloc.dart';
 
-abstract class DeviceState extends Equatable{
-  const DeviceState();
-  @override
-  List<Object> get props => [];
-}
+enum DeviceStatus { initial, loading, success, failure }
 
-class DeviceInitial extends DeviceState {}
-
-class DeviceLoading extends DeviceState {}
-
-class DeviceLoaded extends DeviceState {
+class DeviceState extends Equatable {
   final List<Device2> data;
-  final bool isLoadingMore;
-  const DeviceLoaded(this.data , {this.isLoadingMore = false});
+  final int isMoreOrRefresh;
+  final DeviceStatus status;
+  final String? message;
+  final int? volumePreview;
+
+  const DeviceState({
+    this.data = const [],
+    this.isMoreOrRefresh = 0,
+    this.status = DeviceStatus.initial,
+    this.message,
+    this.volumePreview,
+  });
+
+  // Phương thức copyWith giúp dễ dàng cập nhật các thuộc tính
+  DeviceState copyWith({
+    List<Device2>? data,
+    int? isMoreOrRefresh,
+    DeviceStatus? status,
+    String? message,
+    int? volumePreview,
+  }) {
+    return DeviceState(
+      data: data ?? this.data,
+      isMoreOrRefresh: isMoreOrRefresh ?? this.isMoreOrRefresh,
+      status: status ?? this.status,
+      message: message ?? this.message,
+      volumePreview: volumePreview ?? this.volumePreview,
+    );
+  }
 
   @override
-  List<Object> get props => [data, isLoadingMore];
-}
-
-class DeviceError extends DeviceState {
-  final String message;
-
-  const DeviceError(this.message);
-
-  @override
-  List<Object> get props => [message];
-}
-
-class DeviceVolumePreview extends DeviceState {
-  final int volume;
-
-  const DeviceVolumePreview(this.volume);
-
-  @override
-  List<Object> get props => [volume];
-}
-
-class DeviceVolumeChangedSuccess extends DeviceState {
-  final SpecificResponse<Device2> device;
-
-  const DeviceVolumeChangedSuccess(this.device);
-
-  @override
-  List<Object> get props => [device];
+  List<Object?> get props => [data, isMoreOrRefresh, status, message, volumePreview];
 }

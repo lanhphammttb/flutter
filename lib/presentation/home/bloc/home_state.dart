@@ -1,63 +1,46 @@
 part of 'home_bloc.dart';
 
-abstract class HomeState extends Equatable {
+enum HomeStatus { initial, loading, success, failure }
+
+class HomeState extends Equatable {
   final String locationName;
+  final TreeNode? locationNode;
   final int tabIndex;
   final List<TreeNode> treeNodes;
+  final List<TreeNode>? originalTreeNodes;
+  final HomeStatus status;
+  final String? error;
 
-  const HomeState({this.locationName = '', this.tabIndex = 0, this.treeNodes = const []});
-
-  @override
-  List<Object> get props => [locationName, tabIndex, treeNodes];
-}
-
-class HomeInitial extends HomeState {
-  @override
-  List<Object> get props => [];
-}
-
-class LocationsLoading extends HomeState {
-  const LocationsLoading(String value, int index, List<TreeNode> tree)
-      : super(locationName: value, tabIndex: index, treeNodes: tree);
+  const HomeState({
+    this.locationName = '',
+    this.locationNode,
+    this.tabIndex = 0,
+    this.treeNodes = const [],
+    this.originalTreeNodes,
+    this.status = HomeStatus.initial,
+    this.error,
+  });
 
   @override
-  List<Object> get props => [locationName, tabIndex, treeNodes];
-}
+  List<Object?> get props => [locationName, tabIndex, treeNodes, originalTreeNodes, status, error];
 
-class LocationsSuccess extends HomeState {
-  final List<TreeNode> treeNodes;
-  final List<TreeNode> originalTreeNodes;
-
-  const LocationsSuccess(String value, int index,
-      {required this.treeNodes, required this.originalTreeNodes})
-      : super(locationName: value, tabIndex: index, treeNodes: treeNodes);
-
-  @override
-  List<Object> get props =>
-      [treeNodes, originalTreeNodes, locationName, tabIndex, treeNodes];
-}
-
-class LocationsFailure extends HomeState {
-  final String error;
-
-  const LocationsFailure(this.error);
-
-  @override
-  List<Object> get props => [error];
-}
-
-class TabIndexChanged extends HomeState {
-  const TabIndexChanged(int index, String value, List<TreeNode> tree)
-      : super(tabIndex: index, locationName: value, treeNodes: tree);
-
-  @override
-  List<Object> get props => [tabIndex, locationName, treeNodes];
-}
-
-class LocationSelected extends HomeState {
-  const LocationSelected(String value, int index, List<TreeNode> tree)
-      : super(locationName: value, tabIndex: index, treeNodes: tree);
-
-  @override
-  List<Object> get props => [locationName, tabIndex, treeNodes];
+  HomeState copyWith({
+    String? locationName,
+    TreeNode? locationNode,
+    int? tabIndex,
+    List<TreeNode>? treeNodes,
+    List<TreeNode>? originalTreeNodes,
+    HomeStatus? status,
+    String? error,
+  }) {
+    return HomeState(
+      locationName: locationName ?? this.locationName,
+      locationNode: locationNode ?? this.locationNode,
+      tabIndex: tabIndex ?? this.tabIndex,
+      treeNodes: treeNodes ?? this.treeNodes,
+      originalTreeNodes: originalTreeNodes ?? this.originalTreeNodes,
+      status: status ?? this.status,
+      error: error ?? this.error,
+    );
+  }
 }

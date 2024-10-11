@@ -5,7 +5,7 @@ import 'package:nttcs/widgets/tree_node_widget.dart';
 
 import 'bloc/create_schedule_bloc.dart';
 class ChoicePlaceScreen extends StatefulWidget {
-  const ChoicePlaceScreen({Key? key}) : super(key: key);
+  const ChoicePlaceScreen({super.key});
 
   @override
   State<ChoicePlaceScreen> createState() => _ChoicePlaceScreenState();
