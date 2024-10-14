@@ -3,19 +3,13 @@ import 'package:nttcs/core/app_export.dart';
 
 class SearchField extends StatelessWidget {
   final TextEditingController controller;
+  final String? value;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
   final VoidCallback? onFilter;
   final String hintSearch;
 
-  const SearchField(
-      {Key? key,
-      required this.controller,
-      required this.onChanged,
-      required this.onClear,
-      this.onFilter,
-      required this.hintSearch})
-      : super(key: key);
+  const SearchField({super.key,required this.controller, this.value, required this.onChanged, required this.onClear, this.onFilter, required this.hintSearch});
 
   @override
   Widget build(BuildContext context) {
@@ -36,17 +30,18 @@ class SearchField extends StatelessWidget {
               hintText: hintSearch,
               border: InputBorder.none,
               filled: true,
-              fillColor: Colors.white, // Màu nền bên trong TextField là trắng
+              fillColor: Colors.white,
+              // Màu nền bên trong TextField là trắng
               contentPadding: const EdgeInsets.all(12.0),
               prefixIcon: const Icon(Icons.search, color: Colors.grey),
               suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  controller.text.isNotEmpty
+                  controller!.text.isNotEmpty || value != null
                       ? IconButton(
-                    icon: const Icon(Icons.clear, color: Colors.grey),
-                    onPressed: onClear,
-                  )
+                          icon: const Icon(Icons.clear, color: Colors.grey),
+                          onPressed: onClear,
+                        )
                       : const SizedBox.shrink(),
                   if (onFilter != null)
                     IconButton(
@@ -62,6 +57,4 @@ class SearchField extends StatelessWidget {
       ),
     );
   }
-
-
 }

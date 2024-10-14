@@ -1,5 +1,5 @@
 String convertSecondsToHHMMSS(String secondsString) {
-  if (secondsString == null || secondsString.isEmpty) {
+  if (secondsString.isEmpty) {
     return "00:00:00";
   }
 

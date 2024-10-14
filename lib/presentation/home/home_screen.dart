@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nttcs/presentation/device/bloc/device_bloc.dart';
 import 'package:nttcs/presentation/device/device_screen.dart';
 import 'package:nttcs/presentation/information/information_screen.dart';
+import 'package:nttcs/presentation/news/bloc/news_bloc.dart';
 import 'package:nttcs/presentation/news/news_screen.dart';
 import 'package:nttcs/presentation/overview/bloc/overview_bloc.dart';
 import 'package:nttcs/presentation/overview/overview_screen.dart';
@@ -48,9 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: _buildAppBar(context),
       ),
       body: BlocListener<HomeBloc, HomeState>(
-        listenWhen: (previous, current) {
-          return previous.locationName != current.locationName || previous.tabIndex != current.tabIndex;
-        },
+        listenWhen: (previous, current) => previous.locationName != current.locationName || previous.tabIndex != current.tabIndex,
         listener: (context, state) {
           switch (state.tabIndex) {
             case 0:
@@ -63,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
               context.read<ScheduleBloc>().add(FetchSchedule());
               break;
             case 3:
+              context.read<NewsBloc>().add(const FetchNews(0));
               break;
             case 4:
               break;

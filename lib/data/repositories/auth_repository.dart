@@ -49,7 +49,7 @@ class AuthRepository {
 
   Future<Result<String?>> getToken() async {
     try {
-      final token = await authLocalDataSource.getToken();
+      final [token] = await authLocalDataSource.getValue([Constants.token]);
       if (token == null) {
         return Success(null);
       }
@@ -58,10 +58,6 @@ class AuthRepository {
       log('$e');
       return Failure('$e');
     }
-  }
-
-  String getName() {
-    return authLocalDataSource.getName() ?? '';
   }
 
   Future<Result<void>> logout() async {
@@ -103,8 +99,7 @@ class AuthRepository {
 
   Future<Result<void>> getLocations() async {
     try {
-      String token =  authLocalDataSource.getToken() as String;
-      final result = await authApiClient.getLocations(token);
+      final result = await authApiClient.getLocations();
       return Success(result);
     } catch (e) {
       return Failure('$e');
@@ -120,11 +115,9 @@ class AuthRepository {
     }
   }
 
-  Future<Result<void>> createSchedule(
-      int locationSelected, String name, List<ScheduleDate> scheduleDates, List<Device> devices, int id) async {
+  Future<Result<void>> createSchedule(int locationSelected, String name, List<ScheduleDate> scheduleDates, List<Device> devices, int id) async {
     try {
-      String token = authLocalDataSource.getToken() as String;
-      final result = await authApiClient.createSchedule(token, locationSelected, name, scheduleDates, devices, id);
+      final result = await authApiClient.createSchedule(locationSelected, name, scheduleDates, devices, id);
       return Success(result);
     } catch (e) {
       return Failure('$e');
@@ -133,8 +126,7 @@ class AuthRepository {
 
   Future<Result<void>> getNews() async {
     try {
-      String token = authLocalDataSource.getToken() as String;
-      final result = authApiClient.getNews(token);
+      final result = authApiClient.getNews();
       return Success(result);
     } catch (e) {
       return Failure('$e');
@@ -143,19 +135,16 @@ class AuthRepository {
 
   Future<Result<void>> getInformation() async {
     try {
-      String token = authLocalDataSource.getToken() as String;
-      final result = authApiClient.getInformation(token);
+      final result = authApiClient.getInformation();
       return Success(result);
     } catch (e) {
       return Failure('$e');
     }
   }
 
-  Future<Result<void>> controlDevice(int maLenh, int thamSo) async {
+  Future<Result<void>> controlDevice(int maLenh, int thamSo, List<String> devicesArray) async {
     try {
-      String token =  authLocalDataSource.getToken() as String;
-      int siteId =  authLocalDataSource.getSiteId() as int;
-      final result = await authApiClient.controlDevice(token, siteId, maLenh, thamSo);
+      final result = await authApiClient.controlDevice(maLenh, thamSo, devicesArray);
       return Success(result);
     } catch (e) {
       return Failure('$e');

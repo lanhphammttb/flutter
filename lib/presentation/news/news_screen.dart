@@ -3,7 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:nttcs/core/utils/functions.dart';
 import 'package:nttcs/data/models/content.dart';
+import 'package:nttcs/widgets/custom_bottom_sheet.dart';
+import 'package:nttcs/widgets/search_field.dart';
 import 'bloc/news_bloc.dart';
+
 class NewsScreen extends StatefulWidget {
   const NewsScreen({super.key});
 
@@ -15,6 +18,15 @@ class _NewsScreenState extends State<NewsScreen> {
   final TextEditingController _controller = TextEditingController();
   String _searchQuery = '';
   String _filter = 'all'; // Biến để lưu trữ trạng thái bộ lọc
+  late TextEditingController _searchController;
+  late NewsBloc newsBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    newsBloc = context.read<NewsBloc>();
+    _searchController = TextEditingController(text: newsBloc.state.searchQuery);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,14 +37,11 @@ class _NewsScreenState extends State<NewsScreen> {
           Expanded(
             child: BlocBuilder<NewsBloc, NewsState>(
               builder: (context, state) {
-                if (state is NewsLoading) {
+                if (state.status == NewsStatus.loading && state.data.isEmpty) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (state is NewsLoaded) {
-                  final filteredItems = state.data.items.where((content) {
-                    final matchesSearch = content.tieuDe
-                        ?.toLowerCase()
-                        .contains(_searchQuery.toLowerCase()) ??
-                        false;
+                } else if (state.status == NewsStatus.success) {
+                  final filteredItems = state.data.where((content) {
+                    final matchesSearch = content.tieuDe?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false;
 
                     if (_filter == 'all') {
                       return matchesSearch; // Hiển thị tất cả
@@ -56,10 +65,9 @@ class _NewsScreenState extends State<NewsScreen> {
                       return _buildNewsCard(content);
                     },
                   );
-                } else if (state is NewsError) {
+                } else if (state.status == NewsStatus.failure) {
                   return Center(
-                    child: Text('Lỗi: ${state.message}',
-                        style: const TextStyle(color: Colors.red)),
+                    child: Text('Lỗi: ${state.message}', style: const TextStyle(color: Colors.red)),
                   );
                 }
                 return const Center(child: Text('Không có dữ liệu.'));
@@ -72,110 +80,61 @@ class _NewsScreenState extends State<NewsScreen> {
   }
 
   Widget _buildSearchField() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(8.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: TextField(
-          controller: _controller,
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value; // Cập nhật giá trị tìm kiếm
-            });
+    return BlocBuilder<NewsBloc, NewsState>(builder: (context, state) {
+      return SearchField(
+          controller: _searchController,
+          onChanged: (value) => newsBloc.add(SearchNews(value)),
+          onClear: () {
+            _searchController.clear();
+            newsBloc.add(const SearchNews(''));
           },
-          decoration: InputDecoration(
-            hintText: 'Tìm kiếm...',
-            border: InputBorder.none,
-            filled: true,
-            contentPadding: const EdgeInsets.all(12.0),
-            prefixIcon: const Icon(Icons.search, color: Colors.blue),
-            suffixIcon: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _controller.text.isNotEmpty
-                    ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.grey),
-                  onPressed: () {
-                    _controller.clear();
-                    setState(() {
-                      _searchQuery = ''; // Xóa giá trị tìm kiếm
-                    });
-                  },
-                )
-                    : const SizedBox.shrink(),
-                IconButton(
-                  icon: const Icon(Icons.filter_list, color: Colors.blue),
-                  onPressed: _showFilterBottomSheet,
-                ),
-              ],
-            ),
-            hintStyle: const TextStyle(color: Colors.grey),
-          ),
-        ),
-      ),
-    );
+          hintSearch: 'Tìm kiếm bản tin',
+          onFilter: _showFilterBottomSheet);
+    });
   }
 
   void _showFilterBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16.0),
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            color: Colors.white,
+    CustomBottomSheet(
+      height: 200,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '     Loại bản tin:',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Lọai bản tin:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              ListTile(
-                title: const Text('Bản tin âm thanh'),
-                leading: Radio<String>(
-                  value: 'audio',
-                  groupValue: _filter,
-                  onChanged: (value) {
-                    setState(() {
-                      _filter = value!;
-                    });
-                    Navigator.pop(context);
-                  },
-                ),
-              ),
-              ListTile(
-                title: const Text('Bản tin trực tiếp'),
-                leading: Radio<String>(
-                  value: 'live',
-                  groupValue: _filter,
-                  onChanged: (value) {
-                    setState(() {
-                      _filter = value!;
-                    });
-                    Navigator.pop(context);
-                  },
-                ),
-              ),
-            ],
+          const SizedBox(height: 8),
+          ListTile(
+            title: const Text('Bản tin âm thanh'),
+            leading: Radio<String>(
+              value: 'audio',
+              groupValue: _filter,
+              onChanged: (value) {
+                setState(() {
+                  _filter = value!;
+                });
+                Navigator.pop(context);
+              },
+            ),
           ),
-        );
-      },
-    );
+          ListTile(
+            title: const Text('Bản tin trực tiếp'),
+            leading: Radio<String>(
+              value: 'live',
+              groupValue: _filter,
+              onChanged: (value) {
+                setState(() {
+                  _filter = value!;
+                });
+                Navigator.pop(context);
+              },
+            ),
+          ),
+        ],
+      )
+    ).show(context);
   }
 
   Widget _buildNewsCard(Content content) {
@@ -191,7 +150,7 @@ class _NewsScreenState extends State<NewsScreen> {
           child: Row(
             children: [
               Icon(
-                Icons.queue_music,  // Biểu tượng âm nhạc
+                Icons.queue_music, // Biểu tượng âm nhạc
                 color: Colors.blue,
                 size: 30,
               ),
@@ -211,7 +170,7 @@ class _NewsScreenState extends State<NewsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                     convertSecondsToHHMMSS(content.thoiLuong ?? "0"), // Thời lượng
+                      convertSecondsToHHMMSS(content.thoiLuong ?? "0"), // Thời lượng
                       style: const TextStyle(
                         fontSize: 14,
                         color: Colors.grey, // Màu xám cho thời gian
@@ -226,6 +185,4 @@ class _NewsScreenState extends State<NewsScreen> {
       ),
     );
   }
-
-
 }

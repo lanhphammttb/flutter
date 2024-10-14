@@ -16,7 +16,7 @@ SpecificResponse<T> _$SpecificResponseFromJson<T>(
       message: json['Message'] as String? ?? '',
       page: (json['Page'] as num?)?.toInt() ?? 1,
       size: (json['Size'] as num?)?.toInt() ?? 10,
-      items: (json['Items'] as List<dynamic>).map(fromJsonT).toList(),
+      items: (json['Items'] as List<dynamic>?)?.map(fromJsonT).toList() ?? [],
     );
 
 Map<String, dynamic> _$SpecificResponseToJson<T>(

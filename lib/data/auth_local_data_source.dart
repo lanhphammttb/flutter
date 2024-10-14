@@ -14,27 +14,15 @@ class AuthLocalDataSource {
     await sf.setInt(key, value);
   }
 
-  String? getToken()  {
-    return sf.getString(Constants.token);
+  dynamic getValue(List<String> keys) {
+    List<dynamic> values = [];
+
+    for (String key in keys) {
+      dynamic value = sf.get(key);
+      values.add(value);
+    }
+
+    return values;
   }
 
-  String? getName() {
-    return sf.getString(Constants.name);
-  }
-
-  Future<int?> getSiteId() async{
-    return sf.getInt(Constants.id);
-  }
-
-  String? getSelectCode()  {
-    return sf.getString(Constants.selectCode);
-  }
-
-  String? getCode()  {
-    return sf.getString(Constants.code);
-  }
-//
-// Future<void> deleteToken() async {
-//   await sf.remove(Constants.tokenKey);
-// }
 }

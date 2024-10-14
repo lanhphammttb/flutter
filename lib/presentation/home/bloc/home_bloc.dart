@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nttcs/core/constants/constants.dart';
 import 'package:nttcs/data/models/location.dart';
 import 'package:nttcs/data/models/specific_response.dart';
 import 'package:nttcs/data/models/tree_node.dart';
@@ -71,7 +72,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   void _onSelectLocation(SelectLocation event, Emitter<HomeState> emit) {
-    final location = authRepository.getName();
+    var [location] = authRepository.authLocalDataSource.getValue([Constants.name]);
     if (event.locationNode != null) {
       authRepository.saveSelectCode(event.locationNode!.code);
     }

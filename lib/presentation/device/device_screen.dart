@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:nttcs/data/models/device2.dart';
 import 'package:nttcs/widgets/custom_bottom_sheet.dart';
 import 'package:nttcs/widgets/custom_elevated_button.dart';
@@ -22,19 +23,16 @@ class DeviceScreen extends StatefulWidget {
 }
 
 class _DeviceScreenState extends State<DeviceScreen> {
-  final TextEditingController _controller = TextEditingController();
-  String _searchQuery = '';
-  String _filter = 'all';
-  List<String> _selectedItems = []; // Danh sách các item đã được chọn
-  bool _isSelectAll = false; // Trạng thái nút chọn tất cả
   late DeviceBloc deviceBloc;
   final ScrollController _scrollController = ScrollController(); // Tạo ScrollController
+  late TextEditingController _searchController;
 
   @override
   void initState() {
     super.initState();
     deviceBloc = context.read<DeviceBloc>();
     _scrollController.addListener(_onScroll);
+    _searchController = TextEditingController(text: deviceBloc.state.searchQuery);
   }
 
   void _onScroll() {
@@ -46,76 +44,106 @@ class _DeviceScreenState extends State<DeviceScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          _buildControlPanel(),
-          _buildSearchField(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Đã chọn: ${_selectedItems.length}', style: CustomTextStyles.titleSmallInter),
-                TextButton(
-                  onPressed: _toggleSelectAll,
-                  child: Text(
-                    _isSelectAll ? 'Bỏ chọn tất cả' : 'Chọn tất cả',
-                    style: CustomTextStyles.titleMediumBlue800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: BlocBuilder<DeviceBloc, DeviceState>(
-              builder: (context, state) {
-                if (state.status == DeviceStatus.loading) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (state.status == DeviceStatus.success) {
-                  final filteredItems = _getFilteredItems(state.data);
+      body: BlocListener<DeviceBloc, DeviceState>(
+        listenWhen: (previous, current) => previous.message != current.message,
+        listener: (context, state) {
+          if (state.status == DeviceStatus.success && state.message.isNotEmpty) {
+            print('Message to display: ${state.message}'); // Kiểm tra giá trị của state.message
+            Fluttertoast.showToast(
+                msg: state.message,
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                timeInSecForIosWeb: 1,
+                backgroundColor: Colors.green,
+                textColor: Colors.white,
+                fontSize: 16.0
+            );
 
-                  if (filteredItems.isEmpty) {
-                    return const Center(child: Text('Không có thiết bị nào.'));
+            //gán mặc định cho message
+            deviceBloc.add(const FetchDevices(2));
+          }
+          if (state.status == DeviceStatus.failure && state.message.isNotEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        child: Column(
+          children: [
+            _buildControlPanel(),
+            _buildSearchField(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: BlocBuilder<DeviceBloc, DeviceState>(
+                builder: (context, state) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Đã chọn: ${state.selectedItems.length}', style: CustomTextStyles.titleSmallInter),
+                      TextButton(
+                        onPressed: () => deviceBloc.add(const SelectAllDevices()),
+                        child: Text(
+                          state.isSelectAll ? 'Bỏ chọn tất cả' : 'Chọn tất cả',
+                          style: CustomTextStyles.titleMediumBlue800,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            Expanded(
+              child: BlocBuilder<DeviceBloc, DeviceState>(
+                builder: (context, state) {
+                  if (state.status == DeviceStatus.loading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state.status == DeviceStatus.success || state.status == DeviceStatus.more) {
+                    final filteredItems = _getFilteredItems(state);
+
+                    if (filteredItems.isEmpty) {
+                      return const Center(child: Text('Không có thiết bị nào.'));
+                    }
+
+                    return ListView.builder(
+                      controller: _scrollController,
+                      itemCount: filteredItems.length + (state.isMoreOrRefresh == 1 ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == filteredItems.length) {
+                          return _buildShimmer(); // Hiển thị shimmer khi đang tải thêm
+                        }
+                        final device = filteredItems[index];
+                        final formattedDate = DateFormat('HH:mm - dd/MM/yyyy').format(
+                          DateTime.fromMillisecondsSinceEpoch(device.thoiDiemBatDau * 1000),
+                        );
+                        return _buildDeviceCard(device, formattedDate, context);
+                      },
+                    );
+                  } else if (state.status == DeviceStatus.failure) {
+                    return Center(
+                      child: Text('Lỗi: ${state.message}', style: const TextStyle(color: Colors.red)),
+                    );
                   }
-
-                  return ListView.builder(
-                    controller: _scrollController,
-                    itemCount: filteredItems.length + (state.isMoreOrRefresh == 1 ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == filteredItems.length) {
-                        return _buildShimmer(); // Hiển thị shimmer khi đang tải thêm
-                      }
-                      final device = filteredItems[index];
-                      final formattedDate = DateFormat('HH:mm - dd/MM/yyyy').format(
-                        DateTime.fromMillisecondsSinceEpoch(device.thoiDiemBatDau * 1000),
-                      );
-                      return _buildDeviceCard(device, formattedDate);
-                    },
-                  );
-                } else if (state.status == DeviceStatus.failure) {
-                  return Center(
-                    child: Text('Lỗi: ${state.message}', style: const TextStyle(color: Colors.red)),
-                  );
-                }
-                return const Center(child: Text('Không có dữ liệu.'));
-              },
+                  return const Center(child: Text('Không có dữ liệu.'));
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  List<Device2> _getFilteredItems(List<Device2> data) {
-    return data.where((device) {
-      final matchesSearch = device.tenThietBi?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false;
-      switch (_filter) {
+  List<Device2> _getFilteredItems(DeviceState state) {
+    return state.data.where((device) {
+      final matchesSearch = device.tenThietBi?.toLowerCase().contains(state.searchQuery.toLowerCase()) ?? false;
+      switch (state.filter) {
         case 'playing':
           return matchesSearch && device.dangPhat;
         case 'connected':
@@ -147,27 +175,36 @@ class _DeviceScreenState extends State<DeviceScreen> {
   }
 
   // Hàm để xây dựng mỗi item với checkbox
-  Widget _buildDeviceCard(Device2 device, String formattedDate) {
-    final isSelected = _selectedItems.contains(device.maThietBi);
+  Widget _buildDeviceCard(Device2 device, String formattedDate, BuildContext context) {
+    final isSelected = deviceBloc.state.selectedItems.contains(device.maThietBi);
     return InkWell(
-      onTap: () => _toggleSelectItem(device.maThietBi),
+      onTap: () => {if (!device.matKetNoi) deviceBloc.add(SelectDevice(device.maThietBi))},
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 1.0),
-        // Chỉ cần khoảng cách trên dưới
         child: Container(
-          color: Colors.white, // Đặt nền trắng để trông đơn giản hơn
+          color: Colors.white,
           padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(Icons.volume_up, size: 24, color: appTheme.primary),
+                  Icon(Icons.volume_up,
+                      size: 24,
+                      color: device.isActive
+                          ? Colors.green
+                          : !device.matKetNoi
+                              ? appTheme.primary
+                              : Colors.grey),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       device.tenThietBi ?? 'Thiết bị không xác định',
-                      style: CustomTextStyles.titleLargeBlue800,
+                      style: device.isActive
+                          ? CustomTextStyles.titleActive
+                          : !device.matKetNoi
+                              ? CustomTextStyles.titleOn
+                              : CustomTextStyles.titleOff,
                     ),
                   ),
                   SizedBox(
@@ -192,35 +229,6 @@ class _DeviceScreenState extends State<DeviceScreen> {
     );
   }
 
-  // Hàm chuyển đổi trạng thái chọn item
-  void _toggleSelectItem(String itemId) {
-    final state = BlocProvider.of<DeviceBloc>(context).state;
-    if (state.status == DeviceStatus.success) {
-      setState(() {
-        if (_selectedItems.contains(itemId)) {
-          _selectedItems.remove(itemId);
-        } else {
-          _selectedItems.add(itemId);
-        }
-        _isSelectAll = _selectedItems.length == state.data.length;
-      });
-    }
-  }
-
-  void _toggleSelectAll() {
-    final state = BlocProvider.of<DeviceBloc>(context).state;
-    if (state.status == DeviceStatus.success) {
-      setState(() {
-        if (_isSelectAll) {
-          _selectedItems.clear();
-        } else {
-          _selectedItems = state.data.map((item) => item.maThietBi).toList();
-        }
-        _isSelectAll = !_isSelectAll;
-      });
-    }
-  }
-
   Widget _buildControlPanel() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -234,28 +242,27 @@ class _DeviceScreenState extends State<DeviceScreen> {
                   child: Column(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Slider(
-                                value: 50,
-                                min: 0,
-                                max: 100,
-                                onChanged: (value) => context
-                                    .read<DeviceBloc>()
-                                    .add(DeviceVolumeChanged("device_id_here", value.toInt())),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            CustomElevatedButton(
-                              onPressed: () {
-                                context.read<DeviceBloc>().add(CommitVolumeChange("device_id_here"));
-                              },
-                              text: 'Âm lượng',
-                              leftIcon: const Icon(Icons.volume_up, color: Colors.white, size: 20),
-                            ),
-                          ],
+                        padding: const EdgeInsets.fromLTRB(4, 0, 16, 0),
+                        child: BlocBuilder<DeviceBloc, DeviceState>(
+                          builder: (context, state) {
+                            return Row(
+                              children: [
+                                Expanded(
+                                    child: Slider(
+                                        value: state.volumePreview!.toDouble() ?? 50.0,
+                                        min: 0,
+                                        max: 100,
+                                        onChanged: (value) => deviceBloc.add(DeviceVolumeChanged(value.toInt())))),
+                                Text('${state.volumePreview}'),
+                                const SizedBox(width: 16),
+                                CustomElevatedButton(
+                                  onPressed: () => deviceBloc.add(const CommitVolumeChange()),
+                                  text: 'Âm lượng',
+                                  leftIcon: const Icon(Icons.volume_up, color: Colors.white, size: 20),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                       Padding(
@@ -293,7 +300,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
             },
             backgroundColor: Colors.red,
             rightIcon: const Icon(Icons.play_circle, color: Colors.white),
-            text: 'Phát khẩn',
+            text: 'Phát ngay',
           ),
         ],
       ),
@@ -301,86 +308,75 @@ class _DeviceScreenState extends State<DeviceScreen> {
   }
 
   Widget _buildSearchField() {
-    return SearchField(
-      hintSearch: 'Tìm kiếm thiết bị...',
-      controller: _controller,
-      onChanged: (value) {
-        setState(() {
-          _searchQuery = value;
-        });
-      },
-      onClear: () {
-        _controller.clear();
-        setState(() {
-          _searchQuery = '';
-        });
-      },
-      onFilter: _showFilterBottomSheet,
-    );
+    return BlocBuilder<DeviceBloc, DeviceState>(builder: (context, state) {
+      return SearchField(
+        hintSearch: 'Tìm kiếm thiết bị...',
+        controller: _searchController,
+        onChanged: (value) => deviceBloc.add(SearchDevice(value)),
+        onClear: () {
+          _searchController.clear();
+          deviceBloc.add(const SearchDevice(''));
+        },
+        onFilter: _showFilterBottomSheet,
+      );
+    });
   }
 
   void _showFilterBottomSheet() {
     CustomBottomSheet(
-      height: 270,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ListTile(
-            title: const Text('Tất cả'),
-            leading: Radio<String>(
-              value: 'all',
-              groupValue: _filter,
-              onChanged: (value) {
-                setState(() {
-                  _filter = value!;
-                });
-                Navigator.pop(context);
-              },
-            ),
-          ),
-          ListTile(
-            title: const Text('Đang phát'),
-            leading: Radio<String>(
-              value: 'playing',
-              groupValue: _filter,
-              onChanged: (value) {
-                setState(() {
-                  _filter = value!;
-                });
-                Navigator.pop(context);
-              },
-            ),
-          ),
-          ListTile(
-            title: const Text('Đang kết nối'),
-            leading: Radio<String>(
-              value: 'connected',
-              groupValue: _filter,
-              onChanged: (value) {
-                setState(() {
-                  _filter = value!;
-                });
-                Navigator.pop(context);
-              },
-            ),
-          ),
-          ListTile(
-            title: const Text('Mất kết nối'),
-            leading: Radio<String>(
-              value: 'disconnected',
-              groupValue: _filter,
-              onChanged: (value) {
-                setState(() {
-                  _filter = value!;
-                });
-                Navigator.pop(context);
-              },
-            ),
-          ),
-        ],
-      ),
-    ).show(context);
+        height: 270,
+        child: BlocBuilder<DeviceBloc, DeviceState>(builder: (context, state) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                title: const Text('Tất cả'),
+                leading: Radio<String>(
+                  value: 'all',
+                  groupValue: state.filter,
+                  onChanged: (value) {
+                    deviceBloc.add(UpdateFilter(value!));
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              ListTile(
+                title: const Text('Đang phát'),
+                leading: Radio<String>(
+                  value: 'playing',
+                  groupValue: state.filter,
+                  onChanged: (value) {
+                    deviceBloc.add(UpdateFilter(value!));
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              ListTile(
+                title: const Text('Đang kết nối'),
+                leading: Radio<String>(
+                  value: 'connected',
+                  groupValue: state.filter,
+                  onChanged: (value) {
+                    deviceBloc.add(UpdateFilter(value!));
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              ListTile(
+                title: const Text('Mất kết nối'),
+                leading: Radio<String>(
+                  value: 'disconnected',
+                  groupValue: state.filter,
+                  onChanged: (value) {
+                    deviceBloc.add(UpdateFilter(value!));
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+            ],
+          );
+        })).show(context);
   }
 }
 
@@ -388,22 +384,21 @@ Widget _buildDeviceInfo(Device2 device) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      _buildInfoText('Mã thiết bị: ${device.maThietBi ?? 'Không xác định'}'),
-      _buildInfoText('Nhà cung cấp: ${device.maNhaCungCap ?? 'Không xác định'}'),
-      _buildInfoText('Địa bàn: ${device.tenNguon ?? 'Không xác định'}'),
-      _buildInfoText(
-          'Lịch phát: ${device.noiDungPhat.isNotEmpty == true && device.noiDungPhat != ' ' ? device.noiDungPhat : 'Chưa lập lịch'}'),
-      _buildInfoText('Âm lượng: ${device.amLuong ?? 'Không xác định'}'),
+      _buildInfoText('Mã thiết bị: ${device.maThietBi ?? 'Không xác định'}', device.matKetNoi),
+      _buildInfoText('Nhà cung cấp: ${device.maNhaCungCap ?? 'Không xác định'}', device.matKetNoi),
+      _buildInfoText('Địa bàn: ${device.tenNguon ?? 'Không xác định'}', device.matKetNoi),
+      _buildInfoText('Lịch phát: ${device.schedule?.name.isNotEmpty == true ? device.schedule?.name : 'Chưa lập lịch'}', device.matKetNoi),
+      _buildInfoText('Âm lượng: ${device.amLuong ?? 'Không xác định'}', device.matKetNoi),
     ],
   );
 }
 
-Widget _buildInfoText(String text) {
+Widget _buildInfoText(String text, bool isMatKetNoi) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 4.0),
     child: Text(
       text,
-      style: const TextStyle(fontSize: 14),
+      style: TextStyle(fontSize: 14, color: isMatKetNoi ? Colors.grey : Colors.black),
       overflow: TextOverflow.ellipsis,
       softWrap: false, // Giới hạn chỉ hiển thị một dòng
     ),
@@ -422,11 +417,11 @@ Widget _buildDeviceStatus(Device2 device) {
             fontSize: 14,
           ),
         )
-      : const Text(
+      : Text(
           'Không phát',
           style: TextStyle(
             fontSize: 14,
-            color: Colors.red,
+            color: !device.matKetNoi ? Colors.red : Colors.grey,
             fontWeight: FontWeight.bold,
           ),
         );

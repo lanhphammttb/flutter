@@ -36,4 +36,13 @@ class CustomTextStyles {
 
   static get textButton =>
       theme.textTheme.titleSmall!.copyWith(color: appTheme.white, fontSize: 14);
+
+  static get titleActive=> theme.textTheme.titleMedium!.copyWith(
+      color: Colors.green, fontWeight: FontWeight.w600, fontSize: 16);
+
+  static get titleOn=> theme.textTheme.titleMedium!.copyWith(
+      color: appTheme.primary, fontWeight: FontWeight.w600, fontSize: 16);
+
+  static get titleOff=> theme.textTheme.titleMedium!.copyWith(
+      color: Colors.grey, fontWeight: FontWeight.w600, fontSize: 16);
 }
