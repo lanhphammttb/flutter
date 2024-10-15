@@ -158,13 +158,13 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
 
   Future<void> _onFetchNews2(FetchNews2 event, Emitter<DeviceState> emit) async{
     if (event.isMoreOrRefresh == 0) {
-      emit(state.copyWith(status: DeviceStatus.loadingNews, contentType: event.contentType));
+      emit(state.copyWith(newsStatus: NewsStatus.loading, contentType: event.contentType));
     } else {
       if (_currentPageNews > totalPageNews || totalPageNews == 1) {
         return;
       }
-      if (state.status == DeviceStatus.success) {
-        emit(state.copyWith(status: DeviceStatus.moreNews, contentType: state.contentType));
+      if (state.newsStatus == NewsStatus.success) {
+        emit(state.copyWith(newsStatus: NewsStatus.more, contentType: state.contentType));
       }
     }
 
@@ -182,10 +182,10 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
         totalPageNews = (data.totalRecord + Constants.pageSize - 1) ~/ Constants.pageSize;
         if (event.isMoreOrRefresh == 1 || _currentPageNews == 1) _currentPageNews++;
         final newDevices = event.isMoreOrRefresh == 1 ? state.newsData + data.items : data.items;
-        emit(state.copyWith(status: DeviceStatus.successNews, newsData: newDevices));
+        emit(state.copyWith(newsStatus: NewsStatus.success, newsData: newDevices));
         break;
       case Failure(message: final error):
-        emit(state.copyWith(status: DeviceStatus.failureNews, message: error));
+        emit(state.copyWith(newsStatus: NewsStatus.failure, message: error));
         break;
     }
   }

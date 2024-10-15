@@ -1,10 +1,11 @@
 part of 'device_bloc.dart';
 
-enum DeviceStatus { initial, loading, loadingNews, more, moreNews, success, successNews, failure, failureNews }
+enum DeviceStatus { initial, loading, more, success, failure, failureNews }
 
 class DeviceState extends Equatable {
   final List<Device2> data;
   final DeviceStatus status;
+  final NewsStatus newsStatus;
   final String message;
   final int volumePreview;
   final List<String> selectedItems;
@@ -17,6 +18,7 @@ class DeviceState extends Equatable {
   const DeviceState({
     this.data = const [],
     this.status = DeviceStatus.initial,
+    this.newsStatus = NewsStatus.initial,
     this.message = '',
     this.volumePreview = 0,
     this.selectedItems = const [],
@@ -31,6 +33,7 @@ class DeviceState extends Equatable {
     List<Device2>? data,
     int? isMoreOrRefresh,
     DeviceStatus? status,
+    NewsStatus? newsStatus,
     String? message,
     int? volumePreview,
     List<String>? selectedItems,
@@ -43,6 +46,7 @@ class DeviceState extends Equatable {
     return DeviceState(
       data: data ?? this.data,
       status: status ?? this.status,
+      newsStatus: newsStatus ?? this.newsStatus,
       message: message ?? this.message,
       volumePreview: volumePreview ?? this.volumePreview,
       selectedItems: selectedItems ?? this.selectedItems,
@@ -55,5 +59,5 @@ class DeviceState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [data, status, message, volumePreview, selectedItems, isSelectAll, filter, searchQuery, contentType, newsData];
+  List<Object?> get props => [data, status, message, volumePreview, selectedItems, isSelectAll, filter, searchQuery, contentType, newsData, newsStatus];
 }

@@ -5,11 +5,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:nttcs/core/utils/functions.dart';
 import 'package:nttcs/data/models/device2.dart';
+import 'package:nttcs/presentation/news/bloc/news_bloc.dart';
 import 'package:nttcs/widgets/custom_bottom_sheet.dart';
 import 'package:nttcs/widgets/custom_elevated_button.dart';
 import 'package:nttcs/widgets/custom_image_view.dart';
 import 'package:nttcs/widgets/search_field.dart';
 import 'package:shimmer/shimmer.dart';
+import 'TooltipShape.dart';
 import 'bloc/device_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:nttcs/core/app_export.dart';
@@ -25,7 +27,8 @@ class DeviceScreen extends StatefulWidget {
 
 class _DeviceScreenState extends State<DeviceScreen> {
   late DeviceBloc deviceBloc;
-  final ScrollController _scrollController = ScrollController(); // Tạo ScrollController
+  final ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollControllerNews = ScrollController();
   late TextEditingController _searchController;
 
   @override
@@ -33,12 +36,19 @@ class _DeviceScreenState extends State<DeviceScreen> {
     super.initState();
     deviceBloc = context.read<DeviceBloc>();
     _scrollController.addListener(_onScroll);
+    _scrollControllerNews.addListener(_onScrollNews);
     _searchController = TextEditingController(text: deviceBloc.state.searchQuery);
   }
 
   void _onScroll() {
     if (_scrollController.position.extentAfter < 200 && deviceBloc.state.status == DeviceStatus.success) {
       deviceBloc.add(const FetchDevices(1));
+    }
+  }
+
+  void _onScrollNews() {
+    if (_scrollControllerNews.position.extentAfter < 200 && deviceBloc.state.newsStatus == NewsStatus.success) {
+      deviceBloc.add(const FetchNews2(1, 3));
     }
   }
 
@@ -286,81 +296,104 @@ class _DeviceScreenState extends State<DeviceScreen> {
           CustomElevatedButton(
             onPressed: () {
               CustomBottomSheet(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Danh sách tin tức',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 8), // Thêm khoảng cách giữa chữ và icon
-                          PopupMenuButton<String>(
-                            icon: const Icon(Icons.filter_list_outlined, color: Colors.blue),
-                            onSelected: (String value) {
-                              deviceBloc.add(UpdateFilter(value));
-                            },
-                            itemBuilder: (BuildContext context) {
-                              return [
-                                const PopupMenuItem<String>(
-                                  value: 'option1',
-                                  child: Text('Option 1'),
-                                ),
-                                const PopupMenuItem<String>(
-                                  value: 'option2',
-                                  child: Text('Option 2'),
-                                ),
-                              ];
-                            },
-                          ),
-                          const Spacer(),
-                          CustomElevatedButton(
-                            text: 'Phát',
-                            alignment: Alignment.bottomRight,
-                            rightIcon: const Icon(Icons.play_circle, color: Colors.white),
-                            backgroundColor: Colors.red,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Expanded(
-                        child: BlocBuilder<DeviceBloc, DeviceState>(builder: (context, state) {
-                          return ListView.builder(
-                            controller: _scrollController,
-                            itemCount: state.newsData.length,
-                            itemBuilder: (context, index) {
-                              final content = state.newsData[index];
-                              return ListTile(
-                                leading: Icon(Icons.queue_music, color: appTheme.primary),
-                                title: Text(content.tieuDe, overflow: TextOverflow.ellipsis),
-                                subtitle: Text(
-                                  convertSecondsToHHMMSS(content.thoiLuong ?? "0"), // Thời lượng
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey, // Màu xám cho thời gian
+                child: BlocBuilder<DeviceBloc, DeviceState>(builder: (context, state) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Danh sách tin tức',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ), // Thêm khoảng cách giữa chữ và icon
+                            PopupMenuButton<String>(
+                              offset: const Offset(5, 50),
+                              shape: TooltipShape(),
+                              icon: const Icon(Icons.filter_list_outlined, color: Colors.blue),
+                              onSelected: (String value) {
+                                deviceBloc.add(FetchNews2(0, value == 'audio' ? 3 : 5));
+                              },
+                              itemBuilder: (BuildContext context) {
+                                return [
+                                  PopupMenuItem<String>(
+                                    value: 'audio',
+                                    padding: const EdgeInsets.all(0),
+                                    // This color applies to the entire PopupMenuItem
+                                    child: Container(
+                                      color: state.contentType == 3 ? Colors.blue.withOpacity(0.2) : null,
+                                      width: double.infinity, // ensures full width is colored
+                                      child: const Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 8.0), // Optional padding for better aesthetics
+                                        child: Text('   Bản tin âm thanh'),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                trailing: index == 1 // Example for the playing item
-                                    ? const Icon(Icons.check, color: Colors.blue)
-                                    : null,
-                                onTap: () {
-                                  // Handle tap event
-                                },
-                              );
-                            },
-                          );
-                        }),
-                      ),
-                    ],
-                  ),
-                ),
+                                  PopupMenuItem<String>(
+                                    value: 'live',
+                                    padding: const EdgeInsets.all(0),
+                                    child: Container(
+                                      color: state.contentType == 5 ? Colors.blue.withOpacity(0.2) : null,
+                                      width: double.infinity, // ensures full width is colored
+                                      child: const Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                                        child: Text('   Bản tin trực tiếp'),
+                                      ),
+                                    ),
+                                  ),
+                                ];
+                              },
+                            ),
+                            const Spacer(),
+                            CustomElevatedButton(
+                              text: 'Phát',
+                              alignment: Alignment.bottomRight,
+                              rightIcon: const Icon(Icons.play_circle, color: Colors.white),
+                              backgroundColor: Colors.red,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: BlocBuilder<DeviceBloc, DeviceState>(builder: (context, state) {
+                            return ListView.builder(
+                              controller: _scrollControllerNews,
+                              itemCount: state.newsData.length + (state.newsStatus == NewsStatus.more ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (index == state.newsData.length) {
+                                  return _buildShimmer();
+                                }
+                                final content = state.newsData[index];
+                                return ListTile(
+                                  leading: Icon(Icons.queue_music, color: appTheme.primary),
+                                  title: Text(content.tieuDe, overflow: TextOverflow.ellipsis),
+                                  subtitle: Text(
+                                    convertSecondsToHHMMSS(content.thoiLuong ?? "0"), // Thời lượng
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey, // Màu xám cho thời gian
+                                    ),
+                                  ),
+                                  trailing: index == 1 // Example for the playing item
+                                      ? const Icon(Icons.check, color: Colors.blue)
+                                      : null,
+                                  onTap: () {
+                                    // Handle tap event
+                                  },
+                                );
+                              },
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
               ).show(context);
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 deviceBloc.add(const FetchNews2(0, 3));
