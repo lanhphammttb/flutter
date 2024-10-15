@@ -299,17 +299,17 @@ class AuthApiClient {
     }
   }
 
-  Future<SpecificResponse<Content>> getNews() async {
+  Future<SpecificResponse<Content>> getNews(int contentType, int page, int reload) async {
     try {
       final [token, code] = authLocalDataSource.getValue([Constants.token, Constants.code]);
       final response = await dio.get(
         'content/publish/list',
         token: token,
         queryParameters: {
-          'contentType': 3,
+          'contentType': contentType,
           'code': code,
-          'page': 1,
-          'size': 1000,
+          'page': page,
+          'size': Constants.pageSize * reload,
         },
       );
 
@@ -317,6 +317,12 @@ class AuthApiClient {
         response.data,
         (item) => Content.fromJson(item as Map<String, dynamic>),
       );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message']);
+      } else {
+        throw Exception(e.message);
+      }
     } catch (e) {
       throw Exception('An error occurred: $e');
     }

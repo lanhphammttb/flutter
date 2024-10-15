@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:nttcs/core/utils/functions.dart';
 import 'package:nttcs/data/models/device2.dart';
 import 'package:nttcs/widgets/custom_bottom_sheet.dart';
 import 'package:nttcs/widgets/custom_elevated_button.dart';
@@ -57,14 +58,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
           if (state.status == DeviceStatus.success && state.message.isNotEmpty) {
             print('Message to display: ${state.message}'); // Kiểm tra giá trị của state.message
             Fluttertoast.showToast(
-                msg: state.message,
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.BOTTOM,
-                timeInSecForIosWeb: 1,
-                backgroundColor: Colors.green,
-                textColor: Colors.white,
-                fontSize: 16.0
-            );
+                msg: state.message, toastLength: Toast.LENGTH_SHORT, gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 1, backgroundColor: Colors.green, textColor: Colors.white, fontSize: 16.0);
 
             //gán mặc định cho message
             deviceBloc.add(const FetchDevices(2));
@@ -113,7 +107,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
 
                     return ListView.builder(
                       controller: _scrollController,
-                      itemCount: filteredItems.length + (state.isMoreOrRefresh == 1 ? 1 : 0),
+                      itemCount: filteredItems.length + (state.status == DeviceStatus.more ? 1 : 0),
                       itemBuilder: (context, index) {
                         if (index == filteredItems.length) {
                           return _buildShimmer(); // Hiển thị shimmer khi đang tải thêm
@@ -247,16 +241,11 @@ class _DeviceScreenState extends State<DeviceScreen> {
                           builder: (context, state) {
                             return Row(
                               children: [
-                                Expanded(
-                                    child: Slider(
-                                        value: state.volumePreview!.toDouble() ?? 50.0,
-                                        min: 0,
-                                        max: 100,
-                                        onChanged: (value) => deviceBloc.add(DeviceVolumeChanged(value.toInt())))),
+                                Expanded(child: Slider(value: state.volumePreview.toDouble() ?? 50.0, min: 0, max: 100, onChanged: (value) => deviceBloc.add(DeviceVolumeChanged(value.toInt())))),
                                 Text('${state.volumePreview}'),
                                 const SizedBox(width: 16),
                                 CustomElevatedButton(
-                                  onPressed: () => deviceBloc.add(const CommitVolumeChange()),
+                                  onPressed: () => deviceBloc.add(CommitVolumeChange(0, state.volumePreview)),
                                   text: 'Âm lượng',
                                   leftIcon: const Icon(Icons.volume_up, color: Colors.white, size: 20),
                                 ),
@@ -274,13 +263,13 @@ class _DeviceScreenState extends State<DeviceScreen> {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           children: [
-                            _buildControlButton('Khởi động lại', Icons.refresh, Colors.blue),
-                            _buildControlButton2('Bật công suất', Assets.images.icHotspotOn, Colors.blue),
-                            _buildControlButton2('Tắt công suất', Assets.images.icHotspotOff, Colors.red),
-                            _buildControlButton('Phát tiếp', Icons.play_arrow, Colors.blue),
-                            _buildControlButton('Tạm dừng', Icons.pause, Colors.red),
-                            _buildControlButton('Bản tin tiếp', Icons.fast_forward, Colors.blue),
-                            _buildControlButton('Dừng phát', Icons.stop_circle, Colors.red),
+                            _buildControlButton('Khởi động lại', Icons.refresh, Colors.blue, () => deviceBloc.add(const CommitVolumeChange(3, 3))),
+                            _buildControlButton2('Bật công suất', Assets.images.icHotspotOn, Colors.blue, () => deviceBloc.add(const CommitVolumeChange(1, 0))),
+                            _buildControlButton2('Tắt công suất', Assets.images.icHotspotOff, Colors.red, () => deviceBloc.add(const CommitVolumeChange(1, 1))),
+                            _buildControlButton('Phát tiếp', Icons.play_arrow, Colors.blue, () => deviceBloc.add(const CommitVolumeChange(2, 3))),
+                            _buildControlButton('Tạm dừng', Icons.pause, Colors.red, () => deviceBloc.add(const CommitVolumeChange(2, 2))),
+                            _buildControlButton('Bản tin tiếp', Icons.fast_forward, Colors.blue, () => deviceBloc.add(const CommitVolumeChange(2, 1))),
+                            _buildControlButton('Dừng phát', Icons.stop_circle, Colors.red, () => deviceBloc.add(const CommitVolumeChange(2, 0))),
                           ],
                         ),
                       ),
@@ -296,7 +285,86 @@ class _DeviceScreenState extends State<DeviceScreen> {
           const SizedBox(width: 8),
           CustomElevatedButton(
             onPressed: () {
-              // Hành động khi nhấn nút phát khẩn
+              CustomBottomSheet(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Danh sách tin tức',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 8), // Thêm khoảng cách giữa chữ và icon
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.filter_list_outlined, color: Colors.blue),
+                            onSelected: (String value) {
+                              deviceBloc.add(UpdateFilter(value));
+                            },
+                            itemBuilder: (BuildContext context) {
+                              return [
+                                const PopupMenuItem<String>(
+                                  value: 'option1',
+                                  child: Text('Option 1'),
+                                ),
+                                const PopupMenuItem<String>(
+                                  value: 'option2',
+                                  child: Text('Option 2'),
+                                ),
+                              ];
+                            },
+                          ),
+                          const Spacer(),
+                          CustomElevatedButton(
+                            text: 'Phát',
+                            alignment: Alignment.bottomRight,
+                            rightIcon: const Icon(Icons.play_circle, color: Colors.white),
+                            backgroundColor: Colors.red,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: BlocBuilder<DeviceBloc, DeviceState>(builder: (context, state) {
+                          return ListView.builder(
+                            controller: _scrollController,
+                            itemCount: state.newsData.length,
+                            itemBuilder: (context, index) {
+                              final content = state.newsData[index];
+                              return ListTile(
+                                leading: Icon(Icons.queue_music, color: appTheme.primary),
+                                title: Text(content.tieuDe, overflow: TextOverflow.ellipsis),
+                                subtitle: Text(
+                                  convertSecondsToHHMMSS(content.thoiLuong ?? "0"), // Thời lượng
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey, // Màu xám cho thời gian
+                                  ),
+                                ),
+                                trailing: index == 1 // Example for the playing item
+                                    ? const Icon(Icons.check, color: Colors.blue)
+                                    : null,
+                                onTap: () {
+                                  // Handle tap event
+                                },
+                              );
+                            },
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                ),
+              ).show(context);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                deviceBloc.add(const FetchNews2(0, 3));
+              });
             },
             backgroundColor: Colors.red,
             rightIcon: const Icon(Icons.play_circle, color: Colors.white),
@@ -427,37 +495,41 @@ Widget _buildDeviceStatus(Device2 device) {
         );
 }
 
-Widget _buildControlButton(String label, IconData icon, Color color) {
-  return Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Icon(icon, color: color, size: 32),
-      const SizedBox(height: 8),
-      Text(
-        label,
-        style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w500),
-        textAlign: TextAlign.center,
-      ),
-    ],
-  );
+Widget _buildControlButton(String label, IconData icon, Color color, VoidCallback onPressed) {
+  return GestureDetector(
+      onTap: onPressed,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 32),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w500),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ));
 }
 
-Widget _buildControlButton2(String label, String svgPath, Color color) {
-  return Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      CustomImageView(
-        imagePath: svgPath,
-        height: 32,
-        width: 32,
-        color: color,
-      ),
-      const SizedBox(height: 8),
-      Text(
-        label,
-        style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w500),
-        textAlign: TextAlign.center,
-      ),
-    ],
-  );
+Widget _buildControlButton2(String label, String svgPath, Color color, VoidCallback onPressed) {
+  return GestureDetector(
+      onTap: onPressed,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CustomImageView(
+            imagePath: svgPath,
+            height: 32,
+            width: 32,
+            color: color,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w500),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ));
 }

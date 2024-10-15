@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nttcs/core/constants/constants.dart';
+import 'package:nttcs/data/models/content.dart';
 import 'package:nttcs/data/models/device2.dart';
 import 'package:nttcs/data/models/specific_response.dart';
 import 'package:nttcs/data/models/specific_status_reponse.dart';
 import 'package:nttcs/data/repositories/auth_repository.dart';
 import 'package:nttcs/data/result_type.dart';
 import 'package:equatable/equatable.dart';
+import 'package:nttcs/presentation/news/bloc/news_bloc.dart';
 
 part 'device_event.dart';
 
@@ -17,6 +19,8 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
   final AuthRepository authRepository;
   int _currentPage = 1;
   int totalPage = 1;
+  int _currentPageNews = 1;
+  int totalPageNews = 1;
 
   DeviceBloc(this.authRepository) : super(const DeviceState()) {
     on<FetchDevices>(_onFetchDevices);
@@ -26,7 +30,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     on<SelectAllDevices>(_onSelectAllDevices);
     on<SearchDevice>(_onSearchDevice);
     on<UpdateFilter>(_onUpdateFilter);
-
+    on<FetchNews2>(_onFetchNews2);
     Timer.periodic(const Duration(minutes: 1), (timer) {
       add(const FetchDevices(2));
     });
@@ -42,10 +46,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
           return;
         }
         if (state.status == DeviceStatus.success) {
-          emit(state.copyWith(
-            isMoreOrRefresh: event.isMoreOrRefresh,
-            status: DeviceStatus.more,
-          ));
+          emit(state.copyWith(status: DeviceStatus.more));
         }
         break;
       case 2:
@@ -70,7 +71,6 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
 
         emit(state.copyWith(
           data: newDevices,
-          isMoreOrRefresh: event.isMoreOrRefresh,
           status: DeviceStatus.success,
           message: '',
         ));
@@ -86,7 +86,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
   }
 
   Future<void> _onCommitVolumeChange(CommitVolumeChange event, Emitter<DeviceState> emit) async {
-    final result = await authRepository.controlDevice(0, state.volumePreview, state.selectedItems);
+    final result = await authRepository.controlDevice(event.maLenh, event.thamSo, state.selectedItems);
     switch (result) {
       case Success(data: final data as SpecificStatusResponse<dynamic>):
         if (data.status) {
@@ -125,7 +125,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     } else {
       final allDeviceIds = state.data
           .where((device) {
-            final matchesSearch = device.tenThietBi?.toLowerCase().contains(state.searchQuery.toLowerCase()) ?? true;
+            final matchesSearch = device.tenThietBi.toLowerCase().contains(state.searchQuery.toLowerCase()) ?? true;
 
             switch (state.filter) {
               case 'all':
@@ -154,5 +154,39 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
 
   void _onUpdateFilter(UpdateFilter event, Emitter<DeviceState> emit) {
     emit(state.copyWith(filter: event.filter));
+  }
+
+  Future<void> _onFetchNews2(FetchNews2 event, Emitter<DeviceState> emit) async{
+    if (event.isMoreOrRefresh == 0) {
+      emit(state.copyWith(status: DeviceStatus.loadingNews, contentType: event.contentType));
+    } else {
+      if (_currentPageNews > totalPageNews || totalPageNews == 1) {
+        return;
+      }
+      if (state.status == DeviceStatus.success) {
+        emit(state.copyWith(status: DeviceStatus.moreNews, contentType: state.contentType));
+      }
+    }
+
+    final result = await authRepository.getNews(
+        event.contentType ?? state.contentType,
+        event.isMoreOrRefresh == 1 ? _currentPage : 1,
+        event.isMoreOrRefresh == 1
+            ? 1
+            : _currentPage > totalPage
+            ? totalPage
+            : _currentPage);
+
+    switch (result) {
+      case Success(data: final data as SpecificResponse<Content>):
+        totalPageNews = (data.totalRecord + Constants.pageSize - 1) ~/ Constants.pageSize;
+        if (event.isMoreOrRefresh == 1 || _currentPageNews == 1) _currentPageNews++;
+        final newDevices = event.isMoreOrRefresh == 1 ? state.newsData + data.items : data.items;
+        emit(state.copyWith(status: DeviceStatus.successNews, newsData: newDevices));
+        break;
+      case Failure(message: final error):
+        emit(state.copyWith(status: DeviceStatus.failureNews, message: error));
+        break;
+    }
   }
 }

@@ -124,9 +124,9 @@ class AuthRepository {
     }
   }
 
-  Future<Result<void>> getNews() async {
+  Future<Result<void>> getNews(int contentType,int page, int reload) async {
     try {
-      final result = authApiClient.getNews();
+      final result = await authApiClient.getNews(contentType, page, reload);
       return Success(result);
     } catch (e) {
       return Failure('$e');

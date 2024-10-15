@@ -7,16 +7,16 @@ class NewsState extends Equatable {
   final int isMoreOrRefresh;
   final NewsStatus status;
   final String? message;
-  final String filter;
   final String searchQuery;
+  final int contentType;
 
   const NewsState({
     this.data = const [],
     this.isMoreOrRefresh = 0,
     this.status = NewsStatus.initial,
     this.message,
-    this.filter = 'all',
     this.searchQuery = '',
+    this.contentType = 3,
   });
 
   NewsState copyWith({
@@ -29,17 +29,18 @@ class NewsState extends Equatable {
     bool? isSelectAll,
     String? filter,
     String? searchQuery,
+    int? contentType,
   }) {
     return NewsState(
       data: data ?? this.data,
       isMoreOrRefresh: isMoreOrRefresh ?? this.isMoreOrRefresh,
       status: status ?? this.status,
       message: message ?? this.message,
-      filter: filter ?? this.filter,
       searchQuery: searchQuery ?? this.searchQuery,
+      contentType: contentType ?? this.contentType,
     );
   }
 
   @override
-  List<Object?> get props => [data, isMoreOrRefresh, status, message, filter, searchQuery];
+  List<Object?> get props => [data, isMoreOrRefresh, status, message, searchQuery, contentType];
 }

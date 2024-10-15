@@ -22,11 +22,17 @@ class DeviceVolumeChanged extends DeviceEvent {
   const DeviceVolumeChanged(this.volume);
 
   @override
-  List<Object> get props => [ volume];
+  List<Object> get props => [volume];
 }
 
 class CommitVolumeChange extends DeviceEvent {
-  const CommitVolumeChange();
+  final int maLenh;
+  final int thamSo;
+
+  const CommitVolumeChange(this.maLenh, this.thamSo);
+
+  @override
+  List<Object> get props => [maLenh, thamSo];
 }
 
 class SelectDevice extends DeviceEvent {
@@ -58,4 +64,14 @@ class UpdateFilter extends DeviceEvent {
 
   @override
   List<Object> get props => [filter];
+}
+
+class FetchNews2 extends DeviceEvent {
+  final int isMoreOrRefresh; // 0: call first, 1: load more, 2: refresh
+  final int contentType;
+
+  const FetchNews2(this.isMoreOrRefresh, this.contentType);
+
+  @override
+  List<Object> get props => [isMoreOrRefresh, contentType];
 }

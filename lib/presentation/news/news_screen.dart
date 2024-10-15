@@ -5,6 +5,7 @@ import 'package:nttcs/core/utils/functions.dart';
 import 'package:nttcs/data/models/content.dart';
 import 'package:nttcs/widgets/custom_bottom_sheet.dart';
 import 'package:nttcs/widgets/search_field.dart';
+import 'package:shimmer/shimmer.dart';
 import 'bloc/news_bloc.dart';
 
 class NewsScreen extends StatefulWidget {
@@ -15,17 +16,29 @@ class NewsScreen extends StatefulWidget {
 }
 
 class _NewsScreenState extends State<NewsScreen> {
-  final TextEditingController _controller = TextEditingController();
-  String _searchQuery = '';
-  String _filter = 'all'; // Biến để lưu trữ trạng thái bộ lọc
   late TextEditingController _searchController;
   late NewsBloc newsBloc;
+  final ScrollController _scrollController = ScrollController(); // Tạo ScrollController
 
   @override
   void initState() {
     super.initState();
     newsBloc = context.read<NewsBloc>();
+    _scrollController.addListener(_onScroll);
     _searchController = TextEditingController(text: newsBloc.state.searchQuery);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.extentAfter < 200 && newsBloc.state.status == NewsStatus.success) {
+      newsBloc.add(const FetchNews(1));
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -37,34 +50,28 @@ class _NewsScreenState extends State<NewsScreen> {
           Expanded(
             child: BlocBuilder<NewsBloc, NewsState>(
               builder: (context, state) {
-                if (state.status == NewsStatus.loading && state.data.isEmpty) {
+                if (state.status == NewsStatus.loading) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (state.status == NewsStatus.success) {
-                  final filteredItems = state.data.where((content) {
-                    final matchesSearch = content.tieuDe?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false;
-
-                    if (_filter == 'all') {
-                      return matchesSearch; // Hiển thị tất cả
-                    } else if (_filter == 'audio') {
-                      // return matchesSearch && content. == 2;
-                    } else if (_filter == 'live') {
-                      // return matchesSearch && content.status == 0;
-                    }
-                    return false;
-                  }).toList();
-
-                  if (filteredItems.isEmpty) {
+                } else if (state.status == NewsStatus.success || state.status == NewsStatus.more) {
+                  if (state.data.isEmpty) {
                     return const Center(child: Text('Không có lịch phát nào.'));
                   }
-
-                  return ListView.builder(
-                    itemCount: filteredItems.length,
-                    itemBuilder: (context, index) {
-                      final content = filteredItems[index];
-                      // final createdTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(content.createdTime!));
-                      return _buildNewsCard(content);
-                    },
-                  );
+                  return RefreshIndicator(
+                      // Thêm RefreshIndicator ở đây
+                      onRefresh: () async => newsBloc.add(const FetchNews(1)),
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        itemCount: state.data.length + (state.isMoreOrRefresh == 1 ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == state.data.length) {
+                            return _buildShimmer(); // Hiển thị shimmer khi đang tải thêm
+                          }
+                          final content = state.data[index];
+                          // final createdTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(content.createdTime!));
+                          return _buildNewsCard(content);
+                        },
+                      ) // Kết thúc RefreshIndicator
+                      );
                 } else if (state.status == NewsStatus.failure) {
                   return Center(
                     child: Text('Lỗi: ${state.message}', style: const TextStyle(color: Colors.red)),
@@ -95,46 +102,43 @@ class _NewsScreenState extends State<NewsScreen> {
 
   void _showFilterBottomSheet() {
     CustomBottomSheet(
-      height: 200,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '     Loại bản tin:',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          ListTile(
-            title: const Text('Bản tin âm thanh'),
-            leading: Radio<String>(
-              value: 'audio',
-              groupValue: _filter,
-              onChanged: (value) {
-                setState(() {
-                  _filter = value!;
-                });
-                Navigator.pop(context);
-              },
-            ),
-          ),
-          ListTile(
-            title: const Text('Bản tin trực tiếp'),
-            leading: Radio<String>(
-              value: 'live',
-              groupValue: _filter,
-              onChanged: (value) {
-                setState(() {
-                  _filter = value!;
-                });
-                Navigator.pop(context);
-              },
-            ),
-          ),
-        ],
-      )
-    ).show(context);
+        height: 200,
+        child: BlocBuilder<NewsBloc, NewsState>(builder: (context, state) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '     Loại bản tin:',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                title: const Text('Bản tin âm thanh'),
+                leading: Radio<String>(
+                  value: 'audio',
+                  groupValue: state.contentType == 3 ? 'audio' : 'live',
+                  onChanged: (value) {
+                    newsBloc.add(const FetchNews(0, contentType: 3));
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              ListTile(
+                title: const Text('Bản tin trực tiếp'),
+                leading: Radio<String>(
+                  value: 'live',
+                  groupValue: state.contentType == 5 ? 'live' : 'audio',
+                  onChanged: (value) {
+                    newsBloc.add(const FetchNews(0, contentType: 5));
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+            ],
+          );
+        })).show(context);
   }
 
   Widget _buildNewsCard(Content content) {
@@ -149,7 +153,7 @@ class _NewsScreenState extends State<NewsScreen> {
           padding: const EdgeInsets.all(12.0),
           child: Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.queue_music, // Biểu tượng âm nhạc
                 color: Colors.blue,
                 size: 30,
@@ -160,7 +164,7 @@ class _NewsScreenState extends State<NewsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      content.tieuDe ?? '',
+                      content.tieuDe ?? "", // Tiêu đề
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -180,6 +184,24 @@ class _NewsScreenState extends State<NewsScreen> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmer() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Container(
+          height: 100,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8.0),
           ),
         ),
       ),

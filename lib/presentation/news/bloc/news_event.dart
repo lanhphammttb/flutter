@@ -1,4 +1,5 @@
 part of 'news_bloc.dart';
+
 sealed class NewsEvent extends Equatable {
   const NewsEvent();
 
@@ -8,8 +9,9 @@ sealed class NewsEvent extends Equatable {
 
 class FetchNews extends NewsEvent {
   final int isMoreOrRefresh; // 0: call first, 1: load more, 2: refresh
+  final int? contentType;
 
-  const FetchNews(this.isMoreOrRefresh);
+  const FetchNews(this.isMoreOrRefresh, {this.contentType});
 
   @override
   List<Object> get props => [isMoreOrRefresh];
@@ -17,6 +19,7 @@ class FetchNews extends NewsEvent {
 
 class SearchNews extends NewsEvent {
   final String searchQuery;
+
   const SearchNews(this.searchQuery);
 
   @override
