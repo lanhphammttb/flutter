@@ -10,6 +10,12 @@ class CustomTextStyles {
         fontWeight: FontWeight.w600,
       );
 
+  static get titleLargeBlack900 => theme.textTheme.bodyMedium!.copyWith(
+    color: appTheme.black,
+    fontWeight: FontWeight.w600,
+    fontSize: 16
+  );
+
   static get bodyMediumSecondary => theme.textTheme.titleMedium!.copyWith(
         color: appTheme.gray,
         fontWeight: FontWeight.w300,

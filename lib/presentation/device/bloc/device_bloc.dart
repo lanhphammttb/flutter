@@ -31,6 +31,8 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     on<SearchDevice>(_onSearchDevice);
     on<UpdateFilter>(_onUpdateFilter);
     on<FetchNews2>(_onFetchNews2);
+    on<SelectNews>(_onSelectNews);
+    on<PlayNow>(_onPlayNow);
     Timer.periodic(const Duration(minutes: 1), (timer) {
       add(const FetchDevices(2));
     });
@@ -133,8 +135,6 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
                 return matchesSearch && !device.matKetNoi;
               case 'playing':
                 return matchesSearch && device.dangPhat;
-              case 'connected':
-                return matchesSearch && !device.matKetNoi;
               case 'disconnected':
                 return false;
               default:
@@ -156,15 +156,26 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     emit(state.copyWith(filter: event.filter));
   }
 
-  Future<void> _onFetchNews2(FetchNews2 event, Emitter<DeviceState> emit) async{
+  void _emitLoadingStateDelayed(Emitter<DeviceState> emit) {
+    Future.delayed(const Duration(milliseconds: 1500)).then((_) {
+      if (emit.isDone) return;
+      emit(state.copyWith(newsStatus: NewsStatus.loading));
+    });
+  }
+
+  Future<void> _onFetchNews2(FetchNews2 event, Emitter<DeviceState> emit) async {
     if (event.isMoreOrRefresh == 0) {
-      emit(state.copyWith(newsStatus: NewsStatus.loading, contentType: event.contentType));
+      _emitLoadingStateDelayed(emit);
+    }
+
+    if (event.isMoreOrRefresh == 0) {
+      emit(state.copyWith(contentType: event.contentType));
     } else {
       if (_currentPageNews > totalPageNews || totalPageNews == 1) {
         return;
       }
       if (state.newsStatus == NewsStatus.success) {
-        emit(state.copyWith(newsStatus: NewsStatus.more, contentType: state.contentType));
+        emit(state.copyWith(newsStatus: NewsStatus.more, contentType: state.contentType, selectedContent: event.isMoreOrRefresh == 1 ? state.selectedContent : null));
       }
     }
 
@@ -174,18 +185,44 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
         event.isMoreOrRefresh == 1
             ? 1
             : _currentPage > totalPage
-            ? totalPage
-            : _currentPage);
+                ? totalPage
+                : _currentPage);
 
     switch (result) {
       case Success(data: final data as SpecificResponse<Content>):
         totalPageNews = (data.totalRecord + Constants.pageSize - 1) ~/ Constants.pageSize;
         if (event.isMoreOrRefresh == 1 || _currentPageNews == 1) _currentPageNews++;
         final newDevices = event.isMoreOrRefresh == 1 ? state.newsData + data.items : data.items;
-        emit(state.copyWith(newsStatus: NewsStatus.success, newsData: newDevices));
+        emit(state.copyWith(newsStatus: NewsStatus.success, newsData: newDevices, selectedContent: state.selectedContent));
         break;
       case Failure(message: final error):
         emit(state.copyWith(newsStatus: NewsStatus.failure, message: error));
+        break;
+    }
+  }
+
+  void _onSelectNews(SelectNews event, Emitter<DeviceState> emit) {
+    emit(state.copyWith(selectedContent: event.content));
+  }
+
+  Future<void> _onPlayNow(PlayNow event, Emitter<DeviceState> emit) async {
+    final result = await authRepository.playNow(state.selectedItems, state.selectedContent!);
+    switch (result) {
+      case Success(data: final data as SpecificStatusResponse<dynamic>):
+        if (data.status) {
+          emit(state.copyWith(
+            status: DeviceStatus.success,
+            message: 'Phát ngay thành công',
+          ));
+        } else {
+          emit(state.copyWith(
+            status: DeviceStatus.failure,
+            message: data.message ?? 'Phát ngay  thất bại',
+          ));
+        }
+        break;
+      case Failure(message: final error):
+        emit(state.copyWith(status: DeviceStatus.failure, message: error));
         break;
     }
   }

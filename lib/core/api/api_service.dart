@@ -110,8 +110,7 @@ class AuthApiClient {
   Future<SpecificResponse<Device>> getDevice(int siteMapId, int page) async {
     try {
       final [token, siteId] = authLocalDataSource.getValue([Constants.token, Constants.id]);
-      final response = await dio.get('Device/sitemapid',
-          token: token, queryParameters: {'SiteMapId': siteMapId, 'SiteId': siteId, 'Type': 'IPRADIO', 'Page': page, 'Size': Constants.pageSize});
+      final response = await dio.get('Device/sitemapid', token: token, queryParameters: {'SiteMapId': siteMapId, 'SiteId': siteId, 'Type': 'IPRADIO', 'Page': page, 'Size': Constants.pageSize});
 
       return SpecificResponse<Device>.fromJson(
         response.data,
@@ -236,8 +235,7 @@ class AuthApiClient {
     }
   }
 
-  Future<SpecificStatusResponse<Schedule>> createSchedule(
-      int locationSelected, String name, List<ScheduleDate> scheduleDates, List<Device> devices, int id) async {
+  Future<SpecificStatusResponse<Schedule>> createSchedule(int locationSelected, String name, List<ScheduleDate> scheduleDates, List<Device> devices, int id) async {
     try {
       // Map devices to device IDs
       final [token] = authLocalDataSource.getValue([Constants.token]);
@@ -375,6 +373,32 @@ class AuthApiClient {
       } else {
         throw Exception(e.message);
       }
+    } catch (e) {
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  Future<SpecificStatusResponse<dynamic>> playNow(List<String> devices, Content content) async {
+    try {
+      final [token, siteId, siteMapId] = authLocalDataSource.getValue([Constants.token, Constants.id, Constants.siteMapId]);
+      final response = await dio.post(
+        'Device/live',
+        token: token,
+        data: {
+          'Type': 'IPRADIO',
+          'SiteMapId': siteMapId,
+          'SiteId': siteId,
+          'MediaId': content.banTinId,
+          'Duration': content.thoiLuong,
+          'Otp': '',
+          'CumLoaID': devices,
+        },
+      );
+
+      return SpecificStatusResponse<dynamic>.fromJson(
+        response.data,
+            (item) => item,
+      );
     } catch (e) {
       throw Exception('An error occurred: $e');
     }

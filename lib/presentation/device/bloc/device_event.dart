@@ -68,10 +68,23 @@ class UpdateFilter extends DeviceEvent {
 
 class FetchNews2 extends DeviceEvent {
   final int isMoreOrRefresh; // 0: call first, 1: load more, 2: refresh
-  final int contentType;
+  final int? contentType;
 
-  const FetchNews2(this.isMoreOrRefresh, this.contentType);
+  const FetchNews2(this.isMoreOrRefresh, {this.contentType});
 
   @override
-  List<Object> get props => [isMoreOrRefresh, contentType];
+  List<Object> get props => [isMoreOrRefresh];
+}
+
+class SelectNews extends DeviceEvent {
+  final Content content;
+
+  const SelectNews(this.content);
+
+  @override
+  List<Object> get props => [content];
+}
+
+class PlayNow extends DeviceEvent {
+  const PlayNow();
 }

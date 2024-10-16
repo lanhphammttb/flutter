@@ -61,9 +61,7 @@ class _TreeNodeWidgetState extends State<TreeNodeWidget> {
         TreeNode node = displayedNodes[index];
 
         return GestureDetector(
-          onTap: () {
-            widget.onItemClick(node);
-          },
+          onTap: () => widget.onItemClick(node),
           child: Padding(
             padding: EdgeInsets.only(left: node.level * 16.0),
             child: Row(

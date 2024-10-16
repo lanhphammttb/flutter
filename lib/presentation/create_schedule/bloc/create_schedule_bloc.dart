@@ -13,8 +13,7 @@ part 'create_schedule_event.dart';
 
 part 'create_schedule_state.dart';
 
-class CreateScheduleBloc
-    extends Bloc<CreateScheduleEvent, CreateScheduleState> {
+class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> {
   final AuthRepository authRepository;
   int locationSelected = 0;
   String name = '';
@@ -24,7 +23,7 @@ class CreateScheduleBloc
   List<int> selectedDeviceIds = [];
   bool isInitialized = false; // Biến cờ để tránh khởi tạo lại khi không cần thiết
 
-  CreateScheduleBloc(this.authRepository) : super(CreateScheduleInitial()) {
+  CreateScheduleBloc(this.authRepository) : super(const CreateScheduleState()) {
     on<CreateSchedule>(_onCreateSchedule);
     on<SelectLocationEvent>(_onSelectLocation);
     on<SelectDeviceEvent>(_onSelectDevice);
@@ -32,51 +31,46 @@ class CreateScheduleBloc
     on<InitializeCreateScheduleEvent>(_initializeCreateSchedule);
     on<SearchTextChanged>(_onSearchTextChanged);
     on<ExpandNodeEvent>(_onExpandNode);
-    on<FetchLocationsEvent>(_onFetchLocations);
-    on<FetchDevicesEvent>(_onFetchDevices);
+    on<FetchLocations>(_onFetchLocations);
+    on<FetchDevices>(_onFetchDevices);
   }
 
-  Future<void> _onCreateSchedule(
-      CreateSchedule event, Emitter<CreateScheduleState> emit) async {
-    emit(CreateScheduleLoading());
-    final result = await authRepository.createSchedule(
-        locationSelected, name, scheduleDates, devices, id);
-
-    if (result is Success) {
-      emit(
-          ScheduleSaved()); // Sau khi lưu, chuyển đến trạng thái 'ScheduleSaved'
-    } else if (result is Failure) {
-      emit(CreateScheduleError(result.message));
-    }
+  Future<void> _onCreateSchedule(CreateSchedule event, Emitter<CreateScheduleState> emit) async {
+    // emit(CreateScheduleLoading());
+    // final result = await authRepository.createSchedule(
+    //     locationSelected, name, scheduleDates, devices, id);
+    //
+    // if (result is Success) {
+    //   emit(
+    //       ScheduleSaved()); // Sau khi lưu, chuyển đến trạng thái 'ScheduleSaved'
+    // } else if (result is Failure) {
+    //   emit(CreateScheduleError(result.message));
+    // }
   }
 
-  void _onSelectLocation(
-      SelectLocationEvent event, Emitter<CreateScheduleState> emit) async {
-    emit(LocationSelected(event.locationName));
+  void _onSelectLocation(SelectLocationEvent event, Emitter<CreateScheduleState> emit) async {
+    emit(state.copyWith(location: event.locationName));
     _updateState(emit); // Cập nhật trạng thái
   }
 
-  Future<void> _onSelectDevice(
-      SelectDeviceEvent event, Emitter<CreateScheduleState> emit) async {
-    final currentState = state;
-
-    if (currentState is DeviceLoadedState) {
-      // Nếu thiết bị đã được chọn, xóa nó khỏi danh sách selectedDeviceIds
-      if (selectedDeviceIds.contains(event.device.id)) {
-        selectedDeviceIds.remove(event.device.id);
-      } else {
-        // Nếu chưa chọn, thêm nó vào danh sách
-        selectedDeviceIds.add(event.device.id);
-      }
-
-      emit(DeviceLoadedState(
-          devices: currentState.devices, selectedDeviceIds: selectedDeviceIds));
-    }
-    _updateState(emit); // Cập nhật trạng thái
+  Future<void> _onSelectDevice(SelectDeviceEvent event, Emitter<CreateScheduleState> emit) async {
+    // final currentState = state;
+    //
+    // if (currentState is DeviceLoadedState) {
+    //   // Nếu thiết bị đã được chọn, xóa nó khỏi danh sách selectedDeviceIds
+    //   if (selectedDeviceIds.contains(event.device.id)) {
+    //     selectedDeviceIds.remove(event.device.id);
+    //   } else {
+    //     // Nếu chưa chọn, thêm nó vào danh sách
+    //     selectedDeviceIds.add(event.device.id);
+    //   }
+    //
+    //   emit(DeviceLoadedState(devices: currentState.devices, selectedDeviceIds: selectedDeviceIds));
+    // }
+    // _updateState(emit); // Cập nhật trạng thái
   }
 
-  Future<void> _onAddDate(
-      AddDateEvent event, Emitter<CreateScheduleState> emit) async {
+  Future<void> _onAddDate(AddDateEvent event, Emitter<CreateScheduleState> emit) async {
     scheduleDates.add(ScheduleDate(
       id: 0,
       date: event.date.toIso8601String(),
@@ -88,94 +82,87 @@ class CreateScheduleBloc
 
   // Hàm dùng để cập nhật trạng thái CreateScheduleUpdated
   void _updateState(Emitter<CreateScheduleState> emit) {
-    emit(CreateScheduleUpdated(
-      location: 'Location ID $locationSelected',
-      // Cập nhật tên địa điểm
-      device: devices.isNotEmpty ? 'Selected Devices' : 'Toàn bộ địa bàn',
-      // Cập nhật thiết bị
-      selectedDates: scheduleDates
-          .map((d) => DateTime.parse(d.date))
-          .toList(), // Cập nhật danh sách ngày phát
-    ));
+    // emit(CreateScheduleUpdated(
+    //   location: 'Location ID $locationSelected',
+    //   // Cập nhật tên địa điểm
+    //   device: devices.isNotEmpty ? 'Selected Devices' : 'Toàn bộ địa bàn',
+    //   // Cập nhật thiết bị
+    //   selectedDates: scheduleDates.map((d) => DateTime.parse(d.date)).toList(), // Cập nhật danh sách ngày phát
+    // ));
   }
 
   Future<void> _initializeCreateSchedule(InitializeCreateScheduleEvent event, Emitter<CreateScheduleState> emit) async {
-    if (!isInitialized) {
-      emit(CreateScheduleLoading());
-      // Any initialization logic, such as fetching necessary data
-      await Future.delayed(Duration(seconds: 1)); // Simulate a delay for initialization
-      emit(CreateScheduleUpdated(
-        location: 'Chưa chọn',
-        device: 'Toàn bộ địa bàn',
-        selectedDates: [],
-      ));
-      isInitialized = true; // Đánh dấu đã khởi tạo xong
-    }
+    // if (!isInitialized) {
+    //   emit(CreateScheduleLoading());
+    //   // Any initialization logic, such as fetching necessary data
+    //   await Future.delayed(Duration(seconds: 1)); // Simulate a delay for initialization
+    //   emit(CreateScheduleUpdated(
+    //     location: 'Chưa chọn',
+    //     device: 'Toàn bộ địa bàn',
+    //     selectedDates: [],
+    //   ));
+    //   isInitialized = true; // Đánh dấu đã khởi tạo xong
+    // }
   }
-  Future<void> _onFetchLocations(
-      FetchLocationsEvent event, Emitter<CreateScheduleState> emit) async {
-    emit(LocationsLoading());
 
-    try {
-      final result = await authRepository.getLocations();
+  void _emitLoadingStateDelayed(Emitter<CreateScheduleState> emit) {
+    Future.delayed(const Duration(milliseconds: 1500)).then((_) {
+      if (emit.isDone) return;
+      emit(state.copyWith(locationStatus: LocationStatus.loading));
+    });
+  }
 
-      if (result is Success) {
-        // Assuming result.data contains the location items
-        final data = result.data as SpecificResponse<Location>;
+  Future<void> _onFetchLocations(FetchLocations event, Emitter<CreateScheduleState> emit) async {
+    _emitLoadingStateDelayed(emit);
+
+    final result = await authRepository.getLocations();
+
+    switch (result) {
+      case Success(data: final data as SpecificResponse<Location>):
         List<TreeNode> treeNodes = TreeNode.buildTree(data.items);
-
-        // Keep the original unfiltered list of nodes in state
-        emit(LocationsSuccess(treeNodes, originalTreeNodes: treeNodes));
-      } else if (result is Failure) {
-        emit(LocationsFailure(result.message));
-      }
-    } catch (error) {
-      emit(LocationsFailure(error.toString()));
+        emit(state.copyWith(locationStatus: LocationStatus.success, treeNodes: treeNodes, originalTreeNodes: treeNodes));
+        break;
+      case Failure(message: final error):
+        emit(state.copyWith(locationStatus: LocationStatus.failure, message: error));
+        break;
     }
   }
 
-  Future<void> _onFetchDevices(
-      FetchDevicesEvent event, Emitter<CreateScheduleState> emit) async {
-    emit(DeviceLoadingState());
+  Future<void> _onFetchDevices(FetchDevices event, Emitter<CreateScheduleState> emit) async {
+    emit(state.copyWith(deviceStatus: DeviceStatus.loading));
 
     final result = await authRepository.getDevice(754, 1);
     switch (result) {
       case Success(data: final data as SpecificResponse<Device>):
         devices = data.items;
-        emit(DeviceLoadedState(
-            devices: devices, selectedDeviceIds: selectedDeviceIds));
+        emit(state.copyWith(deviceStatus: DeviceStatus.success, devices: devices));
         break;
       case Failure(message: final error):
-        emit(DeviceErrorState(error));
+        emit(state.copyWith(deviceStatus: DeviceStatus.failure, message: error));
         break;
     }
   }
 
-  void _onSearchTextChanged(
-      SearchTextChanged event, Emitter<CreateScheduleState> emit) {
-    final currentState = state;
-    if (currentState is LocationsSuccess) {
-      final originalNodes = currentState.originalTreeNodes;
+  void _onSearchTextChanged(SearchTextChanged event, Emitter<CreateScheduleState> emit) {
+    if (state.locationStatus == LocationStatus.success) {
+      final originalNodes = state.originalTreeNodes;
 
       if (event.searchText.isEmpty) {
-        emit(LocationsSuccess(originalNodes, originalTreeNodes: originalNodes));
+        emit(state.copyWith(treeNodes: originalNodes, locationSearchQuery: event.searchText));
       } else {
-        List<TreeNode> filteredNodes =
-            TreeNode.trimTreeDFS(originalNodes, event.searchText);
-        emit(LocationsSuccess(filteredNodes, originalTreeNodes: originalNodes));
+        List<TreeNode> filteredNodes = TreeNode.trimTreeDFS(originalNodes, event.searchText);
+        emit(state.copyWith(treeNodes: filteredNodes, locationSearchQuery: event.searchText));
       }
     }
   }
 
   void _onExpandNode(ExpandNodeEvent event, Emitter<CreateScheduleState> emit) {
-    final currentState = state;
-    if (currentState is LocationsSuccess) {
-      List<TreeNode> updatedNodes = List.from(currentState.treeNodes);
-      _toggleExpansion(event.node, updatedNodes);
-      emit(LocationsSuccess(updatedNodes,
-          originalTreeNodes: currentState
-              .originalTreeNodes)); // Ensure the correct state type is emitted
-    }
+    // final currentState = state;
+    // if (currentState is LocationsSuccess) {
+    //   List<TreeNode> updatedNodes = List.from(currentState.treeNodes);
+    //   _toggleExpansion(event.node, updatedNodes);
+    //   emit(LocationsSuccess(updatedNodes, originalTreeNodes: currentState.originalTreeNodes)); // Ensure the correct state type is emitted
+    // }
   }
 
   void _toggleExpansion(TreeNode node, List<TreeNode> nodes) {

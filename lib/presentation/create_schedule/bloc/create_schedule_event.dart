@@ -48,7 +48,7 @@ class UpdatePlaylist extends CreateScheduleEvent {
   UpdatePlaylist(this.dateIndex, this.timeIndex, this.time);
 }
 
-class FetchLocationsEvent extends CreateScheduleEvent {}
+class FetchLocations extends CreateScheduleEvent {}
 
 class SearchTextChanged extends CreateScheduleEvent {
   final String searchText;
@@ -68,4 +68,4 @@ class ExpandNodeEvent extends CreateScheduleEvent {
   List<Object> get props => [node];
 }
 
-class FetchDevicesEvent extends CreateScheduleEvent{}
+class FetchDevices extends CreateScheduleEvent{}

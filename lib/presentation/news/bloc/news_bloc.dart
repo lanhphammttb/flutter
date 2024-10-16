@@ -20,9 +20,20 @@ class NewsBloc extends Bloc<NewsEvent, NewsState> {
     on<SearchNews>(_onSearchDevice);
   }
 
+  void _emitLoadingStateDelayed(Emitter<NewsState> emit) {
+    Future.delayed(const Duration(milliseconds: 1500)).then((_) {
+      if (emit.isDone) return;
+      emit(state.copyWith(status: NewsStatus.loading));
+    });
+  }
+
   Future<void> _onFetchNews(FetchNews event, Emitter<NewsState> emit) async {
     if (event.isMoreOrRefresh == 0) {
-      emit(state.copyWith(status: NewsStatus.loading, contentType: event.contentType));
+      _emitLoadingStateDelayed(emit);
+    }
+
+    if (event.isMoreOrRefresh == 0) {
+      emit(state.copyWith(contentType: event.contentType, isMoreOrRefresh: event.isMoreOrRefresh));
     } else {
       if (_currentPage > totalPage || totalPage == 1) {
         return;

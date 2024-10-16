@@ -4,6 +4,7 @@ import 'package:nttcs/widgets/search_field.dart';
 import 'package:nttcs/widgets/tree_node_widget.dart';
 
 import 'bloc/create_schedule_bloc.dart';
+
 class ChoicePlaceScreen extends StatefulWidget {
   const ChoicePlaceScreen({super.key});
 
@@ -12,23 +13,22 @@ class ChoicePlaceScreen extends StatefulWidget {
 }
 
 class _ChoicePlaceScreenState extends State<ChoicePlaceScreen> {
-  final TextEditingController _searchController = TextEditingController();
+  late TextEditingController _locationSearchController;
   String selectedPlace = 'Thị trấn Bến Lức';
-  List<String> places = [
-    'Huyện Bến Lức',
-    'Huyện Cần Đước',
-    'Huyện Cần Giuộc',
-    'Huyện Châu Thành',
-    'Huyện Đức Hòa',
-    'Huyện Đức Huệ',
-    'Huyện Mộc Hóa',
-    'Huyện Tân Hưng',
-    'Huyện Tân Thạnh',
-    'Huyện Tân Trụ',
-    'Huyện Thạnh Hóa',
-    'Huyện Thủ Thừa',
-    'Huyện Vĩnh Hưng',
-  ];
+  late CreateScheduleBloc createScheduleBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    createScheduleBloc = context.read<CreateScheduleBloc>();
+    _locationSearchController = TextEditingController(text: createScheduleBloc.state.locationSearchQuery);
+  }
+
+  @override
+  void dispose() {
+    _locationSearchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,35 +65,33 @@ class _ChoicePlaceScreenState extends State<ChoicePlaceScreen> {
             ),
           ),
           Expanded(
-            child: Column(
-              children: [
-                _buildSearchField(context),
-                Expanded(
-                  child: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(
-                    builder: (context, state) {
-                      if (state is LocationsLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (state is LocationsSuccess) {
-                        return TreeNodeWidget(
-                          treeNodes: state.treeNodes,
-                          onItemClick: (node) {
-                            // Gọi hành động khi nhấn vào mục trong danh sách
-                            context.read<CreateScheduleBloc>().add(SelectLocationEvent(node.name));
-                            context.read<CreateScheduleBloc>().add(ExpandNodeEvent(node));
-                          },
-                        );
-                      } else if (state is LocationsFailure) {
-                        return Center(child: Text('Failed to load locations: ${state.error}'));
-                      } else {
-                        return const Center(child: Text('No data available'));
-                      }
-                    },
-                  ),
+              child: Column(
+            children: [
+              _buildSearchField(context),
+              Expanded(
+                child: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(
+                  builder: (context, state) {
+                    if (state.locationStatus == LocationStatus.loading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state.locationStatus == LocationStatus.success) {
+                      return TreeNodeWidget(
+                        treeNodes: state.treeNodes,
+                        onItemClick: (node) {
+                          // Gọi hành động khi nhấn vào mục trong danh sách
+                          createScheduleBloc.add(SelectLocationEvent(node.name));
+                          createScheduleBloc.add(ExpandNodeEvent(node));
+                        },
+                      );
+                    } else if (state.locationStatus == LocationStatus.failure) {
+                      return Text('Có lỗi xảy ra: ${state.message}');
+                    } else {
+                      return const Center(child: Text('No data available'));
+                    }
+                  },
                 ),
-              ],
-            )
-          )
-
+              ),
+            ],
+          ))
         ],
       ),
     );
@@ -102,10 +100,12 @@ class _ChoicePlaceScreenState extends State<ChoicePlaceScreen> {
   Widget _buildSearchField(BuildContext context) {
     return SearchField(
       hintSearch: 'Tìm kiếm địa điểm',
-      controller: TextEditingController(),
-      onChanged: (value) =>
-          context.read<CreateScheduleBloc>().add(SearchTextChanged(value)),
-      onClear: () => context.read<CreateScheduleBloc>().add(SearchTextChanged('')),
+      controller: _locationSearchController,
+      onChanged: (value) => createScheduleBloc.add(SearchTextChanged(value)),
+      onClear: () {
+        _locationSearchController.clear();
+        createScheduleBloc.add(const SearchTextChanged(''));
+      },
     );
   }
 }

@@ -14,6 +14,7 @@ class DeviceState extends Equatable {
   final String searchQuery;
   final int contentType;
   final List<Content> newsData;
+  final Content? selectedContent;
 
   const DeviceState({
     this.data = const [],
@@ -27,6 +28,7 @@ class DeviceState extends Equatable {
     this.searchQuery = '',
     this.contentType = 3,
     this.newsData = const [],
+    this.selectedContent,
   });
 
   DeviceState copyWith({
@@ -42,6 +44,7 @@ class DeviceState extends Equatable {
     String? searchQuery,
     int? contentType,
     List<Content>? newsData,
+    Content? selectedContent,
   }) {
     return DeviceState(
       data: data ?? this.data,
@@ -55,9 +58,10 @@ class DeviceState extends Equatable {
       searchQuery: searchQuery ?? this.searchQuery,
       contentType: contentType ?? this.contentType,
       newsData: newsData ?? this.newsData,
+      selectedContent: selectedContent,
     );
   }
 
   @override
-  List<Object?> get props => [data, status, message, volumePreview, selectedItems, isSelectAll, filter, searchQuery, contentType, newsData, newsStatus];
+  List<Object?> get props => [data, status, message, volumePreview, selectedItems, isSelectAll, filter, searchQuery, contentType, newsData, newsStatus, selectedContent];
 }

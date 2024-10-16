@@ -5,7 +5,7 @@ import 'bloc/create_schedule_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
 class CreateScheduleScreen extends StatefulWidget {
-  const CreateScheduleScreen({Key? key}) : super(key: key);
+  const CreateScheduleScreen({super.key});
 
   @override
   State<CreateScheduleScreen> createState() => _CreateScheduleScreenState();
@@ -13,13 +13,14 @@ class CreateScheduleScreen extends StatefulWidget {
 
 class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
   late TextEditingController _nameController;
+  late CreateScheduleBloc createScheduleBloc;
 
   @override
   void initState() {
     super.initState();
+    createScheduleBloc = context.read<CreateScheduleBloc>();
     _nameController = TextEditingController(
-      text:
-          'Thị trấn Bến Lức - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+      text: 'Thị trấn Bến Lức - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
     );
   }
 
@@ -38,8 +39,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
         elevation: 0,
         title: const Text(
           'Tạo lịch phát',
-          style: TextStyle(
-              color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
         ),
         centerTitle: true,
         leading: IconButton(
@@ -58,29 +58,28 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
       ),
       body: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(
         builder: (context, state) {
-          if (state is CreateScheduleInitial) {
+          if (state.status == CreateScheduleStatus.initial) {
             // Chỉ gọi sự kiện khi cần thiết, tránh gọi lại nhiều lần khi quay lại từ các màn hình khác
             if (!context.read<CreateScheduleBloc>().isInitialized) {
               context.read<CreateScheduleBloc>().add(InitializeCreateScheduleEvent());
             }
           }
 
-          if (state is CreateScheduleLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is CreateScheduleLoaded) {
-            return const Center(child: Text('Lịch phát đã được lưu.'));
-          } else if (state is CreateScheduleUpdated) {
-            return _buildCreateScheduleForm(context, state);
-          }
-
-          return const Center(child: Text('Đang tải...'));
+          // if (state.status == CreateScheduleStatus.loading) {
+          //   return const Center(child: CircularProgressIndicator());
+          // } else if (state.status == CreateScheduleStatus.failure) {
+          //   return const Center(child: Text('Lịch phát đã được lưu.'));
+          // } else if (state.status == CreateScheduleStatus.success) {
+          //   return _buildCreateScheduleForm(context, state);
+          // }
+          return _buildCreateScheduleForm(context, state);
+          // return const Center(child: Text('Đang tải...'));
         },
       ),
     );
   }
 
-  Widget _buildCreateScheduleForm(
-      BuildContext context, CreateScheduleUpdated state) {
+  Widget _buildCreateScheduleForm(BuildContext context, CreateScheduleState state) {
     return Column(
       children: [
         // Ô nhập tên lịch phát với nút xóa khi có giá trị
@@ -101,8 +100,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
                 children: [
                   Text(
                     'Tên lịch phát:',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.blue),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -132,19 +130,13 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
           ),
         ),
         // Địa điểm phát
-        _buildOptionTile(context,
-            title: 'Địa điểm phát',
-            subtitle: 'Địa điểm đã chọn: ${state.location}', onTap: () {
-          context
-              .read<CreateScheduleBloc>()
-              .add(FetchLocationsEvent()); // Gọi API chỉ khi chưa có dữ liệu
+        _buildOptionTile(context, title: 'Địa điểm phát', subtitle: 'Địa điểm đã chọn: ${state.location}', onTap: () {
+          createScheduleBloc.add(FetchLocations()); // Gọi API chỉ khi chưa có dữ liệu
           Navigator.pushNamed(context, '/choice-place');
         }),
         // Thiết bị phát
-        _buildOptionTile(context,
-            title: 'Thiết bị phát',
-            subtitle: 'Đã chọn: ${state.device}', onTap: () {
-          context.read<CreateScheduleBloc>().add(FetchDevicesEvent());
+        _buildOptionTile(context, title: 'Thiết bị phát', subtitle: 'Đã chọn: ${state.device}', onTap: () {
+          context.read<CreateScheduleBloc>().add(FetchDevices());
           Navigator.pushNamed(context, '/choice-device');
         }),
         // Ngày phát
@@ -159,13 +151,9 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
               ),
             ),
             child: ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              title: const Text('Ngày phát',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.blue)),
-              subtitle: Text('${state.selectedDates.length} ngày',
-                  style: const TextStyle(fontSize: 16)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              title: const Text('Ngày phát', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+              subtitle: Text('${state.selectedDates.length} ngày', style: const TextStyle(fontSize: 16)),
               trailing: Container(
                 width: 36,
                 height: 36,
@@ -176,9 +164,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
                 child: IconButton(
                   icon: const Icon(Icons.add, color: Colors.white, size: 20),
                   onPressed: () {
-                    context
-                        .read<CreateScheduleBloc>()
-                        .add(AddDateEvent(DateTime.now()));
+                    context.read<CreateScheduleBloc>().add(AddDateEvent(DateTime.now()));
                   },
                 ),
               ),
@@ -201,8 +187,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
                     _buildSlidableAction('Xóa', Icons.delete, Colors.red, () {
                       // Handle delete action
                     }),
-                    _buildSlidableAction('Sao chép', Icons.copy, Colors.orange,
-                        () {
+                    _buildSlidableAction('Sao chép', Icons.copy, Colors.orange, () {
                       // Handle copy action
                     }),
                     _buildSlidableAction('Sửa', Icons.edit, Colors.blue, () {
@@ -227,8 +212,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
               onPressed: () {
                 context.read<CreateScheduleBloc>().add(CreateSchedule());
               },
-              child: const Text('Lưu',
-                  style: TextStyle(fontSize: 16, color: Colors.white)),
+              child: const Text('Lưu', style: TextStyle(fontSize: 16, color: Colors.white)),
             ),
           ),
         ),
@@ -236,8 +220,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
     );
   }
 
-  Widget _buildSlidableAction(
-      String label, IconData icon, Color color, VoidCallback onPressed) {
+  Widget _buildSlidableAction(String label, IconData icon, Color color, VoidCallback onPressed) {
     return SlidableAction(
       padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
       onPressed: (context) => onPressed(),
@@ -264,10 +247,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
     );
   }
 
-  Widget _buildOptionTile(BuildContext context,
-      {required String title,
-      required String subtitle,
-      required VoidCallback onTap}) {
+  Widget _buildOptionTile(BuildContext context, {required String title, required String subtitle, required VoidCallback onTap}) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       child: Container(
@@ -279,11 +259,8 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
           ),
         ),
         child: ListTile(
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          title: Text(title,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, color: Colors.blue)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
           subtitle: Text(subtitle, style: const TextStyle(fontSize: 16)),
           trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black),
           onTap: onTap,

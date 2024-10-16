@@ -8,5 +8,6 @@ final Map<String, String> enUs = {
   'login': 'Đăng nhập',
   'error_account': 'Vui lòng nhập tài khoản',
   'error_password': 'Vui lòng nhập mật khẩu',
-  'placeholder_search': 'Nhập tên khu vực, tên thiết bị hoặc ID'
+  'placeholder_search': 'Nhập tên khu vực, tên thiết bị hoặc ID',
+  'title_news': 'Danh sách tin tức',
 };

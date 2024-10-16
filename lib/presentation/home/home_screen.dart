@@ -86,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, state) {
         int currentIndex = state.tabIndex;
         if (currentIndex == 4) {
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         }
 
         final locationText = state.locationName.isEmpty ? 'Loading...' : state.locationName;
@@ -118,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           } else if (state.status == HomeStatus.failure) {
                             return Center(child: Text('Failed to load locations: ${state.error}'));
                           } else {
-                            return const Center(child: Text('No data available'));
+                            return const Center(child: Text(''));
                           }
                         },
                       ),

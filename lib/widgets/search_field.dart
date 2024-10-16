@@ -3,13 +3,12 @@ import 'package:nttcs/core/app_export.dart';
 
 class SearchField extends StatelessWidget {
   final TextEditingController controller;
-  final String? value;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
   final VoidCallback? onFilter;
   final String hintSearch;
 
-  const SearchField({super.key,required this.controller, this.value, required this.onChanged, required this.onClear, this.onFilter, required this.hintSearch});
+  const SearchField({super.key, required this.controller, required this.onChanged, required this.onClear, this.onFilter, required this.hintSearch});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +18,7 @@ class SearchField extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white, // Đặt màu nền của Container là trắng
           borderRadius: BorderRadius.circular(4.0), // Bo góc cho Container
-          border: Border.all(color: appTheme.gray_border), // Viền màu xám
+          border: Border.all(color: appTheme.grayBorder), // Viền màu xám
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(4.0), // Bo góc giống như Container
@@ -37,7 +36,7 @@ class SearchField extends StatelessWidget {
               suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  controller!.text.isNotEmpty || value != null
+                  controller.text.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.clear, color: Colors.grey),
                           onPressed: onClear,

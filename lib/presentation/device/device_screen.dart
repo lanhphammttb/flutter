@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:nttcs/core/utils/functions.dart';
+import 'package:nttcs/data/models/content.dart';
 import 'package:nttcs/data/models/device2.dart';
 import 'package:nttcs/presentation/news/bloc/news_bloc.dart';
 import 'package:nttcs/widgets/custom_bottom_sheet.dart';
 import 'package:nttcs/widgets/custom_elevated_button.dart';
 import 'package:nttcs/widgets/custom_image_view.dart';
+import 'package:nttcs/widgets/custom_time_picker_dialog.dart';
 import 'package:nttcs/widgets/search_field.dart';
 import 'package:shimmer/shimmer.dart';
 import 'TooltipShape.dart';
@@ -48,7 +50,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
 
   void _onScrollNews() {
     if (_scrollControllerNews.position.extentAfter < 200 && deviceBloc.state.newsStatus == NewsStatus.success) {
-      deviceBloc.add(const FetchNews2(1, 3));
+      deviceBloc.add(const FetchNews2(1));
     }
   }
 
@@ -297,27 +299,25 @@ class _DeviceScreenState extends State<DeviceScreen> {
             onPressed: () {
               CustomBottomSheet(
                 child: BlocBuilder<DeviceBloc, DeviceState>(builder: (context, state) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Danh sách tin tức',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            Text(
+                              'title_news'.tr.toUpperCase(),
+                              style: CustomTextStyles.titleLargeBlack900,
                             ), // Thêm khoảng cách giữa chữ và icon
                             PopupMenuButton<String>(
-                              offset: const Offset(5, 50),
+                              offset: const Offset(60, 50),
+                              color: Colors.white,
                               shape: TooltipShape(),
-                              icon: const Icon(Icons.filter_list_outlined, color: Colors.blue),
+                              icon: Icon(Icons.filter_list_outlined, color: appTheme.primary),
                               onSelected: (String value) {
-                                deviceBloc.add(FetchNews2(0, value == 'audio' ? 3 : 5));
+                                deviceBloc.add(FetchNews2(0, contentType: value == 'audio' ? 3 : 5));
                               },
                               itemBuilder: (BuildContext context) {
                                 return [
@@ -326,7 +326,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
                                     padding: const EdgeInsets.all(0),
                                     // This color applies to the entire PopupMenuItem
                                     child: Container(
-                                      color: state.contentType == 3 ? Colors.blue.withOpacity(0.2) : null,
+                                      color: state.contentType == 3 ? appTheme.primaryContainer : null,
                                       width: double.infinity, // ensures full width is colored
                                       child: const Padding(
                                         padding: EdgeInsets.symmetric(vertical: 8.0), // Optional padding for better aesthetics
@@ -338,7 +338,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
                                     value: 'live',
                                     padding: const EdgeInsets.all(0),
                                     child: Container(
-                                      color: state.contentType == 5 ? Colors.blue.withOpacity(0.2) : null,
+                                      color: state.contentType == 5 ? appTheme.primaryContainer : null,
                                       width: double.infinity, // ensures full width is colored
                                       child: const Padding(
                                         padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -350,17 +350,40 @@ class _DeviceScreenState extends State<DeviceScreen> {
                               },
                             ),
                             const Spacer(),
+                            Text(convertSecondsToHHMMSS(state.selectedContent != null ? state.selectedContent!.thoiLuong : '0'), style: const TextStyle(color: Colors.grey)),
+                            const SizedBox(width: 4),
                             CustomElevatedButton(
                               text: 'Phát',
                               alignment: Alignment.bottomRight,
                               rightIcon: const Icon(Icons.play_circle, color: Colors.white),
                               backgroundColor: Colors.red,
+                              onPressed: () {
+                                if (state.selectedContent != null) {
+                                  deviceBloc.add(const PlayNow());
+                                } else {
+                                  Fluttertoast.showToast(
+                                      msg: 'Vui lòng chọn bản tin trước khi phát',
+                                      toastLength: Toast.LENGTH_SHORT,
+                                      gravity: ToastGravity.BOTTOM,
+                                      timeInSecForIosWeb: 1,
+                                      backgroundColor: Colors.red,
+                                      textColor: Colors.white,
+                                      fontSize: 16.0);
+                                }
+                              },
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        Expanded(
-                          child: BlocBuilder<DeviceBloc, DeviceState>(builder: (context, state) {
+                      ),
+                      Divider(
+                        color: appTheme.primaryContainer,
+                        thickness: 1,
+                      ),
+                      Expanded(
+                        child: BlocBuilder<DeviceBloc, DeviceState>(builder: (context, state) {
+                          if (state.newsStatus == NewsStatus.loading) {
+                            return const Center(child: CircularProgressIndicator());
+                          } else if (state.newsStatus == NewsStatus.success || state.newsStatus == NewsStatus.more) {
                             return ListView.builder(
                               controller: _scrollControllerNews,
                               itemCount: state.newsData.length + (state.newsStatus == NewsStatus.more ? 1 : 0),
@@ -379,25 +402,52 @@ class _DeviceScreenState extends State<DeviceScreen> {
                                       color: Colors.grey, // Màu xám cho thời gian
                                     ),
                                   ),
-                                  trailing: index == 1 // Example for the playing item
-                                      ? const Icon(Icons.check, color: Colors.blue)
+                                  trailing: state.selectedContent != null && state.selectedContent!.banTinId == content.banTinId
+                                      ? const Icon(Icons.check, color: Colors.green)
                                       : null,
                                   onTap: () {
-                                    // Handle tap event
+                                    if (state.contentType == 5) {
+                                      CustomTimePickerDialog.timePickerDialog(context, (String time) {
+                                        // vẫn là content nhưng thay đổi thời lượng
+                                        Content updatedContent = Content(
+                                          banTinId: content.banTinId,
+                                          tieuDe: content.tieuDe,
+                                          loaiLinhVuc: content.loaiLinhVuc,
+                                          loaiBanTin: content.loaiBanTin,
+                                          mucDoUuTien: content.mucDoUuTien,
+                                          nguonId: content.nguonId,
+                                          noiDung: content.noiDung,
+                                          noiDungTomTat: content.noiDungTomTat,
+                                          thoiLuong: time,
+                                          nguonTin: content.nguonTin,
+                                          createdUser: content.createdUser,
+                                          createdTime: content.createdTime,
+                                          vungPhatThietBi: content.vungPhatThietBi,
+                                          tacGia: content.tacGia,
+                                        );
+                                        deviceBloc.add(SelectNews(updatedContent));
+                                      });
+                                    } else {
+                                      deviceBloc.add(SelectNews(content));
+                                    }
                                   },
                                 );
                               },
                             );
-                          }),
-                        ),
-                      ],
-                    ),
+                          } else if (state.newsStatus == NewsStatus.failure) {
+                            return Center(
+                              child: Text('Lỗi: ${state.message}', style: const TextStyle(color: Colors.red)),
+                            );
+                          } else {
+                            return const Center(child: Text(''));
+                          }
+                        }),
+                      ),
+                    ],
                   );
                 }),
               ).show(context);
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                deviceBloc.add(const FetchNews2(0, 3));
-              });
+              WidgetsBinding.instance.addPostFrameCallback((_) => deviceBloc.add(const FetchNews2(0)));
             },
             backgroundColor: Colors.red,
             rightIcon: const Icon(Icons.play_circle, color: Colors.white),

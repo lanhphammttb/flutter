@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:nttcs/core/app_export.dart';
 import 'package:nttcs/core/utils/functions.dart';
 import 'package:nttcs/data/models/content.dart';
 import 'package:nttcs/widgets/custom_bottom_sheet.dart';
@@ -53,7 +54,8 @@ class _NewsScreenState extends State<NewsScreen> {
                 if (state.status == NewsStatus.loading) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (state.status == NewsStatus.success || state.status == NewsStatus.more) {
-                  if (state.data.isEmpty) {
+                  final filteredItems = state.data.where((element) => element.tieuDe.toLowerCase().contains(state.searchQuery.toLowerCase())).toList();
+                  if (filteredItems.isEmpty) {
                     return const Center(child: Text('Không có lịch phát nào.'));
                   }
                   return RefreshIndicator(
@@ -61,13 +63,12 @@ class _NewsScreenState extends State<NewsScreen> {
                       onRefresh: () async => newsBloc.add(const FetchNews(1)),
                       child: ListView.builder(
                         controller: _scrollController,
-                        itemCount: state.data.length + (state.isMoreOrRefresh == 1 ? 1 : 0),
+                        itemCount: filteredItems.length + (state.isMoreOrRefresh == 1 ? 1 : 0),
                         itemBuilder: (context, index) {
-                          if (index == state.data.length) {
+                          if (index == filteredItems.length && state.isMoreOrRefresh == 1) {
                             return _buildShimmer(); // Hiển thị shimmer khi đang tải thêm
                           }
-                          final content = state.data[index];
-                          // final createdTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(content.createdTime!));
+                          final content = filteredItems[index];
                           return _buildNewsCard(content);
                         },
                       ) // Kết thúc RefreshIndicator
@@ -77,7 +78,7 @@ class _NewsScreenState extends State<NewsScreen> {
                     child: Text('Lỗi: ${state.message}', style: const TextStyle(color: Colors.red)),
                   );
                 }
-                return const Center(child: Text('Không có dữ liệu.'));
+                return const Center(child: Text(''));
               },
             ),
           ),
@@ -143,49 +144,36 @@ class _NewsScreenState extends State<NewsScreen> {
 
   Widget _buildNewsCard(Content content) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.queue_music, // Biểu tượng âm nhạc
-                color: Colors.blue,
-                size: 30,
-              ),
-              const SizedBox(width: 10), // Khoảng cách giữa icon và text
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      content.tieuDe ?? "", // Tiêu đề
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue, // Màu xanh cho tiêu đề
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      convertSecondsToHHMMSS(content.thoiLuong ?? "0"), // Thời lượng
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey, // Màu xám cho thời gian
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+      padding: const EdgeInsets.all(12.0),
+      child: Row(
+        children: [
+          Icon(
+            Icons.queue_music, // Biểu tượng âm nhạc
+            color: appTheme.primary,
+            size: 30,
           ),
-        ),
+          const SizedBox(width: 10), // Khoảng cách giữa icon và text
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  content.tieuDe ?? "", // Tiêu đề
+                  style: CustomTextStyles.titleLargeBlue800,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  convertSecondsToHHMMSS(content.thoiLuong ?? "0"), // Thời lượng
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey, // Màu xám cho thời gian
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

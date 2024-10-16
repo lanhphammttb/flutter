@@ -2,7 +2,9 @@ import 'dart:developer';
 
 import 'package:nttcs/core/api/api_service.dart';
 import 'package:nttcs/core/constants/constants.dart';
+import 'package:nttcs/data/models/content.dart';
 import 'package:nttcs/data/models/device.dart';
+import 'package:nttcs/data/models/device2.dart';
 import 'package:nttcs/data/models/schedule_date.dart';
 import 'package:nttcs/data/result_type.dart';
 
@@ -153,5 +155,18 @@ class AuthRepository {
 
   void saveSelectCode(String selectCode) {
     authLocalDataSource.saveString(Constants.selectCode, selectCode);
+  }
+
+  void saveSiteMapId(int siteMapId) {
+    authLocalDataSource.saveInt(Constants.siteMapId, siteMapId);
+  }
+
+  Future<Result<void>> playNow(List<String> devices, Content content) async {
+    try {
+      final result = await authApiClient.playNow(devices, content);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
   }
 }

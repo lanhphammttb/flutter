@@ -18,16 +18,7 @@ class CustomElevatedButton extends BaseButton {
       double? height,
       double? width,
       required String text})
-      : super(
-            text: text,
-            onPressed: onPressed,
-            buttonStyle: buttonStyle,
-            isDisable: isDisable,
-            buttonTextStyle: buttonTextStyle,
-            height: height,
-            width: width,
-            alignment: alignment,
-            margin: margin);
+      : super(text: text, onPressed: onPressed, buttonStyle: buttonStyle, isDisable: isDisable, buttonTextStyle: buttonTextStyle, height: height, width: width, alignment: alignment, margin: margin);
 
   final BoxDecoration? decoration;
   final Widget? leftIcon;
@@ -36,17 +27,14 @@ class CustomElevatedButton extends BaseButton {
 
   @override
   Widget build(BuildContext context) {
-    return alignment != null
-        ? Align(
-            alignment: alignment ?? Alignment.center,
-            child: buildElevatedButtonWidget)
-        : buildElevatedButtonWidget;
+    return alignment != null ? Align(alignment: alignment ?? Alignment.center, child: buildElevatedButtonWidget) : buildElevatedButtonWidget;
   }
 
   Widget get buildElevatedButtonWidget => Container(
         height: height ?? 40.v,
         margin: margin ?? EdgeInsets.zero,
         decoration: decoration,
+        width: width,
         child: ElevatedButton(
           style: buttonStyle ??
               ElevatedButton.styleFrom(
@@ -55,7 +43,7 @@ class CustomElevatedButton extends BaseButton {
                   borderRadius: BorderRadius.circular(8.0),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 8), // Thêm padding ngang
-                elevation: 0,  // Đặt độ cao của nút thành 0 để bỏ đổ bóng
+                elevation: 0, // Đặt độ cao của nút thành 0 để bỏ đổ bóng
               ),
           onPressed: isDisable ?? false ? null : onPressed ?? () {},
           child: Row(

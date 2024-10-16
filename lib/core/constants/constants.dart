@@ -5,5 +5,6 @@ class Constants {
   static const id = 'Id';
   static const isGoogleAuth = 'IsGoogleAuth';
   static const selectCode = 'SelectCode';
+  static const siteMapId = 'SiteMapId';
   static const int pageSize = 30;
 }

@@ -84,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
             suffix: IconButton(
               icon: Icon(
                 _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                color: appTheme.gray_border,
+                color: appTheme.grayBorder,
                 size: 24,
               ),
               onPressed: () {

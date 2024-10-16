@@ -1,126 +1,123 @@
 part of 'create_schedule_bloc.dart';
 
- class CreateScheduleState extends Equatable{
-  const CreateScheduleState();
+enum CreateScheduleStatus { initial, loading, more, success, failure }
 
-  @override
-  List<Object> get props => [];
- }
+enum LocationStatus { initial, loading, more, success, failure }
 
-class CreateScheduleInitial extends CreateScheduleState {}
+enum DeviceStatus { initial, loading, more, success, failure }
 
-class CreateScheduleLoading extends CreateScheduleState {}
-
-class CreateScheduleLoaded extends CreateScheduleState {
-  final SpecificResponse<Schedule> data;
-
-  const CreateScheduleLoaded(this.data);
-
-  @override
-  List<Object> get props => [data];
-}
-
-class CreateScheduleError extends CreateScheduleState {
+class CreateScheduleState extends Equatable {
+  final SpecificResponse<Schedule>? data;
   final String message;
-
-  const CreateScheduleError(this.message);
-
-  @override
-  List<Object> get props => [message];
-}
-
-// Thêm trạng thái cập nhật
-class CreateScheduleUpdated extends CreateScheduleState {
   final String location;
   final String device;
   final List<DateTime> selectedDates;
-
-  const CreateScheduleUpdated({
-    required this.location,
-    required this.device,
-    required this.selectedDates,
-  });
-
-  @override
-  List<Object> get props => [location, device, selectedDates];
-}
-
-class SelectLocationState extends CreateScheduleState {
-  final int location;
-
-  const SelectLocationState(this.location);
-
-  @override
-  List<Object> get props => [location];
-}
-
-class SelectDeviceState extends CreateScheduleState {
-  final List<int> devices;
-
-  SelectDeviceState(this.devices);
-}
-
-class SelectDateState extends CreateScheduleState {
+  final int locationId;
+  final List<int> devicesId;
   final List<DateTime> dates;
-
-  SelectDateState(this.dates);
-}
-
-class AddDateState extends CreateScheduleState {
-  final DateTime date;
-
-  AddDateState(this.date);
-}
-
-class RemoveDateState extends CreateScheduleState {
-  final DateTime date;
-
-  RemoveDateState(this.date);
-}
-
-class ScheduleSaved extends CreateScheduleState {}
-
-class LocationsLoading extends CreateScheduleState {}
-
-class LocationsSuccess extends CreateScheduleState {
+  final DateTime? date;
   final List<TreeNode> treeNodes;
   final List<TreeNode> originalTreeNodes;
-  const LocationsSuccess(this.treeNodes, {required this.originalTreeNodes});
-
-  @override
-  List<Object> get props => [treeNodes, originalTreeNodes];
-}
-
-class LocationsFailure extends CreateScheduleState {
-  final String error;
-
-  const LocationsFailure(this.error);
-
-  @override
-  List<Object> get props => [error];
-}
-
-class LocationSelected extends CreateScheduleState {
   final String locationName;
-
-  const LocationSelected(this.locationName);
-
-  @override
-  List<Object> get props => [locationName];
-}
-
-class DeviceLoadingState extends CreateScheduleState {}
-
-class DeviceLoadedState extends CreateScheduleState {
   final List<Device> devices;
   final List<int> selectedDeviceIds;
   final bool isAllSelected;
+  final CreateScheduleStatus status;
+  final LocationStatus locationStatus;
+  final DeviceStatus deviceStatus;
+  final String locationSearchQuery;
+  final String? deviceSearchQuery;
 
-  DeviceLoadedState({required this.devices, required this.selectedDeviceIds, this.isAllSelected = false});
-}
+  const CreateScheduleState({
+    this.data,
+    this.message = '',
+    this.location = '',
+    this.device = '',
+    this.selectedDates = const [],
+    this.locationId = 0,
+    this.devicesId = const [],
+    this.dates = const [],
+    this.date,
+    this.treeNodes = const [],
+    this.originalTreeNodes = const [],
+    this.locationName = '',
+    this.devices = const [],
+    this.selectedDeviceIds = const [],
+    this.isAllSelected = false,
+    this.status = CreateScheduleStatus.initial,
+    this.locationStatus = LocationStatus.initial,
+    this.deviceStatus = DeviceStatus.initial,
+    this.locationSearchQuery = '',
+    this.deviceSearchQuery,
+  });
 
-class DeviceErrorState extends CreateScheduleState {
-  final String error;
+  CreateScheduleState copyWith({
+    SpecificResponse<Schedule>? data,
+    String? message,
+    String? location,
+    String? device,
+    List<DateTime>? selectedDates,
+    int? locationId,
+    List<int>? devicesId,
+    List<DateTime>? dates,
+    DateTime? date,
+    List<TreeNode>? treeNodes,
+    List<TreeNode>? originalTreeNodes,
+    String? locationName,
+    List<Device>? devices,
+    List<int>? selectedDeviceIds,
+    bool? isAllSelected,
+    CreateScheduleStatus? status,
+    LocationStatus? locationStatus,
+    DeviceStatus? deviceStatus,
+    String? locationSearchQuery,
+    String? deviceSearchQuery,
+  }) {
+    return CreateScheduleState(
+      data: data ?? this.data,
+      message: message ?? this.message,
+      location: location ?? this.location,
+      device: device ?? this.device,
+      selectedDates: selectedDates ?? this.selectedDates,
+      locationId: locationId ?? this.locationId,
+      devicesId: devicesId ?? this.devicesId,
+      dates: dates ?? this.dates,
+      date: date ?? this.date,
+      treeNodes: treeNodes ?? this.treeNodes,
+      originalTreeNodes: originalTreeNodes ?? this.originalTreeNodes,
+      locationName: locationName ?? this.locationName,
+      devices: devices ?? this.devices,
+      selectedDeviceIds: selectedDeviceIds ?? this.selectedDeviceIds,
+      isAllSelected: isAllSelected ?? this.isAllSelected,
+      status: status ?? this.status,
+      locationStatus: locationStatus ?? this.locationStatus,
+      deviceStatus: deviceStatus ?? this.deviceStatus,
+      locationSearchQuery: locationSearchQuery ?? this.locationSearchQuery,
+      deviceSearchQuery: deviceSearchQuery ?? this.deviceSearchQuery,
+    );
+  }
 
-  DeviceErrorState(this.error);
+  @override
+  List<Object?> get props => [
+        data,
+        message,
+        location,
+        device,
+        selectedDates,
+        locationId,
+        devicesId,
+        dates,
+        date,
+        treeNodes,
+        originalTreeNodes,
+        locationName,
+        devices,
+        selectedDeviceIds,
+        isAllSelected,
+        status,
+        locationStatus,
+        deviceStatus,
+        locationSearchQuery,
+        deviceSearchQuery,
+      ];
 }

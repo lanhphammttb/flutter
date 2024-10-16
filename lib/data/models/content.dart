@@ -64,6 +64,7 @@ class Content {
   });
 
   factory Content.fromJson(Map<String, dynamic> json) => _$ContentFromJson(json);
+
   Map<String, dynamic> toJson() => _$ContentToJson(this);
 }
 
@@ -89,5 +90,6 @@ class TacGia {
   });
 
   factory TacGia.fromJson(Map<String, dynamic> json) => _$TacGiaFromJson(json);
+
   Map<String, dynamic> toJson() => _$TacGiaToJson(this);
 }

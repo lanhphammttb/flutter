@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:nttcs/core/app_export.dart';
 
 class TooltipShape extends ShapeBorder {
   TooltipShape();
 
-  final BorderSide _side = BorderSide.none;
-  final BorderRadiusGeometry _borderRadius = BorderRadius.circular(12); // Rounded corners
+  final BorderSide _side = BorderSide(color: appTheme.primaryContainer, width: 1.0);
+  final BorderRadiusGeometry _borderRadius = BorderRadius.circular(4); // Rounded corners
 
   @override
   EdgeInsetsGeometry get dimensions => EdgeInsets.all(_side.width);
@@ -23,7 +24,7 @@ class TooltipShape extends ShapeBorder {
     final RRect rrect = _borderRadius.resolve(textDirection).toRRect(rect);
     final Path path = Path();
 
-    // Start drawing the shape, rounded corners
+    // Start drawing the shape with rounded corners
     path.moveTo(10, 0); // Start from the top-left
     path.quadraticBezierTo(0, 0, 0, 10); // Top-left rounded corner
     path.lineTo(0, rrect.height - 10); // Left side
@@ -33,17 +34,26 @@ class TooltipShape extends ShapeBorder {
     path.lineTo(rrect.width, 10); // Right side
     path.quadraticBezierTo(rrect.width, 0, rrect.width - 10, 0); // Top-right rounded corner
 
-    // Create the arrow (notch) in the top-right corner
-    path.lineTo(rrect.width - 40, 0); // Start point of the notch
-    path.lineTo(rrect.width - 30, -10); // Arrow tip pointing upward
-    path.lineTo(rrect.width - 20, 0); // End of the notch
+    double arrowCenter = rrect.width / 2;
+    path.lineTo(arrowCenter + 10, 0); // Arrow tip pointing upward
+    path.lineTo(arrowCenter, -10); // Start point of the notch
+    path.lineTo(arrowCenter - 10, 0); // Arrow tip pointing upward
+
+    // Close the path by connecting back to the start of the notch
+    path.lineTo(10, 0); // Connects back to the starting point to close the path
 
     return path;
   }
 
   @override
   void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
-    // Custom paint logic (optional)
+    final Paint paint = Paint()
+      ..color = _side.color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _side.width;
+
+    final Path path = getOuterPath(rect, textDirection: textDirection);
+    canvas.drawPath(path, paint); // Draw the border with the specified color and width
   }
 
   @override

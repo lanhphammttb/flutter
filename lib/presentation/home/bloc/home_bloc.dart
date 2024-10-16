@@ -22,8 +22,15 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<SelectLocation>(_onSelectLocation);
   }
 
+  void _emitLoadingStateDelayed(Emitter<HomeState> emit) {
+    Future.delayed(const Duration(milliseconds: 1500)).then((_) {
+      if (emit.isDone) return;
+      emit(state.copyWith(status: HomeStatus.loading));
+    });
+  }
+
   Future<void> _onFetchLocations(FetchLocations event, Emitter<HomeState> emit) async {
-    emit(state.copyWith(status: HomeStatus.loading));
+    _emitLoadingStateDelayed(emit);
 
     try {
       final result = await authRepository.getLocations();
@@ -75,6 +82,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     var [location] = authRepository.authLocalDataSource.getValue([Constants.name]);
     if (event.locationNode != null) {
       authRepository.saveSelectCode(event.locationNode!.code);
+      authRepository.saveSiteMapId(event.locationNode!.id);
     }
     emit(state.copyWith(locationName: event.locationNode != null ? event.locationNode?.name : location, locationNode: event.locationNode));
   }

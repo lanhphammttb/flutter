@@ -6,7 +6,7 @@ extension TextFormFieldStyleHelper on CustomTextFormField {
   static OutlineInputBorder get outLineGray => OutlineInputBorder(
       borderRadius: BorderRadius.circular(8.h),
       borderSide: BorderSide(
-        color: appTheme.gray_border,
+        color: appTheme.grayBorder,
         width: 1,
       ));
 }
