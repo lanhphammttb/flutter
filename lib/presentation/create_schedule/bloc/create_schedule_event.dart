@@ -1,43 +1,51 @@
 part of 'create_schedule_bloc.dart';
 
- class CreateScheduleEvent extends Equatable{
+class CreateScheduleEvent extends Equatable {
   const CreateScheduleEvent();
 
   @override
   List<Object> get props => [];
- }
+}
 
 class CreateSchedule extends CreateScheduleEvent {}
+
 class InitializeCreateScheduleEvent extends CreateScheduleEvent {}
+
 class SelectLocationEvent extends CreateScheduleEvent {
   final String locationName;
-  SelectLocationEvent(this.locationName);
+
+  const SelectLocationEvent(this.locationName);
 }
 
-class SelectDeviceEvent extends CreateScheduleEvent {
-  final Device device;
+class SelectDevice extends CreateScheduleEvent {
+  final int deviceId;
 
-  SelectDeviceEvent(this.device);
+  const SelectDevice(this.deviceId);
+
+  @override
+  List<Object> get props => [deviceId];
 }
 
-class ToggleSelectAllDevicesEvent extends CreateScheduleEvent {
-  final bool selectAll;
-
-  ToggleSelectAllDevicesEvent(this.selectAll);
+class SelectAllDevices extends CreateScheduleEvent {
+  const SelectAllDevices();
 }
+
 class AddDateEvent extends CreateScheduleEvent {
   final DateTime date;
+
   AddDateEvent(this.date);
 }
 
 class AddPlaylist extends CreateScheduleEvent {
   final int dateIndex;
+
   AddPlaylist(this.dateIndex);
 }
 
 class RemovePlaylist extends CreateScheduleEvent {
   final int dateIndex;
   final int timeIndex;
+
   RemovePlaylist(this.dateIndex, this.timeIndex);
 }
 
@@ -45,6 +53,7 @@ class UpdatePlaylist extends CreateScheduleEvent {
   final int dateIndex;
   final int timeIndex;
   final String time;
+
   UpdatePlaylist(this.dateIndex, this.timeIndex, this.time);
 }
 
@@ -59,6 +68,13 @@ class SearchTextChanged extends CreateScheduleEvent {
   List<Object> get props => [searchText];
 }
 
+class DeviceSearchTextChanged extends SearchTextChanged {
+  const DeviceSearchTextChanged(super.searchText);
+
+  @override
+  List<Object> get props => [searchText];
+}
+
 class ExpandNodeEvent extends CreateScheduleEvent {
   final TreeNode node;
 
@@ -68,4 +84,22 @@ class ExpandNodeEvent extends CreateScheduleEvent {
   List<Object> get props => [node];
 }
 
-class FetchDevices extends CreateScheduleEvent{}
+class FetchDevices extends CreateScheduleEvent {}
+
+class DateStringChanged extends CreateScheduleEvent {
+  final String dateString;
+
+  const DateStringChanged(this.dateString);
+
+  @override
+  List<Object> get props => [dateString];
+}
+
+class FetchNews3 extends CreateScheduleEvent {
+  final int contentType;
+
+  const FetchNews3(this.contentType);
+
+  @override
+  List<Object> get props => [contentType];
+}

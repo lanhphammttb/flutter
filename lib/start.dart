@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:nttcs/core/api/api_service.dart';
 import 'package:nttcs/core/api/dio_client.dart';
 import 'package:nttcs/core/app_export.dart';
@@ -36,8 +37,7 @@ class MyApp extends StatelessWidget {
           RepositoryProvider(
             create: (context) => AuthRepository(
               authApiClient: AuthApiClient(DioClient(), AuthLocalDataSource(PrefUtils().sharedPreferences!)),
-              authLocalDataSource:
-                  AuthLocalDataSource(PrefUtils().sharedPreferences!),
+              authLocalDataSource: AuthLocalDataSource(PrefUtils().sharedPreferences!),
             ),
           ),
         ],
@@ -49,8 +49,7 @@ class MyApp extends StatelessWidget {
               ),
             ),
             BlocProvider(
-              create: (context) =>
-                  ThemeBloc(ThemeState(themeType: PrefUtils().getThemeData())),
+              create: (context) => ThemeBloc(ThemeState(themeType: PrefUtils().getThemeData())),
             ),
             BlocProvider(
               create: (context) => HomeBloc(
@@ -67,7 +66,6 @@ class MyApp extends StatelessWidget {
                 context.read<AuthRepository>(),
               ), // Providing HomeBloc
             ),
-
             BlocProvider(
               create: (context) => ScheduleBloc(
                 context.read<AuthRepository>(),
@@ -87,7 +85,7 @@ class MyApp extends StatelessWidget {
               create: (context) => InformationBloc(
                 context.read<AuthRepository>(),
               ), // Providing HomeBloc
-            )
+            ),
           ],
           child: const AppContent(),
         ),
@@ -124,14 +122,18 @@ class _AppContentState extends State<AppContent> {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: NavigatorService.navigatorKey,
-          localizationsDelegates: const [AppLocalizationDelegate()],
+          localizationsDelegates: const [AppLocalizationDelegate(),
+            GlobalMaterialLocalizations.delegate,  // Cung cấp Material localizations
+            GlobalCupertinoLocalizations.delegate, // Cung cấp Cupertino localizations
+            GlobalWidgetsLocalizations.delegate],
           theme: theme,
           // Use the theme data from the ThemeBloc
           title: 'Nguồn thông tin cơ sở',
           supportedLocales: const [
+            Locale('vi', 'VN'),
             Locale('en', 'US'),
-            Locale('vi', 'VI'),
           ],
+          locale: const Locale('vi', 'VN'),
           initialRoute: AppRoutes.initialRoute,
           routes: AppRoutes.routes,
         );

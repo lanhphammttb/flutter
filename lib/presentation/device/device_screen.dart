@@ -402,12 +402,10 @@ class _DeviceScreenState extends State<DeviceScreen> {
                                       color: Colors.grey, // Màu xám cho thời gian
                                     ),
                                   ),
-                                  trailing: state.selectedContent != null && state.selectedContent!.banTinId == content.banTinId
-                                      ? const Icon(Icons.check, color: Colors.green)
-                                      : null,
+                                  trailing: state.selectedContent != null && state.selectedContent!.banTinId == content.banTinId ? const Icon(Icons.check, color: Colors.green) : null,
                                   onTap: () {
                                     if (state.contentType == 5) {
-                                      CustomTimePickerDialog.timePickerDialog(context, (String time) {
+                                      CustomTimePickerDialog.timePickerDialog(context, 1, addSelectedNews: (String time) {
                                         // vẫn là content nhưng thay đổi thời lượng
                                         Content updatedContent = Content(
                                           banTinId: content.banTinId,

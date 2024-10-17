@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
+import 'package:nttcs/data/models/content.dart';
 import 'package:nttcs/data/models/device.dart';
 import 'package:nttcs/data/models/location.dart';
 import 'package:nttcs/data/models/schedule.dart';
@@ -8,6 +12,7 @@ import 'package:nttcs/data/models/tree_node.dart';
 import 'package:nttcs/data/repositories/auth_repository.dart';
 import 'package:nttcs/data/result_type.dart';
 import 'package:equatable/equatable.dart';
+import 'package:nttcs/presentation/news/bloc/news_bloc.dart';
 
 part 'create_schedule_event.dart';
 
@@ -20,19 +25,22 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
   List<ScheduleDate> scheduleDates = [];
   List<Device> devices = [];
   int id = 0;
-  List<int> selectedDeviceIds = [];
   bool isInitialized = false; // Biến cờ để tránh khởi tạo lại khi không cần thiết
 
   CreateScheduleBloc(this.authRepository) : super(const CreateScheduleState()) {
     on<CreateSchedule>(_onCreateSchedule);
     on<SelectLocationEvent>(_onSelectLocation);
-    on<SelectDeviceEvent>(_onSelectDevice);
+    on<SelectDevice>(_onSelectDevice);
+    on<SelectAllDevices>(_onSelectAllDevices);
     on<AddDateEvent>(_onAddDate);
     on<InitializeCreateScheduleEvent>(_initializeCreateSchedule);
     on<SearchTextChanged>(_onSearchTextChanged);
+    on<DeviceSearchTextChanged>(_onDeviceSearchTextChanged);
     on<ExpandNodeEvent>(_onExpandNode);
     on<FetchLocations>(_onFetchLocations);
     on<FetchDevices>(_onFetchDevices);
+    on<DateStringChanged>(_onDateStringChanged);
+    on<FetchNews3>(_onFetchNews);
   }
 
   Future<void> _onCreateSchedule(CreateSchedule event, Emitter<CreateScheduleState> emit) async {
@@ -53,21 +61,27 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
     _updateState(emit); // Cập nhật trạng thái
   }
 
-  Future<void> _onSelectDevice(SelectDeviceEvent event, Emitter<CreateScheduleState> emit) async {
-    // final currentState = state;
-    //
-    // if (currentState is DeviceLoadedState) {
-    //   // Nếu thiết bị đã được chọn, xóa nó khỏi danh sách selectedDeviceIds
-    //   if (selectedDeviceIds.contains(event.device.id)) {
-    //     selectedDeviceIds.remove(event.device.id);
-    //   } else {
-    //     // Nếu chưa chọn, thêm nó vào danh sách
-    //     selectedDeviceIds.add(event.device.id);
-    //   }
-    //
-    //   emit(DeviceLoadedState(devices: currentState.devices, selectedDeviceIds: selectedDeviceIds));
-    // }
-    // _updateState(emit); // Cập nhật trạng thái
+  void _onSelectDevice(SelectDevice event, Emitter<CreateScheduleState> emit) async {
+    if (state.deviceStatus == DeviceStatus.success) {
+      final updatedSelectedItems = Set<int>.from(state.selectedDeviceIds);
+      if (!updatedSelectedItems.add(event.deviceId)) {
+        updatedSelectedItems.remove(event.deviceId);
+      }
+      emit(state.copyWith(selectedDeviceIds: updatedSelectedItems.toList()));
+    }
+    _updateState(emit); // Cập nhật trạng thái
+  }
+
+  void _onSelectAllDevices(SelectAllDevices event, Emitter<CreateScheduleState> emit) {
+    if (state.deviceStatus == DeviceStatus.success) {
+      if (state.isSelectAll) {
+        emit(state.copyWith(selectedDeviceIds: [], isSelectAll: false));
+      } else {
+        final allDeviceIds = state.devices.map((device) => device.id).toList();
+        emit(state.copyWith(selectedDeviceIds: allDeviceIds, isSelectAll: true));
+      }
+    }
+    _updateState(emit); // Cập nhật trạng thái
   }
 
   Future<void> _onAddDate(AddDateEvent event, Emitter<CreateScheduleState> emit) async {
@@ -173,6 +187,29 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
       } else if (n.hasChildren()) {
         _toggleExpansion(node, n.children);
       }
+    }
+  }
+
+  void _onDeviceSearchTextChanged(DeviceSearchTextChanged event, Emitter<CreateScheduleState> emit) {
+    if (state.deviceStatus == DeviceStatus.success) {
+      emit(state.copyWith(deviceSearchQuery: event.searchText));
+    }
+  }
+
+  void _onDateStringChanged(DateStringChanged event, Emitter<CreateScheduleState> emit) {
+    emit(state.copyWith(dateString: event.dateString));
+  }
+
+  Future<void> _onFetchNews(FetchNews3 event, Emitter<CreateScheduleState> emit) async {
+    final result = await authRepository.getNews(event.contentType, 1, 1);
+
+    switch (result) {
+      case Success(data: final data as SpecificResponse<Content>):
+        emit(state.copyWith(newsStatus: NewsStatus.success, news: data.items));
+        break;
+      case Failure(message: final error):
+        emit(state.copyWith(newsStatus: NewsStatus.failure, message: error));
+        break;
     }
   }
 }

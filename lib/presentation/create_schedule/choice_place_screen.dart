@@ -59,9 +59,13 @@ class _ChoicePlaceScreenState extends State<ChoicePlaceScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Địa điểm đã chọn: $selectedPlace',
-              style: const TextStyle(color: Colors.blue, fontSize: 16),
+            child: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(
+              builder: (context, state) {
+                return Text(
+                  'Địa điểm đã chọn: ${state.location}',
+                  style: const TextStyle(color: Colors.blue, fontSize: 16),
+                );
+              },
             ),
           ),
           Expanded(
@@ -85,7 +89,7 @@ class _ChoicePlaceScreenState extends State<ChoicePlaceScreen> {
                     } else if (state.locationStatus == LocationStatus.failure) {
                       return Text('Có lỗi xảy ra: ${state.message}');
                     } else {
-                      return const Center(child: Text('No data available'));
+                      return const Center(child: Text(''));
                     }
                   },
                 ),

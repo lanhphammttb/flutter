@@ -4,11 +4,12 @@ class CustomBottomSheet {
   final Widget child;
   final double? height;
   final Color? backgroundColor;
-
+  final bool? showDraggableIndicator;
   CustomBottomSheet({
     required this.child,
     this.height,
     this.backgroundColor,
+    this.showDraggableIndicator,
   });
 
   void show(BuildContext context) {
@@ -28,7 +29,7 @@ class CustomBottomSheet {
           ),
           child: Column(
             children: [
-              _buildDraggableIndicator(),
+              if(showDraggableIndicator ?? true) _buildDraggableIndicator(),
               Expanded(
                 // Không nên dùng SingleChildScrollView ở đây
                 child: child,

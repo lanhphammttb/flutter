@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:nttcs/core/app_export.dart';
+import 'package:nttcs/widgets/custom_elevated_button.dart';
 import 'bloc/create_schedule_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
@@ -100,13 +102,13 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
                 children: [
                   Text(
                     'Tên lịch phát:',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                    style: CustomTextStyles.titleLargeBlue800,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
                       controller: _nameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         isDense: true,
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.zero,
@@ -114,6 +116,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
                         hintText: 'Nhập tên lịch phát...',
                       ),
                       style: const TextStyle(fontSize: 16),
+                      maxLines: null,
                     ),
                   ),
                   if (_nameController.text.isNotEmpty)
@@ -135,11 +138,10 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
           Navigator.pushNamed(context, '/choice-place');
         }),
         // Thiết bị phát
-        _buildOptionTile(context, title: 'Thiết bị phát', subtitle: 'Đã chọn: ${state.device}', onTap: () {
-          context.read<CreateScheduleBloc>().add(FetchDevices());
+        _buildOptionTile(context, title: 'Thiết bị phát', subtitle: 'Đã chọn: ${state.selectedDeviceIds.length}', onTap: () {
+          createScheduleBloc.add(FetchDevices());
           Navigator.pushNamed(context, '/choice-device');
         }),
-        // Ngày phát
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Container(
@@ -152,19 +154,20 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
             ),
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              title: const Text('Ngày phát', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+              title: Text('Ngày phát', style: CustomTextStyles.titleLargeBlue800),
               subtitle: Text('${state.selectedDates.length} ngày', style: const TextStyle(fontSize: 16)),
               trailing: Container(
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: Colors.blue,
+                  color: appTheme.primary,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.add, color: Colors.white, size: 20),
                   onPressed: () {
                     context.read<CreateScheduleBloc>().add(AddDateEvent(DateTime.now()));
+                    Navigator.pushNamed(context, '/choice-date');
                   },
                 ),
               ),
@@ -201,18 +204,15 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           child: SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
+            child: CustomElevatedButton(
+              text: 'Lưu',
+              backgroundColor: appTheme.primary,
               onPressed: () {
                 context.read<CreateScheduleBloc>().add(CreateSchedule());
               },
-              child: const Text('Lưu', style: TextStyle(fontSize: 16, color: Colors.white)),
             ),
           ),
         ),
@@ -260,7 +260,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
         ),
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+          title: Text(title, style: CustomTextStyles.titleLargeBlue800),
           subtitle: Text(subtitle, style: const TextStyle(fontSize: 16)),
           trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black),
           onTap: onTap,

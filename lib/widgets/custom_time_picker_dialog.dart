@@ -4,18 +4,25 @@ import 'package:nttcs/widgets/custom_elevated_button.dart';
 import 'package:numberpicker/numberpicker.dart';
 
 class CustomTimePickerDialog {
-  static void timePickerDialog(BuildContext context, void Function(String) addSelectedNews) {
+  static void timePickerDialog(BuildContext context, int type, {void Function(String)? addSelectedNews, void Function(String)? selectTimeStart, String? timeStart}) {
+    //type 1 là chọn thời lượng phát, 2 là chọn thời gian bắt đầu
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        int selectedHour = 0;
-        int selectedMinute = 0;
-        int selectedSecond = 0;
+        DateTime now = DateTime.now();
+        // nếu timeStart tồn tại thì gán mặc định now ban đầu là giá trị của timeStart
+        if (timeStart != null) {
+          List<String> time = timeStart.split(':');
+          now = DateTime(now.year, now.month, now.day, int.parse(time[0]), int.parse(time[1]), int.parse(time[2]));
+        }
+        int selectedHour = type == 2 ? now.hour : 0;
+        int selectedMinute = type == 2 ? now.minute : 0;
+        int selectedSecond = type == 2 ? now.second : 0;
 
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text("CHỌN THỜI LƯỢNG PHÁT", style: CustomTextStyles.titleLargeBlack900),
+              title: Text(type == 1 ? 'CHỌN THỜI LƯỢNG PHÁT' : 'CHỌN THỜI GIAN BẮT ĐẦU', style: CustomTextStyles.titleLargeBlack900),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -35,10 +42,10 @@ class CustomTimePickerDialog {
                               },
                               infiniteLoop: true,
                               textMapper: (numberText) {
-                                if (int.parse(numberText) == selectedHour) {
+                                if (int.parse(numberText) == selectedHour && type == 1) {
                                   return '$numberText giờ';
                                 }
-                                return numberText;
+                                return type == 2 ? numberText.padLeft(2, '0') : numberText;
                               },
                             ),
                           ],
@@ -58,10 +65,10 @@ class CustomTimePickerDialog {
                               },
                               infiniteLoop: true,
                               textMapper: (numberText) {
-                                if (int.parse(numberText) == selectedMinute) {
+                                if (int.parse(numberText) == selectedMinute && type == 1) {
                                   return '$numberText phút';
                                 }
-                                return numberText;
+                                return type == 2 ? numberText.padLeft(2, '0') : numberText;
                               },
                             ),
                           ],
@@ -81,10 +88,10 @@ class CustomTimePickerDialog {
                               },
                               infiniteLoop: true,
                               textMapper: (numberText) {
-                                if (int.parse(numberText) == selectedSecond) {
+                                if (int.parse(numberText) == selectedSecond && type == 1) {
                                   return '$numberText giây';
                                 }
-                                return numberText;
+                                return type == 2 ? numberText.padLeft(2, '0') : numberText;
                               },
                             ),
                           ],
@@ -113,6 +120,11 @@ class CustomTimePickerDialog {
                       if (addSelectedNews != null) {
                         addSelectedNews((selectedHour * 3600 + selectedMinute * 60 + selectedSecond).toString());
                       }
+
+                      if (selectTimeStart != null) {
+                        selectTimeStart('${selectedHour.toString().padLeft(2, '0')}:${selectedMinute.toString().padLeft(2, '0')}:${selectedSecond.toString().padLeft(2, '0')}');
+                      }
+
                       Navigator.of(context).pop();
                     }
                   },

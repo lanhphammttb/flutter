@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nttcs/core/app_export.dart';
 import 'package:nttcs/widgets/custom_image_view.dart';
 import 'package:nttcs/gen/assets.gen.dart';
 import 'package:nttcs/widgets/search_field.dart';
@@ -59,16 +60,13 @@ class _ChoiceDeviceScreenState extends State<ChoiceDeviceScreen> {
                     children: [
                       Text(
                         selectedCount == 0 ? 'Đã chọn: Toàn bộ địa bàn' : 'Đã chọn: $selectedCount',
-                        style: TextStyle(fontSize: 16),
+                        style: CustomTextStyles.titleSmallInter,
                       ),
                       GestureDetector(
-                        onTap: () {
-                          bool selectAll = selectedCount != state.devices.length;
-                          context.read<CreateScheduleBloc>().add(ToggleSelectAllDevicesEvent(selectAll));
-                        },
+                        onTap: () => createScheduleBloc.add(const SelectAllDevices()),
                         child: Text(
-                          selectedCount == state.devices.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả',
-                          style: const TextStyle(color: Colors.blue),
+                          state.isSelectAll ? 'Bỏ chọn tất cả' : 'Chọn tất cả',
+                          style: CustomTextStyles.titleMediumBlue800,
                         ),
                       ),
                     ],
@@ -81,12 +79,12 @@ class _ChoiceDeviceScreenState extends State<ChoiceDeviceScreen> {
           Expanded(
             child: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(
               builder: (context, state) {
-                if (state.deviceStatus == DeviceStatus.success) {
+                if (state.deviceStatus == DeviceStatus.success && state.devices.isNotEmpty) {
+                  final filteredDevices = state.devices.where((device) => device.name.toLowerCase().contains(state.deviceSearchQuery.toLowerCase())).toList();
                   return ListView.builder(
-                    itemCount: state.devices.length,
+                    itemCount: filteredDevices.length,
                     itemBuilder: (context, index) {
-                      final device = state.devices[index];
-                      final isSelected = state.selectedDeviceIds.contains(device.id);
+                      final device = filteredDevices[index];
                       return ListTile(
                         leading: CustomImageView(
                           imagePath: Assets.images.icSpeakerOn.path,
@@ -94,8 +92,8 @@ class _ChoiceDeviceScreenState extends State<ChoiceDeviceScreen> {
                           width: 24,
                         ),
                         title: Text(device.name),
-                        trailing: isSelected ? const Icon(Icons.check, color: Colors.blue) : null,
-                        onTap: () => createScheduleBloc.add(SelectDeviceEvent(device)),
+                        trailing: state.selectedDeviceIds.contains(device.id) ? const Icon(Icons.check, color: Colors.green) : null,
+                        onTap: () => createScheduleBloc.add(SelectDevice(device.id)),
                       );
                     },
                   );
@@ -113,7 +111,7 @@ class _ChoiceDeviceScreenState extends State<ChoiceDeviceScreen> {
     return SearchField(
       hintSearch: 'Tìm kiếm thiết bị',
       controller: _deviceSearchController,
-      onChanged: (value) => createScheduleBloc.add(SearchTextChanged(value)),
+      onChanged: (value) => createScheduleBloc.add(DeviceSearchTextChanged(value)),
       onClear: () {
         _deviceSearchController.clear();
         createScheduleBloc.add(const SearchTextChanged(''));
