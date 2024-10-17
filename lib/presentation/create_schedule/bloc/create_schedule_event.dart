@@ -103,3 +103,12 @@ class FetchNews3 extends CreateScheduleEvent {
   @override
   List<Object> get props => [contentType];
 }
+
+class SelectNews extends CreateScheduleEvent {
+  final Content content;
+
+  const SelectNews(this.content);
+
+  @override
+  List<Object> get props => [content];
+}

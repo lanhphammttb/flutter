@@ -41,6 +41,7 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
     on<FetchDevices>(_onFetchDevices);
     on<DateStringChanged>(_onDateStringChanged);
     on<FetchNews3>(_onFetchNews);
+    on<SelectNews>(_onSelectNews);
   }
 
   Future<void> _onCreateSchedule(CreateSchedule event, Emitter<CreateScheduleState> emit) async {
@@ -211,5 +212,9 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
         emit(state.copyWith(newsStatus: NewsStatus.failure, message: error));
         break;
     }
+  }
+
+  void _onSelectNews(SelectNews event, Emitter<CreateScheduleState> emit) {
+    emit(state.copyWith(selectedNews: state.selectedNews + [event.content]));
   }
 }

@@ -22,6 +22,7 @@ class CreateScheduleState extends Equatable {
   final List<Device> devices;
   final List<Content> news;
   final List<int> selectedDeviceIds;
+  final List<Content> selectedNews;
   final CreateScheduleStatus status;
   final LocationStatus locationStatus;
   final DeviceStatus deviceStatus;
@@ -37,6 +38,7 @@ class CreateScheduleState extends Equatable {
     this.location = '',
     this.device = '',
     this.selectedDates = const [],
+    this.selectedNews = const [],
     this.locationId = 0,
     this.devicesId = const [],
     this.dates = const [],
@@ -63,6 +65,7 @@ class CreateScheduleState extends Equatable {
     String? location,
     String? device,
     List<DateTime>? selectedDates,
+    List<Content>? selectedNews,
     int? locationId,
     List<int>? devicesId,
     List<DateTime>? dates,
@@ -89,6 +92,7 @@ class CreateScheduleState extends Equatable {
       location: location ?? this.location,
       device: device ?? this.device,
       selectedDates: selectedDates ?? this.selectedDates,
+      selectedNews: selectedNews ?? this.selectedNews,
       locationId: locationId ?? this.locationId,
       devicesId: devicesId ?? this.devicesId,
       dates: dates ?? this.dates,
@@ -117,6 +121,7 @@ class CreateScheduleState extends Equatable {
         location,
         device,
         selectedDates,
+        selectedNews,
         locationId,
         devicesId,
         dates,

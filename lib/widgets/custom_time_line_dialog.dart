@@ -32,7 +32,6 @@ class _CustomTimeLineDialogState extends State<CustomTimeLineDialog> {
   static String timeEnd = '05:00:00';
   static int contentType = 3;
   late CreateScheduleBloc createScheduleBloc;
-  List<Content> selectedContentId = [];
 
   @override
   void initState() {
@@ -91,9 +90,7 @@ class _CustomTimeLineDialogState extends State<CustomTimeLineDialog> {
                                           leading: Icon(Icons.queue_music_outlined, color: appTheme.primary),
                                           title: Text(state.news[index].tieuDe),
                                           subtitle: Text(convertSecondsToHHMMSS(state.news[index].thoiLuong)),
-                                          onTap: () => setState(() {
-                                                selectedContentId.add(content);
-                                              }),
+                                          onTap: () => createScheduleBloc.add(SelectNews(content)),
                                           trailing: const Icon(Icons.add, color: Colors.blue));
                                     },
                                   );
@@ -107,15 +104,15 @@ class _CustomTimeLineDialogState extends State<CustomTimeLineDialog> {
                             Expanded(
                               child: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(builder: (context, state) {
                                 return ListView.builder(
-                                  itemCount: selectedContentId.length,
+                                  itemCount: state.selectedNews.length,
                                   itemBuilder: (context, index) {
                                     return ListTile(
-                                      title: Text(selectedContentId[index].tieuDe),
-                                      subtitle: Text(convertSecondsToHHMMSS(selectedContentId[index].thoiLuong)),
+                                      title: Text(state.selectedNews[index].tieuDe),
+                                      subtitle: Text(convertSecondsToHHMMSS(state.selectedNews[index].thoiLuong)),
                                       trailing: IconButton(
                                         icon: const Icon(Icons.remove, color: Colors.red),
                                         onPressed: () => setState(() {
-                                          selectedContentId.removeAt(index);  // Cập nhật bằng setState khi xóa
+                                          state.selectedNews.removeAt(index); // Cập nhật bằng setState khi xóa
                                         }),
                                       ),
                                     );

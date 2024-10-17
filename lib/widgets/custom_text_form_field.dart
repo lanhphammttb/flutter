@@ -13,7 +13,7 @@ extension TextFormFieldStyleHelper on CustomTextFormField {
 
 class CustomTextFormField extends StatelessWidget {
   const CustomTextFormField({
-    Key? key,
+    super.key,
     this.alignment,
     this.width,
     this.scrollPadding,
@@ -36,7 +36,7 @@ class CustomTextFormField extends StatelessWidget {
     this.filled,
     this.validator,
     this.textStyle,
-  }) : super(key: key);
+  });
 
   final Alignment? alignment;
   final double? width;
