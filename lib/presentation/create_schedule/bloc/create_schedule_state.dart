@@ -31,6 +31,8 @@ class CreateScheduleState extends Equatable {
   final String deviceSearchQuery;
   final bool isSelectAll;
   final String dateString;
+  final int contentType;
+  final List<SchedulePlaylistTime> schedulePlaylistTimes;
 
   const CreateScheduleState({
     this.data,
@@ -57,6 +59,8 @@ class CreateScheduleState extends Equatable {
     this.deviceSearchQuery = '',
     this.isSelectAll = false,
     this.dateString = '',
+    this.contentType = 3,
+    this.schedulePlaylistTimes = const [],
   });
 
   CreateScheduleState copyWith({
@@ -85,6 +89,8 @@ class CreateScheduleState extends Equatable {
     String? deviceSearchQuery,
     bool? isSelectAll,
     String? dateString,
+    int? contentType,
+    List<SchedulePlaylistTime>? schedulePlaylistTimes,
   }) {
     return CreateScheduleState(
       data: data ?? this.data,
@@ -111,6 +117,8 @@ class CreateScheduleState extends Equatable {
       deviceSearchQuery: deviceSearchQuery ?? this.deviceSearchQuery,
       isSelectAll: isSelectAll ?? this.isSelectAll,
       dateString: dateString ?? this.dateString,
+      contentType: contentType ?? this.contentType,
+      schedulePlaylistTimes: schedulePlaylistTimes ?? this.schedulePlaylistTimes,
     );
   }
 
@@ -140,5 +148,7 @@ class CreateScheduleState extends Equatable {
         deviceSearchQuery,
         isSelectAll,
         dateString,
+        contentType,
+        schedulePlaylistTimes,
       ];
 }

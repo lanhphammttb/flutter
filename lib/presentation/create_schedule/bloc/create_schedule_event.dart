@@ -33,20 +33,22 @@ class SelectAllDevices extends CreateScheduleEvent {
 class AddDateEvent extends CreateScheduleEvent {
   final DateTime date;
 
-  AddDateEvent(this.date);
+  const AddDateEvent(this.date);
 }
 
 class AddPlaylist extends CreateScheduleEvent {
   final int dateIndex;
 
-  AddPlaylist(this.dateIndex);
+  const AddPlaylist(this.dateIndex);
 }
 
 class RemovePlaylist extends CreateScheduleEvent {
-  final int dateIndex;
-  final int timeIndex;
+  final int playlistIndex;
 
-  RemovePlaylist(this.dateIndex, this.timeIndex);
+  const RemovePlaylist(this.playlistIndex);
+
+  @override
+  List<Object> get props => [playlistIndex];
 }
 
 class UpdatePlaylist extends CreateScheduleEvent {
@@ -54,7 +56,7 @@ class UpdatePlaylist extends CreateScheduleEvent {
   final int timeIndex;
   final String time;
 
-  UpdatePlaylist(this.dateIndex, this.timeIndex, this.time);
+  const UpdatePlaylist(this.dateIndex, this.timeIndex, this.time);
 }
 
 class FetchLocations extends CreateScheduleEvent {}
@@ -111,4 +113,15 @@ class SelectNews extends CreateScheduleEvent {
 
   @override
   List<Object> get props => [content];
+}
+
+class AddTimeLine extends CreateScheduleEvent {
+  final String nameTimeLine;
+  final String startTime;
+  final String endTime;
+
+  const AddTimeLine(this.nameTimeLine, this.startTime, this.endTime);
+
+  @override
+  List<Object> get props => [nameTimeLine, startTime, endTime];
 }

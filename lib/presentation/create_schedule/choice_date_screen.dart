@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:nttcs/core/app_export.dart';
 import 'package:nttcs/widgets/custom_date_picker_dialog.dart';
 import 'package:nttcs/widgets/custom_elevated_button.dart';
-import 'package:nttcs/widgets/custom_time_line_dialog.dart';
+import 'package:nttcs/presentation/create_schedule/time_line_dialog.dart';
 
 import 'bloc/create_schedule_bloc.dart';
 
@@ -22,19 +22,6 @@ class _ChoiceDateScreenState extends State<ChoiceDateScreen> {
     super.initState();
     createScheduleBloc = context.read<CreateScheduleBloc>();
   }
-
-  List<Map<String, dynamic>> timeFrames = [
-    {
-      "startTime": "05:00:00",
-      "endTime": "05:28:40",
-      "reports": 4,
-    },
-    {
-      "startTime": "05:00:00",
-      "endTime": "05:40:00",
-      "reports": 4,
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +56,7 @@ class _ChoiceDateScreenState extends State<ChoiceDateScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: GestureDetector(
-              onTap: () => CustomTimeLineDialog.show(context),
+              onTap: () => TimeLineDialog.show(context),
               child: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(
                 builder: (context, state) => Row(
                   children: [
@@ -85,58 +72,66 @@ class _ChoiceDateScreenState extends State<ChoiceDateScreen> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: timeFrames.length,
-              itemBuilder: (context, index) {
-                final timeFrame = timeFrames[index];
-                return Card(
-                  margin: EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      Container(
-                        color: Colors.blue,
-                        child: ListTile(
-                          title: Text(
-                            'Khung giờ từ ${timeFrame["startTime"]} đến ${timeFrame["endTime"]}',
-                            style: TextStyle(color: Colors.white),
+            child: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(
+              builder: (context, state) {
+                // Lấy dữ liệu từ state
+                return ListView.builder(
+                  itemCount: state.schedulePlaylistTimes.length,
+                  itemBuilder: (context, index) {
+                    final timeFrame = state.schedulePlaylistTimes[index];
+                    return Card(
+                      margin: EdgeInsets.all(8.0),
+                      child: Column(
+                        children: [
+                          Container(
+                            color: Colors.blue,
+                            child: ListTile(
+                              title: Text(
+                                'Khung giờ từ ${timeFrame.start} đến ${timeFrame.end}',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              trailing: IconButton(
+                                icon: Icon(Icons.close, color: Colors.red),
+                                onPressed: () {
+                                  // Xử lý sự kiện khi nhấn nút "close"
+                                  // context.read<CreateScheduleBloc>().add(RemoveTimeFrame(index));
+                                },
+                              ),
+                            ),
                           ),
-                          trailing: IconButton(
-                            icon: Icon(Icons.close, color: Colors.red),
-                            onPressed: () {},
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.calendar_today, color: Colors.blue),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      '${timeFrame.start} - ${timeFrame.end}',
+                                      style: TextStyle(color: Colors.black, fontSize: 16),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Icon(Icons.article, color: Colors.blue),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      '${timeFrame.playlists.length} bản tin',
+                                      style: TextStyle(color: Colors.black, fontSize: 16),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.calendar_today, color: Colors.blue),
-                                SizedBox(width: 10),
-                                Text(
-                                  '${timeFrame["startTime"]} - ${timeFrame["endTime"]}',
-                                  style: TextStyle(color: Colors.black, fontSize: 16),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Icon(Icons.article, color: Colors.blue),
-                                SizedBox(width: 10),
-                                Text(
-                                  '${timeFrame["reports"]} bản tin',
-                                  style: TextStyle(color: Colors.black, fontSize: 16),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
+                    );
+                  },
                 );
               },
             ),

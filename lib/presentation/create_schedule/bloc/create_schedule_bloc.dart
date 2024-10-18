@@ -42,6 +42,8 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
     on<DateStringChanged>(_onDateStringChanged);
     on<FetchNews3>(_onFetchNews);
     on<SelectNews>(_onSelectNews);
+    on<RemovePlaylist>(_onRemovePlaylist);
+    on<AddTimeLine>(_onAddTimeLine);
   }
 
   Future<void> _onCreateSchedule(CreateSchedule event, Emitter<CreateScheduleState> emit) async {
@@ -202,6 +204,7 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
   }
 
   Future<void> _onFetchNews(FetchNews3 event, Emitter<CreateScheduleState> emit) async {
+    emit(state.copyWith(contentType: event.contentType));
     final result = await authRepository.getNews(event.contentType, 1, 1);
 
     switch (result) {
@@ -216,5 +219,30 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
 
   void _onSelectNews(SelectNews event, Emitter<CreateScheduleState> emit) {
     emit(state.copyWith(selectedNews: state.selectedNews + [event.content]));
+  }
+
+  void _onRemovePlaylist(RemovePlaylist event, Emitter<CreateScheduleState> emit) {
+    final updatedSelectedItems = List<Content>.from(state.selectedNews)..removeAt(event.playlistIndex);
+
+    emit(state.copyWith(selectedNews: updatedSelectedItems));
+  }
+
+  void _onAddTimeLine(AddTimeLine event, Emitter<CreateScheduleState> emit) {
+    SchedulePlaylistTime schedulePlaylistTime = SchedulePlaylistTime(
+      id: 0,
+      name: event.nameTimeLine,
+      start: event.startTime,
+      end: event.endTime,
+      playlists: state.selectedNews.map((content) => Playlist(id: 0, order: state.selectedNews.indexOf(content), mediaProjectId: content.banTinId, thoiLuong: content.thoiLuong)).toList(),
+    );
+
+    final updatedScheduleDates = List<ScheduleDate>.from(state.schedulePlaylistTimes)..add(ScheduleDate(
+      id: 0,
+      date: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      datesCopy: '',
+      schedulePlaylistTimes: [schedulePlaylistTime],
+    ));
+
+    emit(state.copyWith(schedulePlaylistTimes: updatedScheduleDates));
   }
 }

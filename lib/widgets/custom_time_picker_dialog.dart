@@ -137,6 +137,3 @@ class CustomTimePickerDialog {
     );
   }
 }
-
-// NumberPicker widget can be found here: https://pub.dev/packages/numberpicker
-// Remember to import and use it.
