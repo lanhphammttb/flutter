@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:nttcs/core/app_export.dart';
+import 'package:nttcs/data/models/schedule_date.dart';
+import 'package:nttcs/widgets/custom_dates_picker_dialog.dart';
 import 'package:nttcs/widgets/custom_elevated_button.dart';
 import 'bloc/create_schedule_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -78,11 +80,25 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
           // return const Center(child: Text('Đang tải...'));
         },
       ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        child: SizedBox(
+          width: double.infinity,
+          child: CustomElevatedButton(
+            text: 'Lưu',
+            backgroundColor: appTheme.primary,
+            onPressed: () {
+              context.read<CreateScheduleBloc>().add(CreateSchedule());
+            },
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildCreateScheduleForm(BuildContext context, CreateScheduleState state) {
-    return Column(
+    return SingleChildScrollView(
+        child: Column(
       children: [
         // Ô nhập tên lịch phát với nút xóa khi có giá trị
         Padding(
@@ -176,48 +192,39 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
         ),
         const SizedBox(height: 8),
         // Danh sách ngày phát
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: state.selectedDates.length,
-            itemBuilder: (context, index) {
-              final date = state.selectedDates[index];
-              return Slidable(
-                key: ValueKey(date),
-                endActionPane: ActionPane(
-                  motion: const DrawerMotion(),
-                  children: [
-                    _buildSlidableAction('Xóa', Icons.delete, Colors.red, () {
-                      // Handle delete action
-                    }),
-                    _buildSlidableAction('Sao chép', Icons.copy, Colors.orange, () {
-                      // Handle copy action
-                    }),
-                    _buildSlidableAction('Sửa', Icons.edit, Colors.blue, () {
-                      // Handle edit action
-                    }),
-                  ],
-                ),
-                child: _buildDateTile(date),
-              );
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-          child: SizedBox(
-            width: double.infinity,
-            child: CustomElevatedButton(
-              text: 'Lưu',
-              backgroundColor: appTheme.primary,
-              onPressed: () {
-                context.read<CreateScheduleBloc>().add(CreateSchedule());
-              },
-            ),
-          ),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: state.scheduleDates.length,
+          itemBuilder: (context, index) {
+            final date = state.scheduleDates[index];
+            return Slidable(
+              key: ValueKey(date),
+              endActionPane: ActionPane(
+                motion: const DrawerMotion(),
+                children: [
+                  _buildSlidableAction('Xóa', Icons.delete, Colors.red, () => createScheduleBloc.add(RemoveScheduleDate(index))),
+                  _buildSlidableAction(
+                      'Sao chép',
+                      Icons.copy,
+                      Colors.orange,
+                      () => CustomDatesPickerDialog.datesPickerDialog(
+                          context,
+                          (selectedDate) => {
+                                // createScheduleBloc.add(AddDateEvent(selectedDate))
+                              })),
+                  _buildSlidableAction('Sửa', Icons.edit, Colors.blue, () {
+                    // Handle edit action
+                  }),
+                ],
+              ),
+              child: _buildDates(date),
+            );
+          },
         ),
       ],
-    );
+    ));
   }
 
   Widget _buildSlidableAction(String label, IconData icon, Color color, VoidCallback onPressed) {
@@ -231,17 +238,36 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
     );
   }
 
-  Widget _buildDateTile(DateTime date) {
+  Widget _buildDates(ScheduleDate scheduleDate) {
     return Container(
       width: double.infinity,
-      // This makes the container take the full width available
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(0.0),
+        border: Border.all(
+          color: Colors.black12, // Màu của viền
+          width: 1.0, // Độ dày của viền
+        ),
+      ),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(DateFormat('dd-MM-yyyy').format(date)),
-          const Text('05:00:00 - 05:05:00 1 bản tin'),
+          Text(scheduleDate.date, style: CustomTextStyles.titleLargeBlack900),
+          // Wrap the ListView in a Container to provide a specific height
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: scheduleDate.schedulePlaylistTimes.map((timeFrame) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 0, 0),
+                child: Text(
+                  '${timeFrame.start} - ${timeFrame.end}    ${timeFrame.playlists.length} bản tin',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              );
+            }).toList(),
+          ),
         ],
       ),
     );

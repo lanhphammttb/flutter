@@ -131,7 +131,7 @@ class _TimeLineDialogState extends State<TimeLineDialog> {
                   style: TextStyle(fontSize: 16, color: enabled ? Colors.black87 : Colors.grey),
                 ),
                 const SizedBox(width: 8),
-                enabled ? Icon(Icons.av_timer_rounded, color: appTheme.primary) : const SizedBox(width: 24),
+                enabled ? const Icon(Icons.av_timer_rounded, color: Colors.blue) : const SizedBox(width: 24),
               ],
             ),
           ),
@@ -254,6 +254,7 @@ class _TimeLineDialogState extends State<TimeLineDialog> {
                             itemBuilder: (context, index) {
                               final content = state.news[index];
                               return ListTile(
+                                  contentPadding: const EdgeInsets.fromLTRB(16, 0, 0, 4),
                                   leading: Icon(Icons.queue_music_outlined, color: appTheme.primary),
                                   title: Text(state.news[index].tieuDe),
                                   subtitle: Text(convertSecondsToHHMMSS(state.news[index].thoiLuong)),
@@ -278,6 +279,7 @@ class _TimeLineDialogState extends State<TimeLineDialog> {
                           itemCount: state.selectedNews.length,
                           itemBuilder: (context, index) {
                             return ListTile(
+                              contentPadding: const EdgeInsets.fromLTRB(16, 0, 0, 4),
                               leading: Icon(Icons.queue_music_outlined, color: appTheme.primary),
                               title: Text(state.selectedNews[index].tieuDe),
                               subtitle: Text(convertSecondsToHHMMSS(state.selectedNews[index].thoiLuong)),
@@ -304,10 +306,10 @@ class _TimeLineDialogState extends State<TimeLineDialog> {
                     style: TextStyle(fontSize: 16, color: Colors.black87),
                   ),
                   const SizedBox(width: 8),
-                  Icon(
+                  const Icon(
                     Icons.add_circle_outline,
                     size: 24,
-                    color: appTheme.primary,
+                    color: Colors.blue,
                   ),
                 ],
               );

@@ -44,6 +44,8 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
     on<SelectNews>(_onSelectNews);
     on<RemovePlaylist>(_onRemovePlaylist);
     on<AddTimeLine>(_onAddTimeLine);
+    on<AddScheduleDate>(_onAddScheduleDate);
+    on<RemoveScheduleDate>(_onRemoveScheduleDate);
   }
 
   Future<void> _onCreateSchedule(CreateSchedule event, Emitter<CreateScheduleState> emit) async {
@@ -236,13 +238,26 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
       playlists: state.selectedNews.map((content) => Playlist(id: 0, order: state.selectedNews.indexOf(content), mediaProjectId: content.banTinId, thoiLuong: content.thoiLuong)).toList(),
     );
 
-    final updatedScheduleDates = List<ScheduleDate>.from(state.schedulePlaylistTimes)..add(ScheduleDate(
-      id: 0,
-      date: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-      datesCopy: '',
-      schedulePlaylistTimes: [schedulePlaylistTime],
-    ));
+    final updatedScheduleDates = List<SchedulePlaylistTime>.from(state.schedulePlaylistTimes)..add(schedulePlaylistTime);
 
     emit(state.copyWith(schedulePlaylistTimes: updatedScheduleDates));
+  }
+
+  void _onAddScheduleDate(AddScheduleDate event, Emitter<CreateScheduleState> emit) {
+    ScheduleDate scheduleDate = ScheduleDate(
+      id: 0,
+      date: state.dateString == '' ? DateFormat('dd-MM-yyyy').format(DateTime.now()) : state.dateString,
+      schedulePlaylistTimes: state.schedulePlaylistTimes,
+    );
+
+    final updatedScheduleDates = List<ScheduleDate>.from(state.scheduleDates)..add(scheduleDate);
+
+    emit(state.copyWith(scheduleDates: updatedScheduleDates));
+  }
+
+  void _onRemoveScheduleDate(RemoveScheduleDate event, Emitter<CreateScheduleState> emit) {
+    final updatedScheduleDates = List<ScheduleDate>.from(state.scheduleDates)..removeAt(event.dateIndex);
+
+    emit(state.copyWith(scheduleDates: updatedScheduleDates));
   }
 }

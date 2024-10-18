@@ -33,6 +33,7 @@ class CreateScheduleState extends Equatable {
   final String dateString;
   final int contentType;
   final List<SchedulePlaylistTime> schedulePlaylistTimes;
+  final List<ScheduleDate> scheduleDates;
 
   const CreateScheduleState({
     this.data,
@@ -61,6 +62,7 @@ class CreateScheduleState extends Equatable {
     this.dateString = '',
     this.contentType = 3,
     this.schedulePlaylistTimes = const [],
+    this.scheduleDates = const [],
   });
 
   CreateScheduleState copyWith({
@@ -91,6 +93,7 @@ class CreateScheduleState extends Equatable {
     String? dateString,
     int? contentType,
     List<SchedulePlaylistTime>? schedulePlaylistTimes,
+    List<ScheduleDate>? scheduleDates,
   }) {
     return CreateScheduleState(
       data: data ?? this.data,
@@ -119,6 +122,7 @@ class CreateScheduleState extends Equatable {
       dateString: dateString ?? this.dateString,
       contentType: contentType ?? this.contentType,
       schedulePlaylistTimes: schedulePlaylistTimes ?? this.schedulePlaylistTimes,
+      scheduleDates: scheduleDates ?? this.scheduleDates,
     );
   }
 
@@ -150,5 +154,6 @@ class CreateScheduleState extends Equatable {
         dateString,
         contentType,
         schedulePlaylistTimes,
+        scheduleDates,
       ];
 }

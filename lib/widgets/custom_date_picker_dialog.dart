@@ -31,7 +31,7 @@ class CustomDatePickerDialog {
         // Màu của ngày đã chọn
         onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
           if (args.value is DateTime) {
-            String formattedDate = DateFormat('dd/MM/yyyy').format(args.value);
+            String formattedDate = DateFormat('dd-MM-yyyy').format(args.value);
             selectedDate(formattedDate);
           }
         },

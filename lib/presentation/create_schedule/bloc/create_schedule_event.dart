@@ -125,3 +125,16 @@ class AddTimeLine extends CreateScheduleEvent {
   @override
   List<Object> get props => [nameTimeLine, startTime, endTime];
 }
+
+class AddScheduleDate extends CreateScheduleEvent {
+  const AddScheduleDate();
+}
+
+class RemoveScheduleDate extends CreateScheduleEvent {
+  final int dateIndex;
+
+  const RemoveScheduleDate(this.dateIndex);
+
+  @override
+  List<Object> get props => [dateIndex];
+}

@@ -45,7 +45,7 @@ class _ChoiceDateScreenState extends State<ChoiceDateScreen> {
                     Icon(Icons.edit_calendar, color: appTheme.primary),
                     const SizedBox(width: 8),
                     Text(
-                      state.dateString == '' ? DateFormat('dd/MM/yyyy').format(DateTime.now()) : state.dateString,
+                      state.dateString == '' ? DateFormat('dd-MM-yyyy').format(DateTime.now()) : state.dateString,
                       style: CustomTextStyles.bodyLargeBlue700,
                     ),
                   ],
@@ -80,20 +80,26 @@ class _ChoiceDateScreenState extends State<ChoiceDateScreen> {
                   itemBuilder: (context, index) {
                     final timeFrame = state.schedulePlaylistTimes[index];
                     return Card(
-                      margin: EdgeInsets.all(8.0),
+                      color: appTheme.white,
+                      margin: const EdgeInsets.all(8.0),
                       child: Column(
                         children: [
                           Container(
-                            color: Colors.blue,
+                            decoration: BoxDecoration(
+                              color: appTheme.primary, // Đặt màu ở đây thay vì thuộc tính color.
+                              borderRadius: BorderRadius.circular(8.0), // Bo góc cho container.
+                            ),
                             child: ListTile(
+                              contentPadding: const EdgeInsets.fromLTRB(16, 0, 0, 0),
                               title: Text(
-                                'Khung giờ từ ${timeFrame.start} đến ${timeFrame.end}',
-                                style: TextStyle(color: Colors.white),
+                                timeFrame.name,
+                                style: CustomTextStyles.titleOverview,
                               ),
                               trailing: IconButton(
-                                icon: Icon(Icons.close, color: Colors.red),
+                                padding: EdgeInsets.zero,
+                                icon: const Icon(Icons.close, color: Colors.red),
                                 onPressed: () {
-                                  // Xử lý sự kiện khi nhấn nút "close"
+                                  // Xử lý sự kiện khi nhấn nút "close".
                                   // context.read<CreateScheduleBloc>().add(RemoveTimeFrame(index));
                                 },
                               ),
@@ -106,22 +112,22 @@ class _ChoiceDateScreenState extends State<ChoiceDateScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    Icon(Icons.calendar_today, color: Colors.blue),
-                                    SizedBox(width: 10),
+                                    Icon(Icons.calendar_month_outlined, color: appTheme.primary),
+                                    const SizedBox(width: 10),
                                     Text(
                                       '${timeFrame.start} - ${timeFrame.end}',
-                                      style: TextStyle(color: Colors.black, fontSize: 16),
+                                      style: CustomTextStyles.titleSmallInter,
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: 8),
+                                const SizedBox(height: 8),
                                 Row(
                                   children: [
-                                    Icon(Icons.article, color: Colors.blue),
-                                    SizedBox(width: 10),
+                                    Icon(Icons.article_outlined, color: appTheme.primary),
+                                    const SizedBox(width: 10),
                                     Text(
                                       '${timeFrame.playlists.length} bản tin',
-                                      style: TextStyle(color: Colors.black, fontSize: 16),
+                                      style: CustomTextStyles.titleSmallInter,
                                     ),
                                   ],
                                 ),
@@ -137,8 +143,13 @@ class _ChoiceDateScreenState extends State<ChoiceDateScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-            child: CustomElevatedButton(text: 'Lưu', onPressed: () {}),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: CustomElevatedButton(
+                text: 'Lưu',
+                onPressed: () {
+                  createScheduleBloc.add(const AddScheduleDate());
+                  Navigator.pop(context);
+                }),
           ),
         ],
       ),
