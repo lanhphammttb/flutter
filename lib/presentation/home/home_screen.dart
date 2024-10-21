@@ -56,13 +56,17 @@ class _HomeScreenState extends State<HomeScreen> {
               context.read<OverviewBloc>().add(const FetchOverview());
               break;
             case 1:
-              context.read<DeviceBloc>().add(const FetchDevices(0));
+              context.read<DeviceBloc>().add(FetchDevices(0, code: state.locationNode?.code));
               break;
             case 2:
-              context.read<ScheduleBloc>().add(FetchSchedule());
+              context.read<ScheduleBloc>().add(FetchSchedule(
+                    0,
+                    locationNode: state.locationNode,
+                    locationIds: (state.locationNode != null && state.locationNode!.id != 0) ? [state.locationNode!.id] : state.treeNodes.map((e) => e.id).toList(),
+                  ));
               break;
             case 3:
-              context.read<NewsBloc>().add(const FetchNews(0));
+              context.read<NewsBloc>().add(FetchNews(0, code: state.locationNode?.code));
               break;
             case 4:
               break;

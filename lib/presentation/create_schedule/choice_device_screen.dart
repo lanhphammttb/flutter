@@ -53,7 +53,7 @@ class _ChoiceDeviceScreenState extends State<ChoiceDeviceScreen> {
                   return const Center(child: CircularProgressIndicator());
                 } else if (state.deviceStatus == DeviceStatus.failure) {
                   return Text('Có lỗi xảy ra: ${state.message}');
-                } else if (state.deviceStatus == DeviceStatus.success) {
+                } else if (state.deviceStatus == DeviceStatus.success && state.devices.isNotEmpty) {
                   int selectedCount = state.selectedDeviceIds.length;
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -71,6 +71,8 @@ class _ChoiceDeviceScreenState extends State<ChoiceDeviceScreen> {
                       ),
                     ],
                   );
+                }else if (state.deviceStatus == DeviceStatus.success && state.devices.isEmpty) {
+                  return const Center(child: Text('Không có thiết bị nào'));
                 }
                 return Container();
               },

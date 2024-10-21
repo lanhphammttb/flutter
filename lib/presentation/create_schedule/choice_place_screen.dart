@@ -14,7 +14,6 @@ class ChoicePlaceScreen extends StatefulWidget {
 
 class _ChoicePlaceScreenState extends State<ChoicePlaceScreen> {
   late TextEditingController _locationSearchController;
-  String selectedPlace = 'Thị trấn Bến Lức';
   late CreateScheduleBloc createScheduleBloc;
 
   @override
@@ -62,7 +61,7 @@ class _ChoicePlaceScreenState extends State<ChoicePlaceScreen> {
             child: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(
               builder: (context, state) {
                 return Text(
-                  'Địa điểm đã chọn: ${state.location}',
+                  'Địa điểm đã chọn: ${state.location?.name ?? ''}',
                   style: const TextStyle(color: Colors.blue, fontSize: 16),
                 );
               },
@@ -81,8 +80,7 @@ class _ChoicePlaceScreenState extends State<ChoicePlaceScreen> {
                       return TreeNodeWidget(
                         treeNodes: state.treeNodes,
                         onItemClick: (node) {
-                          // Gọi hành động khi nhấn vào mục trong danh sách
-                          createScheduleBloc.add(SelectLocationEvent(node.name));
+                          createScheduleBloc.add(SelectLocation(node));
                           createScheduleBloc.add(ExpandNodeEvent(node));
                         },
                       );

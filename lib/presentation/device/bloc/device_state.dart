@@ -1,6 +1,6 @@
 part of 'device_bloc.dart';
 
-enum DeviceStatus { initial, loading, more, success, failure, failureNews }
+enum DeviceStatus { initial, loading, more, success, failure }
 
 class DeviceState extends Equatable {
   final List<Device2> data;
@@ -15,6 +15,7 @@ class DeviceState extends Equatable {
   final int contentType;
   final List<Content> newsData;
   final Content? selectedContent;
+  final String code;
 
   const DeviceState({
     this.data = const [],
@@ -29,6 +30,7 @@ class DeviceState extends Equatable {
     this.contentType = 3,
     this.newsData = const [],
     this.selectedContent,
+    this.code = '',
   });
 
   DeviceState copyWith({
@@ -45,6 +47,7 @@ class DeviceState extends Equatable {
     int? contentType,
     List<Content>? newsData,
     Content? selectedContent,
+    String? code,
   }) {
     return DeviceState(
       data: data ?? this.data,
@@ -59,9 +62,10 @@ class DeviceState extends Equatable {
       contentType: contentType ?? this.contentType,
       newsData: newsData ?? this.newsData,
       selectedContent: selectedContent,
+      code: code ?? this.code,
     );
   }
 
   @override
-  List<Object?> get props => [data, status, message, volumePreview, selectedItems, isSelectAll, filter, searchQuery, contentType, newsData, newsStatus, selectedContent];
+  List<Object?> get props => [data, status, message, volumePreview, selectedItems, isSelectAll, filter, searchQuery, contentType, newsData, newsStatus, selectedContent, code];
 }

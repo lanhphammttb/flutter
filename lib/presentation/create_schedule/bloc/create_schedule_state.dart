@@ -9,7 +9,6 @@ enum DeviceStatus { initial, loading, more, success, failure }
 class CreateScheduleState extends Equatable {
   final SpecificResponse<Schedule>? data;
   final String message;
-  final String location;
   final String device;
   final List<DateTime> selectedDates;
   final int locationId;
@@ -18,7 +17,7 @@ class CreateScheduleState extends Equatable {
   final DateTime? date;
   final List<TreeNode> treeNodes;
   final List<TreeNode> originalTreeNodes;
-  final String locationName;
+  final TreeNode? location;
   final List<Device> devices;
   final List<Content> news;
   final List<int> selectedDeviceIds;
@@ -38,7 +37,6 @@ class CreateScheduleState extends Equatable {
   const CreateScheduleState({
     this.data,
     this.message = '',
-    this.location = '',
     this.device = '',
     this.selectedDates = const [],
     this.selectedNews = const [],
@@ -48,7 +46,7 @@ class CreateScheduleState extends Equatable {
     this.date,
     this.treeNodes = const [],
     this.originalTreeNodes = const [],
-    this.locationName = '',
+    this.location,
     this.devices = const [],
     this.news = const [],
     this.selectedDeviceIds = const [],
@@ -68,7 +66,6 @@ class CreateScheduleState extends Equatable {
   CreateScheduleState copyWith({
     SpecificResponse<Schedule>? data,
     String? message,
-    String? location,
     String? device,
     List<DateTime>? selectedDates,
     List<Content>? selectedNews,
@@ -78,7 +75,7 @@ class CreateScheduleState extends Equatable {
     DateTime? date,
     List<TreeNode>? treeNodes,
     List<TreeNode>? originalTreeNodes,
-    String? locationName,
+    TreeNode? location,
     List<Device>? devices,
     List<Content>? news,
     List<int>? selectedDeviceIds,
@@ -98,7 +95,6 @@ class CreateScheduleState extends Equatable {
     return CreateScheduleState(
       data: data ?? this.data,
       message: message ?? this.message,
-      location: location ?? this.location,
       device: device ?? this.device,
       selectedDates: selectedDates ?? this.selectedDates,
       selectedNews: selectedNews ?? this.selectedNews,
@@ -108,7 +104,7 @@ class CreateScheduleState extends Equatable {
       date: date ?? this.date,
       treeNodes: treeNodes ?? this.treeNodes,
       originalTreeNodes: originalTreeNodes ?? this.originalTreeNodes,
-      locationName: locationName ?? this.locationName,
+      location: location ?? this.location,
       devices: devices ?? this.devices,
       news: news ?? this.news,
       selectedDeviceIds: selectedDeviceIds ?? this.selectedDeviceIds,
@@ -130,7 +126,6 @@ class CreateScheduleState extends Equatable {
   List<Object?> get props => [
         data,
         message,
-        location,
         device,
         selectedDates,
         selectedNews,
@@ -140,7 +135,7 @@ class CreateScheduleState extends Equatable {
         date,
         treeNodes,
         originalTreeNodes,
-        locationName,
+        location,
         devices,
         news,
         selectedDeviceIds,

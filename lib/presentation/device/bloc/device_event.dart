@@ -4,16 +4,17 @@ abstract class DeviceEvent extends Equatable {
   const DeviceEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class FetchDevices extends DeviceEvent {
   final int isMoreOrRefresh; // 0: call first, 1: load more, 2: refresh
+  final String? code;
 
-  const FetchDevices(this.isMoreOrRefresh);
+  const FetchDevices(this.isMoreOrRefresh, {this.code});
 
   @override
-  List<Object> get props => [isMoreOrRefresh];
+  List<Object?> get props => [isMoreOrRefresh, code];
 }
 
 class DeviceVolumeChanged extends DeviceEvent {

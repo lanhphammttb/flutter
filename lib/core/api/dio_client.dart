@@ -13,10 +13,11 @@ class DioClient {
   DioClient._internal() {
     dio = Dio(BaseOptions(
       baseUrl: dotenv.env['BASE_URL']!,
-      connectTimeout: const Duration(minutes: 30),
-      receiveTimeout: const Duration(minutes: 30),
+      connectTimeout: const Duration(seconds: 60),
+      receiveTimeout: const Duration(seconds: 60),
       headers: {
         'Connection': 'keep-alive',
+        'Content-Type': 'application/json',
       },
     ));
 
@@ -27,9 +28,7 @@ class DioClient {
 
   static DioClient get instance => _instance;
 
-
-  Future<Response> get(String path,
-      {String? token, Map<String, dynamic>? queryParameters}) async {
+  Future<Response> get(String path, {String? token, Map<String, dynamic>? queryParameters}) async {
     return dio.get(
       path,
       queryParameters: queryParameters,

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:nttcs/core/app_export.dart';
+import 'package:nttcs/core/utils/functions.dart';
 import 'package:nttcs/data/models/schedule_date.dart';
+import 'package:nttcs/data/models/tree_node.dart';
+import 'package:nttcs/presentation/schedule/bloc/schedule_bloc.dart';
 import 'package:nttcs/widgets/custom_dates_picker_dialog.dart';
 import 'package:nttcs/widgets/custom_elevated_button.dart';
 import 'bloc/create_schedule_bloc.dart';
@@ -23,9 +27,15 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
   void initState() {
     super.initState();
     createScheduleBloc = context.read<CreateScheduleBloc>();
-    _nameController = TextEditingController(
-      text: 'Thị trấn Bến Lức - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
-    );
+    _nameController = TextEditingController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)!.settings.arguments;
+      if (args is TreeNode) {
+        createScheduleBloc.add(SelectLocation(args));
+
+        _nameController.text = '${args.name} - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}';
+      }
+    });
   }
 
   @override
@@ -49,6 +59,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
+            createScheduleBloc.add(ResetCreateSchedule());
             Navigator.pop(context);
           },
         ),
@@ -60,26 +71,30 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
           ),
         ),
       ),
-      body: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(
-        builder: (context, state) {
-          if (state.status == CreateScheduleStatus.initial) {
-            // Chỉ gọi sự kiện khi cần thiết, tránh gọi lại nhiều lần khi quay lại từ các màn hình khác
-            if (!context.read<CreateScheduleBloc>().isInitialized) {
-              context.read<CreateScheduleBloc>().add(InitializeCreateScheduleEvent());
-            }
-          }
-
-          // if (state.status == CreateScheduleStatus.loading) {
-          //   return const Center(child: CircularProgressIndicator());
-          // } else if (state.status == CreateScheduleStatus.failure) {
-          //   return const Center(child: Text('Lịch phát đã được lưu.'));
-          // } else if (state.status == CreateScheduleStatus.success) {
-          //   return _buildCreateScheduleForm(context, state);
-          // }
+      body: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(builder: (context, state) {
+        if (state.status == CreateScheduleStatus.success) {
+          Fluttertoast.showToast(
+              msg: 'Lưu lịch phát thành công',
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              timeInSecForIosWeb: 1,
+              backgroundColor: Colors.green,
+              textColor: Colors.white,
+              fontSize: 16.0);
+          context.read<ScheduleBloc>().add(const FetchSchedule(0));
+          Future.delayed(const Duration(seconds: 1), () {
+            Navigator.pop(context);
+            createScheduleBloc.add(ResetCreateSchedule());
+          });
+        }
+        if (state.status == CreateScheduleStatus.loading || state.status == CreateScheduleStatus.success) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (state.status == CreateScheduleStatus.failure) {
+          return Text('Có lỗi xảy ra: ${state.message}');
+        } else {
           return _buildCreateScheduleForm(context, state);
-          // return const Center(child: Text('Đang tải...'));
-        },
-      ),
+        }
+      }),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         child: SizedBox(
@@ -87,9 +102,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
           child: CustomElevatedButton(
             text: 'Lưu',
             backgroundColor: appTheme.primary,
-            onPressed: () {
-              context.read<CreateScheduleBloc>().add(CreateSchedule());
-            },
+            onPressed: () => createScheduleBloc.add(CreateSchedule(_nameController.text)),
           ),
         ),
       ),
@@ -149,7 +162,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
           ),
         ),
         // Địa điểm phát
-        _buildOptionTile(context, title: 'Địa điểm phát', subtitle: 'Địa điểm đã chọn: ${state.location}', onTap: () {
+        _buildOptionTile(context, title: 'Địa điểm phát', subtitle: 'Địa điểm đã chọn: ${state.location?.name}', onTap: () {
           createScheduleBloc.add(FetchLocations()); // Gọi API chỉ khi chưa có dữ liệu
           Navigator.pushNamed(context, '/choice-place');
         }),
@@ -171,7 +184,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               title: Text('Ngày phát', style: CustomTextStyles.titleLargeBlue800),
-              subtitle: Text('${state.selectedDates.length} ngày', style: const TextStyle(fontSize: 16)),
+              subtitle: Text('${state.scheduleDates.length} ngày', style: const TextStyle(fontSize: 16)),
               trailing: Container(
                 width: 36,
                 height: 36,
@@ -182,7 +195,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
                 child: IconButton(
                   icon: const Icon(Icons.add, color: Colors.white, size: 20),
                   onPressed: () {
-                    context.read<CreateScheduleBloc>().add(AddDateEvent(DateTime.now()));
+                    createScheduleBloc.add(AddDateEvent(DateFormat('dd-MM-yyyy').format(DateTime.now())));
                     Navigator.pushNamed(context, '/choice-date');
                   },
                 ),
@@ -191,7 +204,6 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        // Danh sách ngày phát
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -209,11 +221,8 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
                       'Sao chép',
                       Icons.copy,
                       Colors.orange,
-                      () => CustomDatesPickerDialog.datesPickerDialog(
-                          context,
-                          (selectedDate) => {
-                                // createScheduleBloc.add(AddDateEvent(selectedDate))
-                              })),
+                      () =>
+                          CustomDatesPickerDialog.datesPickerDialog(context, (selectedDate) => createScheduleBloc.add(CopyDate(date, selectedDate)), state.scheduleDates.map((e) => e.date).toList())),
                   _buildSlidableAction('Sửa', Icons.edit, Colors.blue, () {
                     // Handle edit action
                   }),
@@ -253,7 +262,7 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(scheduleDate.date, style: CustomTextStyles.titleLargeBlack900),
+          Text(convertDateFormat(scheduleDate.date), style: CustomTextStyles.titleLargeBlack900),
           // Wrap the ListView in a Container to provide a specific height
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,

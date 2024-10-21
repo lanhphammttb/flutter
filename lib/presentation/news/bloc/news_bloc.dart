@@ -28,6 +28,9 @@ class NewsBloc extends Bloc<NewsEvent, NewsState> {
   }
 
   Future<void> _onFetchNews(FetchNews event, Emitter<NewsState> emit) async {
+    if (event.code != null) {
+      emit(state.copyWith(code: event.code));
+    }
     if (event.isMoreOrRefresh == 0) {
       _emitLoadingStateDelayed(emit);
     }
@@ -45,6 +48,7 @@ class NewsBloc extends Bloc<NewsEvent, NewsState> {
 
     final result = await authRepository.getNews(
         event.contentType ?? state.contentType,
+        state.code,
         event.isMoreOrRefresh == 1 ? _currentPage : 1,
         event.isMoreOrRefresh == 1
             ? 1

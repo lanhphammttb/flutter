@@ -10,7 +10,7 @@ class ScheduleDate {
   @JsonKey(name: 'Date')
   String date;
 
-  @JsonKey(name: 'DatesCopy')
+  @JsonKey(name: 'DatesCopy', includeIfNull: false)
   String? datesCopy;
 
   @JsonKey(name: 'SchedulePlaylistTimes')
@@ -31,15 +31,6 @@ class ScheduleDate {
         playlist.id = 0;
       }
     }
-  }
-
-  ScheduleDate clone() {
-    return ScheduleDate(
-      id: id,
-      date: date,
-      datesCopy: datesCopy,
-      schedulePlaylistTimes: List.from(schedulePlaylistTimes),
-    );
   }
 
   factory ScheduleDate.fromJson(Map<String, dynamic> json) =>
@@ -90,46 +81,46 @@ class Playlist {
   @JsonKey(name: 'MediaProjectId')
   String mediaProjectId;
 
-  @JsonKey(name: 'BroadcastRegion')
+  @JsonKey(name: 'BroadcastRegion', includeIfNull: false)
   String? broadcastRegion;
 
-  @JsonKey(name: 'BanTinId')
+  @JsonKey(name: 'BanTinId', includeIfNull: false)
   String? banTinId;
 
-  @JsonKey(name: 'TieuDe')
+  @JsonKey(name: 'TieuDe', includeIfNull: false)
   String? tieuDe;
 
-  @JsonKey(name: 'LoaiLinhVuc')
+  @JsonKey(name: 'LoaiLinhVuc', includeIfNull: false)
   String? loaiLinhVuc;
 
-  @JsonKey(name: 'LoaiBanTin')
+  @JsonKey(name: 'LoaiBanTin', includeIfNull: false)
   String? loaiBanTin;
 
-  @JsonKey(name: 'MucDoUuTien')
+  @JsonKey(name: 'MucDoUuTien', includeIfNull: false)
   String? mucDoUuTien;
 
-  @JsonKey(name: 'NguonId')
+  @JsonKey(name: 'NguonId', includeIfNull: false)
   String? nguonId;
 
-  @JsonKey(name: 'NoiDung')
+  @JsonKey(name: 'NoiDung', includeIfNull: false)
   String? noiDung;
 
-  @JsonKey(name: 'NoiDungTomTat')
+  @JsonKey(name: 'NoiDungTomTat', includeIfNull: false)
   String? noiDungTomTat;
 
   @JsonKey(name: 'ThoiLuong')
   String thoiLuong;
 
-  @JsonKey(name: 'NguonTin')
+  @JsonKey(name: 'NguonTin', includeIfNull: false)
   String? nguonTin;
 
-  @JsonKey(name: 'VungPhat')
+  @JsonKey(name: 'VungPhat', includeIfNull: false)
   String? vungPhat;
 
-  @JsonKey(name: 'TacGia')
+  @JsonKey(name: 'TacGia', includeIfNull: false)
   TacGia? tacGia;
 
-  @JsonKey(name: 'Duration')
+  @JsonKey(name: 'Duration', includeIfNull: false)
   String? duration;
 
   Playlist({

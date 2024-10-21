@@ -4,17 +4,17 @@ sealed class NewsEvent extends Equatable {
   const NewsEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class FetchNews extends NewsEvent {
   final int isMoreOrRefresh; // 0: call first, 1: load more, 2: refresh
   final int? contentType;
-
-  const FetchNews(this.isMoreOrRefresh, {this.contentType});
+  final String? code;
+  const FetchNews(this.isMoreOrRefresh, {this.contentType, this.code});
 
   @override
-  List<Object> get props => [isMoreOrRefresh];
+  List<Object?> get props => [isMoreOrRefresh, contentType, code];
 }
 
 class SearchNews extends NewsEvent {

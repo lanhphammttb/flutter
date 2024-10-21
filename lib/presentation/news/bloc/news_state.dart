@@ -1,6 +1,6 @@
 part of 'news_bloc.dart';
 
-enum NewsStatus { initial, loading, more,  success, failure }
+enum NewsStatus { initial, loading, more, success, failure }
 
 class NewsState extends Equatable {
   final List<Content> data;
@@ -9,6 +9,7 @@ class NewsState extends Equatable {
   final String? message;
   final String searchQuery;
   final int contentType;
+  final String code;
 
   const NewsState({
     this.data = const [],
@@ -17,6 +18,7 @@ class NewsState extends Equatable {
     this.message,
     this.searchQuery = '',
     this.contentType = 3,
+    this.code = '',
   });
 
   NewsState copyWith({
@@ -30,6 +32,8 @@ class NewsState extends Equatable {
     String? filter,
     String? searchQuery,
     int? contentType,
+    List<Content>? newsData,
+    String? code,
   }) {
     return NewsState(
       data: data ?? this.data,
@@ -38,9 +42,10 @@ class NewsState extends Equatable {
       message: message ?? this.message,
       searchQuery: searchQuery ?? this.searchQuery,
       contentType: contentType ?? this.contentType,
+      code: code ?? this.code,
     );
   }
 
   @override
-  List<Object?> get props => [data, isMoreOrRefresh, status, message, searchQuery, contentType];
+  List<Object?> get props => [data, isMoreOrRefresh, status, message, searchQuery, contentType, code];
 }

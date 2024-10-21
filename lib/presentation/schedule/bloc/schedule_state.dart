@@ -1,29 +1,48 @@
 part of 'schedule_bloc.dart';
+
+enum ScheduleStatus { initial, loading, more, success, failure, failureNews }
+
+enum SyncStatus { initial, loading, success, failure }
+
 class ScheduleState extends Equatable {
-  const ScheduleState();
-
-  @override
-  List<Object> get props => [];
-}
-
-class ScheduleInitial extends ScheduleState {}
-
-class ScheduleLoading extends ScheduleState {}
-
-class ScheduleLoaded extends ScheduleState {
-  final SpecificResponse<Schedule> data;
-
-  ScheduleLoaded(this.data);
-
-  @override
-  List<Object> get props => [data];
-}
-
-class ScheduleError extends ScheduleState {
+  final ScheduleStatus status;
+  final List<Schedule> schedules;
   final String message;
+  final TreeNode? locationNode;
+  final List<int> locationIds;
+  final SyncStatus syncStatus;
+  final int isMoreOrRefresh;
 
-  ScheduleError(this.message);
+  const ScheduleState({
+    this.status = ScheduleStatus.initial,
+    this.schedules = const [],
+    this.message = '',
+    this.locationNode,
+    this.locationIds = const [],
+    this.syncStatus = SyncStatus.initial,
+    this.isMoreOrRefresh = 0,
+  });
+
+  ScheduleState copyWith({
+    ScheduleStatus? status,
+    List<Schedule>? schedules,
+    String? message,
+    TreeNode? locationNode,
+    List<int>? locationIds,
+    SyncStatus? syncStatus,
+    int? isMoreOrRefresh,
+  }) {
+    return ScheduleState(
+      status: status ?? this.status,
+      schedules: schedules ?? this.schedules,
+      message: message ?? this.message,
+      locationNode: locationNode ?? this.locationNode,
+      locationIds: locationIds ?? this.locationIds,
+      syncStatus: syncStatus ?? this.syncStatus,
+      isMoreOrRefresh: isMoreOrRefresh ?? this.isMoreOrRefresh,
+    );
+  }
 
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [status, schedules, message, locationNode, locationIds, syncStatus, isMoreOrRefresh];
 }

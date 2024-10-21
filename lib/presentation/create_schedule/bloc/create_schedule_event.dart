@@ -7,14 +7,22 @@ class CreateScheduleEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class CreateSchedule extends CreateScheduleEvent {}
+class CreateSchedule extends CreateScheduleEvent {
+  String name;
 
-class InitializeCreateScheduleEvent extends CreateScheduleEvent {}
+  CreateSchedule(this.name);
 
-class SelectLocationEvent extends CreateScheduleEvent {
-  final String locationName;
+  @override
+  List<Object> get props => [name];
+}
 
-  const SelectLocationEvent(this.locationName);
+class SelectLocation extends CreateScheduleEvent {
+  final TreeNode location;
+
+  const SelectLocation(this.location);
+
+  @override
+  List<Object> get props => [location];
 }
 
 class SelectDevice extends CreateScheduleEvent {
@@ -31,9 +39,19 @@ class SelectAllDevices extends CreateScheduleEvent {
 }
 
 class AddDateEvent extends CreateScheduleEvent {
-  final DateTime date;
+  final String date;
 
   const AddDateEvent(this.date);
+}
+
+class CopyDate extends CreateScheduleEvent {
+  final ScheduleDate scheduleDate;
+  final List<String> dates;
+
+  const CopyDate(this.scheduleDate, this.dates);
+
+  @override
+  List<Object> get props => [scheduleDate, dates];
 }
 
 class AddPlaylist extends CreateScheduleEvent {
@@ -138,3 +156,5 @@ class RemoveScheduleDate extends CreateScheduleEvent {
   @override
   List<Object> get props => [dateIndex];
 }
+
+class ResetCreateSchedule extends CreateScheduleEvent {}

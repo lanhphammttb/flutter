@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:nttcs/core/theme/custom_text_style.dart';
 import 'package:nttcs/data/models/schedule.dart';
 import 'package:nttcs/widgets/custom_bottom_sheet.dart';
 import 'package:nttcs/widgets/custom_elevated_button.dart';
@@ -17,8 +18,15 @@ class ScheduleScreen extends StatefulWidget {
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
   final TextEditingController _controller = TextEditingController();
+  late ScheduleBloc scheduleBloc;
   String _searchQuery = '';
   String _filter = 'all'; // Biến để lưu trữ trạng thái bộ lọc
+
+  @override
+  void initState() {
+    super.initState();
+    scheduleBloc = context.read<ScheduleBloc>();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +38,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           Expanded(
             child: BlocBuilder<ScheduleBloc, ScheduleState>(
               builder: (context, state) {
-                if (state is ScheduleLoading) {
+                if (state.status == ScheduleStatus.loading) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (state is ScheduleLoaded) {
-                  final filteredItems = state.data.items.where((schedule) {
+                } else if (state.status == ScheduleStatus.success) {
+                  final filteredItems = state.schedules.where((schedule) {
                     final matchesSearch = schedule.name?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false;
 
                     if (_filter == 'all') {
@@ -52,16 +60,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     return const Center(child: Text('Không có lịch phát nào.'));
                   }
 
-                  return ListView.builder(
-                    itemCount: filteredItems.length,
-                    itemBuilder: (context, index) {
-                      final schedule = filteredItems[index];
-                      final createdTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(schedule.createdTime!));
-                      final modifiedTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(schedule.modifiedTime!));
-                      return _buildScheduleCard(schedule, createdTime, modifiedTime);
-                    },
-                  );
-                } else if (state is ScheduleError) {
+                  return RefreshIndicator(
+                      // Thêm RefreshIndicator ở đây
+                      onRefresh: () async => scheduleBloc.add(const FetchSchedule(1)),
+                      child: ListView.builder(
+                        itemCount: filteredItems.length,
+                        itemBuilder: (context, index) {
+                          final schedule = filteredItems[index];
+                          final createdTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(schedule.createdTime!));
+                          final modifiedTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(schedule.modifiedTime!));
+                          return _buildScheduleCard(schedule, createdTime, modifiedTime);
+                        },
+                      ));
+                } else if (state.status == ScheduleStatus.failure) {
                   return Center(
                     child: Text('Lỗi: ${state.message}', style: const TextStyle(color: Colors.red)),
                   );
@@ -78,18 +89,27 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   Widget _buildControlPanel() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          CustomElevatedButton(
-            onPressed: () {
-              // ở đây mở ra screen create schedule để tạo lịch phát
-              Navigator.pushNamed(context, '/create-schedule');
-            },
-            text: 'Lập lịch',
-            leftIcon: const Icon(Icons.add_rounded, color: Colors.white),
-          ),
-        ],
+      child: BlocBuilder<ScheduleBloc, ScheduleState>(
+        builder: (context, state) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              CustomElevatedButton(
+                onPressed: () {
+                  if (state.locationNode?.level == 3) {
+                    Navigator.pushNamed(context, '/create-schedule', arguments: state.locationNode);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Vui lòng chọn địa bàn cấp xã!')),
+                    );
+                  }
+                },
+                text: 'Lập lịch',
+                leftIcon: const Icon(Icons.add_rounded, color: Colors.white),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -187,10 +207,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             },
             padding: const EdgeInsets.symmetric(vertical: 1.0),
             backgroundColor: Colors.red, // Màu nền đỏ cho nút xóa
-            child: Column(
+            child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Icon(Icons.delete, color: Colors.white, size: 24),
                 SizedBox(height: 4),
                 Text(
@@ -201,14 +221,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             ),
           ),
           CustomSlidableAction(
-            onPressed: (context) {
-              // Hành động cho nút phát lịch
-            },
+            onPressed: (context) => scheduleBloc.add(SyncSchedule(schedule.id)),
             backgroundColor: Colors.orange,
             padding: const EdgeInsets.symmetric(vertical: 1.0),
-            child: Column(
+            child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Icon(Icons.sync, color: Colors.white, size: 28),
                 SizedBox(height: 4),
                 Text(
@@ -224,9 +242,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             },
             backgroundColor: Colors.blue,
             padding: const EdgeInsets.symmetric(vertical: 1.0),
-            child: Column(
+            child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Icon(Icons.edit, color: Colors.white, size: 28),
                 SizedBox(height: 4),
                 Text(
@@ -274,7 +292,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         Expanded(
           child: Text(
             schedule.name ?? 'Lịch không xác định',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue),
+            style: CustomTextStyles.titleLargeBlue800,
           ),
         ),
         const SizedBox(width: 8),
@@ -288,7 +306,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildInfoText('Địa bàn', schedule.siteMapName ?? 'Không xác định'),
-        _buildInfoText('Lặp lại', '${schedule.attributes} ngày'),
+        _buildInfoText('Lặp lại', '${schedule.scheduleDates.length} ngày'),
         _buildInfoText('Thiết bị', 'Tất cả'),
       ],
     );

@@ -7,4 +7,6 @@ class Constants {
   static const selectCode = 'SelectCode';
   static const siteMapId = 'SiteMapId';
   static const int pageSize = 30;
+  static const String formatDate = 'yyyy-MM-dd';
+  static const String formatDate2 = 'dd-MM-yyyy';
 }

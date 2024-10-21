@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
@@ -14,7 +15,6 @@ import 'package:nttcs/data/models/location.dart';
 import 'package:nttcs/data/models/res_overview.dart';
 import 'package:nttcs/data/models/schedule.dart';
 import 'package:nttcs/data/models/schedule_date.dart';
-import 'package:nttcs/data/models/schedule_request.dart';
 import 'package:nttcs/data/models/specific_response.dart';
 import 'package:nttcs/data/models/specific_status_reponse.dart';
 import 'package:nttcs/data/models/user.dart';
@@ -86,7 +86,7 @@ class AuthApiClient {
 
       final result = SpecificResponse<User>.fromJson(
         response.data,
-        (item) => User.fromJson(item as Map<String, dynamic>),
+            (item) => User.fromJson(item as Map<String, dynamic>),
       );
 
       if (result.items.isNotEmpty) {
@@ -114,7 +114,7 @@ class AuthApiClient {
 
       return SpecificResponse<Device>.fromJson(
         response.data,
-        (item) => Device.fromJson(item as Map<String, dynamic>),
+            (item) => Device.fromJson(item as Map<String, dynamic>),
       );
     } on DioException catch (e) {
       if (e.response != null) {
@@ -144,7 +144,7 @@ class AuthApiClient {
 
       return SpecificResponse<Device2>.fromJson(
         response.data,
-        (item) => Device2.fromJson(item as Map<String, dynamic>),
+            (item) => Device2.fromJson(item as Map<String, dynamic>),
       );
     } on DioException catch (e) {
       if (e.response != null) {
@@ -159,7 +159,8 @@ class AuthApiClient {
 
   Future<SpecificResponse<ResOverview>> getOverview() async {
     try {
-      final stopwatch = Stopwatch()..start();
+      final stopwatch = Stopwatch()
+        ..start();
 
       final [token, code, selectCode] = authLocalDataSource.getValue([Constants.token, Constants.code, Constants.selectCode]);
       final response = await dio.get(
@@ -174,7 +175,7 @@ class AuthApiClient {
       log('API call duration: ${stopwatch.elapsedMicroseconds} µs');
       return SpecificResponse<ResOverview>.fromJson(
         response.data,
-        (item) => ResOverview.fromJson(item as Map<String, dynamic>),
+            (item) => ResOverview.fromJson(item as Map<String, dynamic>),
       );
     } on DioException catch (e) {
       if (e.response != null) {
@@ -198,7 +199,7 @@ class AuthApiClient {
 
       return SpecificResponse<Location>.fromJson(
         response.data,
-        (item) => Location.fromJson(item as Map<String, dynamic>),
+            (item) => Location.fromJson(item as Map<String, dynamic>),
       );
     } on DioException catch (e) {
       if (e.response != null) {
@@ -211,7 +212,7 @@ class AuthApiClient {
     }
   }
 
-  Future<SpecificResponse<Schedule>> getSchedules(int page, int reload) async {
+  Future<SpecificResponse<Schedule>> getSchedules(List<int> locationIds, int page, int reload) async {
     try {
       final [token, id] = authLocalDataSource.getValue([Constants.token, Constants.id]);
       final response = await dio.post(
@@ -220,7 +221,7 @@ class AuthApiClient {
         data: {
           'Type': 'IPRADIO',
           'SiteId': id,
-          'SiteMapIds': [769, 770, 771, 772, 773, 774, 775, 776, 777, 778],
+          'SiteMapIds': locationIds,
           'Page': page,
           'Size': Constants.pageSize * reload,
         },
@@ -228,7 +229,7 @@ class AuthApiClient {
 
       return SpecificResponse<Schedule>.fromJson(
         response.data,
-        (item) => Schedule.fromJson(item as Map<String, dynamic>),
+            (item) => Schedule.fromJson(item as Map<String, dynamic>),
       );
     } catch (e) {
       throw Exception('An error occurred: $e');
@@ -237,75 +238,48 @@ class AuthApiClient {
 
   Future<SpecificStatusResponse<Schedule>> createSchedule(int locationSelected, String name, List<ScheduleDate> scheduleDates, List<Device> devices, int id) async {
     try {
-      // Map devices to device IDs
-      final [token] = authLocalDataSource.getValue([Constants.token]);
-      List<int> deviceIds = devices.map((device) => device.id).toList();
+      final [token, siteId] = authLocalDataSource.getValue([Constants.token, Constants.id]);
 
-      List<ScheduleDate> formatSchedules = scheduleDates.map((scheduleDate) {
-        List<SchedulePlaylistTime> playlistTimes = scheduleDate.schedulePlaylistTimes.map((playlistTime) {
-          List<Playlist> playlists = playlistTime.playlists.map((playlist) {
-            return Playlist(
-              id: playlist.id,
-              order: playlist.order,
-              mediaProjectId: playlist.mediaProjectId,
-              thoiLuong: playlist.thoiLuong,
-            );
-          }).toList();
+      final data = {
+        'Name': name,
+        'Id': id,
+        'Attributes': 'IPRADIO',
+        'SiteId': siteId,
+        'SiteMapId': locationSelected.toString(),
+        'ScheduleDates': scheduleDates.map((date) => date.toJson()).toList(),
+        'Devices': devices.map((device) => device.id).toList(),
+      };
+      log('Request JSON: ${jsonEncode(data)}');
 
-          return SchedulePlaylistTime(
-            id: playlistTime.id,
-            name: playlistTime.name,
-            start: playlistTime.start,
-            end: playlistTime.end,
-            playlists: playlists,
-          );
-        }).toList();
-
-        return ScheduleDate(
-          id: scheduleDate.id,
-          date: scheduleDate.date,
-          schedulePlaylistTimes: playlistTimes,
-        );
-      }).toList();
-
-      // Tạo request
-      ScheduleRequest scheduleRequest = ScheduleRequest(
-        name: name,
-        id: id,
-        attributes: '',
-        siteId: 5,
-        siteMapId: locationSelected,
-        scheduleDates: formatSchedules,
-        devices: deviceIds,
-      );
-
-      // Gửi yêu cầu POST
       final response = await dio.post(
-        'Schedule/data',
+        'Schedule/insertorupdate',
         token: token,
-        data: scheduleRequest.toJson(),
+        data: data,
       );
-
-      // Xử lý phản hồi từ API
       return SpecificStatusResponse<Schedule>.fromJson(
         response.data,
-        (item) => Schedule.fromJson(item as Map<String, dynamic>),
+            (item) => Schedule.fromJson(item as Map<String, dynamic>),
       );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message']);
+      } else {
+        throw Exception(e.message);
+      }
     } catch (e) {
-      // Xử lý lỗi trong quá trình gọi API hoặc chuyển đổi dữ liệu
       throw Exception('An error occurred: $e');
     }
   }
 
-  Future<SpecificResponse<Content>> getNews(int contentType, int page, int reload) async {
+  Future<SpecificResponse<Content>> getNews(int contentType, String code, int page, int reload) async {
     try {
-      final [token, code] = authLocalDataSource.getValue([Constants.token, Constants.code]);
+      final [token, codeAccount] = authLocalDataSource.getValue([Constants.token, Constants.code]);
       final response = await dio.get(
         'content/publish/list',
         token: token,
         queryParameters: {
           'contentType': contentType,
-          'code': code,
+          'code': code ?? codeAccount,
           'page': page,
           'size': Constants.pageSize * reload,
         },
@@ -313,7 +287,7 @@ class AuthApiClient {
 
       return SpecificResponse<Content>.fromJson(
         response.data,
-        (item) => Content.fromJson(item as Map<String, dynamic>),
+            (item) => Content.fromJson(item as Map<String, dynamic>),
       );
     } on DioException catch (e) {
       if (e.response != null) {
@@ -333,7 +307,7 @@ class AuthApiClient {
 
       return SpecificStatusResponse<Information>.fromJson(
         response.data,
-        (item) => Information.fromJson(item as Map<String, dynamic>),
+            (item) => Information.fromJson(item as Map<String, dynamic>),
       );
     } on DioException catch (e) {
       if (e.response != null) {
@@ -365,7 +339,7 @@ class AuthApiClient {
 
       return SpecificStatusResponse<dynamic>.fromJson(
         response.data,
-        (item) => item,
+            (item) => item,
       );
     } on DioException catch (e) {
       if (e.response != null) {
@@ -392,6 +366,28 @@ class AuthApiClient {
           'Duration': content.thoiLuong,
           'Otp': '',
           'CumLoaID': devices,
+        },
+      );
+
+      return SpecificStatusResponse<dynamic>.fromJson(
+        response.data,
+            (item) => item,
+      );
+    } catch (e) {
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  Future<SpecificStatusResponse<dynamic>> syncSchedule(int id) async {
+    try {
+      final [token, siteId] = authLocalDataSource.getValue([Constants.token, Constants.id]);
+      final response = await dio.post(
+        'Schedule/updateToDevice',
+        token: token,
+        data: {
+          'Type': 'IPRADIO',
+          'Id': id,
+          'SiteId': siteId,
         },
       );
 

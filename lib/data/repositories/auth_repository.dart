@@ -4,7 +4,6 @@ import 'package:nttcs/core/api/api_service.dart';
 import 'package:nttcs/core/constants/constants.dart';
 import 'package:nttcs/data/models/content.dart';
 import 'package:nttcs/data/models/device.dart';
-import 'package:nttcs/data/models/device2.dart';
 import 'package:nttcs/data/models/schedule_date.dart';
 import 'package:nttcs/data/result_type.dart';
 
@@ -108,9 +107,9 @@ class AuthRepository {
     }
   }
 
-  Future<Result<void>> getSchedules(int page, int reload) async {
+  Future<Result<void>> getSchedules(List<int> locationIds, int page, int reload) async {
     try {
-      final result = await authApiClient.getSchedules(page, reload);
+      final result = await authApiClient.getSchedules(locationIds, page, reload);
       return Success(result);
     } catch (e) {
       return Failure('$e');
@@ -126,9 +125,9 @@ class AuthRepository {
     }
   }
 
-  Future<Result<void>> getNews(int contentType,int page, int reload) async {
+  Future<Result<void>> getNews(int contentType, String code, int page, int reload) async {
     try {
-      final result = await authApiClient.getNews(contentType, page, reload);
+      final result = await authApiClient.getNews(contentType, code, page, reload);
       return Success(result);
     } catch (e) {
       return Failure('$e');
@@ -164,6 +163,15 @@ class AuthRepository {
   Future<Result<void>> playNow(List<String> devices, Content content) async {
     try {
       final result = await authApiClient.playNow(devices, content);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> syncSchedule(int id) async {
+    try {
+      final result = await authApiClient.syncSchedule(id);
       return Success(result);
     } catch (e) {
       return Failure('$e');

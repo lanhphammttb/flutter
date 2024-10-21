@@ -4,7 +4,6 @@ class AppInterceptors extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
-    // Kiểm tra và thêm token nếu có trong headers
     if (options.headers.containsKey("Authorization")) {
       final token = options.headers["Authorization"];
       options.headers["Authorization"] = "Bearer $token";
@@ -64,7 +63,7 @@ class RetryInterceptor extends Interceptor {
           queryParameters: err.requestOptions.queryParameters,
         );
       } catch (e) {
-        return super.onError(err, handler); // Nếu retry thất bại thì xử lý lỗi bình thường
+        return super.onError(err, handler);
       }
     }
     return super.onError(err, handler);

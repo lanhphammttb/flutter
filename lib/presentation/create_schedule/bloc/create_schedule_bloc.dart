@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:nttcs/core/constants/constants.dart';
 import 'package:nttcs/data/models/content.dart';
 import 'package:nttcs/data/models/device.dart';
 import 'package:nttcs/data/models/location.dart';
@@ -20,20 +21,14 @@ part 'create_schedule_state.dart';
 
 class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> {
   final AuthRepository authRepository;
-  int locationSelected = 0;
-  String name = '';
-  List<ScheduleDate> scheduleDates = [];
-  List<Device> devices = [];
-  int id = 0;
-  bool isInitialized = false; // Biến cờ để tránh khởi tạo lại khi không cần thiết
 
   CreateScheduleBloc(this.authRepository) : super(const CreateScheduleState()) {
     on<CreateSchedule>(_onCreateSchedule);
-    on<SelectLocationEvent>(_onSelectLocation);
+    on<SelectLocation>(_onSelectLocation);
     on<SelectDevice>(_onSelectDevice);
     on<SelectAllDevices>(_onSelectAllDevices);
     on<AddDateEvent>(_onAddDate);
-    on<InitializeCreateScheduleEvent>(_initializeCreateSchedule);
+    on<CopyDate>(_onCopyDate);
     on<SearchTextChanged>(_onSearchTextChanged);
     on<DeviceSearchTextChanged>(_onDeviceSearchTextChanged);
     on<ExpandNodeEvent>(_onExpandNode);
@@ -46,24 +41,22 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
     on<AddTimeLine>(_onAddTimeLine);
     on<AddScheduleDate>(_onAddScheduleDate);
     on<RemoveScheduleDate>(_onRemoveScheduleDate);
+    on<ResetCreateSchedule>(_onResetCreateSchedule);
   }
 
   Future<void> _onCreateSchedule(CreateSchedule event, Emitter<CreateScheduleState> emit) async {
-    // emit(CreateScheduleLoading());
-    // final result = await authRepository.createSchedule(
-    //     locationSelected, name, scheduleDates, devices, id);
-    //
-    // if (result is Success) {
-    //   emit(
-    //       ScheduleSaved()); // Sau khi lưu, chuyển đến trạng thái 'ScheduleSaved'
-    // } else if (result is Failure) {
-    //   emit(CreateScheduleError(result.message));
-    // }
+    emit(state.copyWith(status: CreateScheduleStatus.loading));
+    final result = await authRepository.createSchedule(state.location!.id, event.name, state.scheduleDates, state.devices, 0);
+
+    if (result is Success) {
+      emit(state.copyWith(status: CreateScheduleStatus.success));
+    } else if (result is Failure) {
+      emit(state.copyWith(status: CreateScheduleStatus.failure, message: result.message));
+    }
   }
 
-  void _onSelectLocation(SelectLocationEvent event, Emitter<CreateScheduleState> emit) async {
-    emit(state.copyWith(location: event.locationName));
-    _updateState(emit); // Cập nhật trạng thái
+  void _onSelectLocation(SelectLocation event, Emitter<CreateScheduleState> emit) async {
+    emit(state.copyWith(location: event.location));
   }
 
   void _onSelectDevice(SelectDevice event, Emitter<CreateScheduleState> emit) async {
@@ -90,12 +83,6 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
   }
 
   Future<void> _onAddDate(AddDateEvent event, Emitter<CreateScheduleState> emit) async {
-    scheduleDates.add(ScheduleDate(
-      id: 0,
-      date: event.date.toIso8601String(),
-      datesCopy: '',
-      schedulePlaylistTimes: [],
-    ));
     _updateState(emit); // Cập nhật trạng thái
   }
 
@@ -108,20 +95,6 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
     //   // Cập nhật thiết bị
     //   selectedDates: scheduleDates.map((d) => DateTime.parse(d.date)).toList(), // Cập nhật danh sách ngày phát
     // ));
-  }
-
-  Future<void> _initializeCreateSchedule(InitializeCreateScheduleEvent event, Emitter<CreateScheduleState> emit) async {
-    // if (!isInitialized) {
-    //   emit(CreateScheduleLoading());
-    //   // Any initialization logic, such as fetching necessary data
-    //   await Future.delayed(Duration(seconds: 1)); // Simulate a delay for initialization
-    //   emit(CreateScheduleUpdated(
-    //     location: 'Chưa chọn',
-    //     device: 'Toàn bộ địa bàn',
-    //     selectedDates: [],
-    //   ));
-    //   isInitialized = true; // Đánh dấu đã khởi tạo xong
-    // }
   }
 
   void _emitLoadingStateDelayed(Emitter<CreateScheduleState> emit) {
@@ -150,11 +123,10 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
   Future<void> _onFetchDevices(FetchDevices event, Emitter<CreateScheduleState> emit) async {
     emit(state.copyWith(deviceStatus: DeviceStatus.loading));
 
-    final result = await authRepository.getDevice(754, 1);
+    final result = await authRepository.getDevice(state.location!.id, 1);
     switch (result) {
       case Success(data: final data as SpecificResponse<Device>):
-        devices = data.items;
-        emit(state.copyWith(deviceStatus: DeviceStatus.success, devices: devices));
+        emit(state.copyWith(deviceStatus: DeviceStatus.success, devices: data.items));
         break;
       case Failure(message: final error):
         emit(state.copyWith(deviceStatus: DeviceStatus.failure, message: error));
@@ -207,7 +179,7 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
 
   Future<void> _onFetchNews(FetchNews3 event, Emitter<CreateScheduleState> emit) async {
     emit(state.copyWith(contentType: event.contentType));
-    final result = await authRepository.getNews(event.contentType, 1, 1);
+    final result = await authRepository.getNews(event.contentType, state.location!.code, 1, 1);
 
     switch (result) {
       case Success(data: final data as SpecificResponse<Content>):
@@ -235,29 +207,55 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
       name: event.nameTimeLine,
       start: event.startTime,
       end: event.endTime,
-      playlists: state.selectedNews.map((content) => Playlist(id: 0, order: state.selectedNews.indexOf(content), mediaProjectId: content.banTinId, thoiLuong: content.thoiLuong)).toList(),
+      playlists: state.selectedNews.asMap().entries.map((entry) {
+        final index = entry.key;
+        final content = entry.value;
+        return Playlist(
+          id: 0,
+          order: index,
+          mediaProjectId: content.banTinId,
+          thoiLuong: content.thoiLuong,
+        );
+      }).toList(),
     );
 
     final updatedScheduleDates = List<SchedulePlaylistTime>.from(state.schedulePlaylistTimes)..add(schedulePlaylistTime);
 
-    emit(state.copyWith(schedulePlaylistTimes: updatedScheduleDates));
+    emit(state.copyWith(schedulePlaylistTimes: updatedScheduleDates, selectedNews: []));
   }
 
   void _onAddScheduleDate(AddScheduleDate event, Emitter<CreateScheduleState> emit) {
     ScheduleDate scheduleDate = ScheduleDate(
       id: 0,
-      date: state.dateString == '' ? DateFormat('dd-MM-yyyy').format(DateTime.now()) : state.dateString,
+      date: state.dateString == '' ? DateFormat(Constants.formatDate).format(DateTime.now()) : state.dateString,
       schedulePlaylistTimes: state.schedulePlaylistTimes,
     );
 
     final updatedScheduleDates = List<ScheduleDate>.from(state.scheduleDates)..add(scheduleDate);
 
-    emit(state.copyWith(scheduleDates: updatedScheduleDates));
+    emit(state.copyWith(scheduleDates: updatedScheduleDates, schedulePlaylistTimes: []));
   }
 
   void _onRemoveScheduleDate(RemoveScheduleDate event, Emitter<CreateScheduleState> emit) {
     final updatedScheduleDates = List<ScheduleDate>.from(state.scheduleDates)..removeAt(event.dateIndex);
 
     emit(state.copyWith(scheduleDates: updatedScheduleDates));
+  }
+
+  void _onCopyDate(CopyDate event, Emitter<CreateScheduleState> emit) {
+    final updatedScheduleDates = [
+      ...state.scheduleDates,
+      ...event.dates.map((date) => ScheduleDate(
+            id: 0,
+            date: date,
+            schedulePlaylistTimes: List.from(event.scheduleDate.schedulePlaylistTimes),
+          )),
+    ];
+
+    emit(state.copyWith(scheduleDates: updatedScheduleDates));
+  }
+
+  void _onResetCreateSchedule(ResetCreateSchedule event, Emitter<CreateScheduleState> emit) {
+    emit(const CreateScheduleState());
   }
 }

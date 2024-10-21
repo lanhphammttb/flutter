@@ -15,14 +15,23 @@ ScheduleDate _$ScheduleDateFromJson(Map<String, dynamic> json) => ScheduleDate(
           .toList(),
     );
 
-Map<String, dynamic> _$ScheduleDateToJson(ScheduleDate instance) =>
-    <String, dynamic>{
-      'Id': instance.id,
-      'Date': instance.date,
-      'DatesCopy': instance.datesCopy,
-      'SchedulePlaylistTimes':
-          instance.schedulePlaylistTimes.map((e) => e.toJson()).toList(),
-    };
+Map<String, dynamic> _$ScheduleDateToJson(ScheduleDate instance) {
+  final val = <String, dynamic>{
+    'Id': instance.id,
+    'Date': instance.date,
+  };
+
+  void writeNotNull(String key, dynamic value) {
+    if (value != null) {
+      val[key] = value;
+    }
+  }
+
+  writeNotNull('DatesCopy', instance.datesCopy);
+  val['SchedulePlaylistTimes'] =
+      instance.schedulePlaylistTimes.map((e) => e.toJson()).toList();
+  return val;
+}
 
 SchedulePlaylistTime _$SchedulePlaylistTimeFromJson(
         Map<String, dynamic> json) =>
@@ -68,25 +77,35 @@ Playlist _$PlaylistFromJson(Map<String, dynamic> json) => Playlist(
       duration: json['Duration'] as String?,
     );
 
-Map<String, dynamic> _$PlaylistToJson(Playlist instance) => <String, dynamic>{
-      'Id': instance.id,
-      'Order': instance.order,
-      'MediaProjectId': instance.mediaProjectId,
-      'BroadcastRegion': instance.broadcastRegion,
-      'BanTinId': instance.banTinId,
-      'TieuDe': instance.tieuDe,
-      'LoaiLinhVuc': instance.loaiLinhVuc,
-      'LoaiBanTin': instance.loaiBanTin,
-      'MucDoUuTien': instance.mucDoUuTien,
-      'NguonId': instance.nguonId,
-      'NoiDung': instance.noiDung,
-      'NoiDungTomTat': instance.noiDungTomTat,
-      'ThoiLuong': instance.thoiLuong,
-      'NguonTin': instance.nguonTin,
-      'VungPhat': instance.vungPhat,
-      'TacGia': instance.tacGia?.toJson(),
-      'Duration': instance.duration,
-    };
+Map<String, dynamic> _$PlaylistToJson(Playlist instance) {
+  final val = <String, dynamic>{
+    'Id': instance.id,
+    'Order': instance.order,
+    'MediaProjectId': instance.mediaProjectId,
+  };
+
+  void writeNotNull(String key, dynamic value) {
+    if (value != null) {
+      val[key] = value;
+    }
+  }
+
+  writeNotNull('BroadcastRegion', instance.broadcastRegion);
+  writeNotNull('BanTinId', instance.banTinId);
+  writeNotNull('TieuDe', instance.tieuDe);
+  writeNotNull('LoaiLinhVuc', instance.loaiLinhVuc);
+  writeNotNull('LoaiBanTin', instance.loaiBanTin);
+  writeNotNull('MucDoUuTien', instance.mucDoUuTien);
+  writeNotNull('NguonId', instance.nguonId);
+  writeNotNull('NoiDung', instance.noiDung);
+  writeNotNull('NoiDungTomTat', instance.noiDungTomTat);
+  val['ThoiLuong'] = instance.thoiLuong;
+  writeNotNull('NguonTin', instance.nguonTin);
+  writeNotNull('VungPhat', instance.vungPhat);
+  writeNotNull('TacGia', instance.tacGia?.toJson());
+  writeNotNull('Duration', instance.duration);
+  return val;
+}
 
 TacGia _$TacGiaFromJson(Map<String, dynamic> json) => TacGia(
       tenDayDu: json['TenDayDu'] as String,

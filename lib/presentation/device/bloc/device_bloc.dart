@@ -42,6 +42,10 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     switch (event.isMoreOrRefresh) {
       case 0:
         emit(state.copyWith(status: DeviceStatus.loading));
+
+        if (event.code != null) {
+          emit(state.copyWith(code: event.code));
+        }
         break;
       case 1:
         if (_currentPage > totalPage || totalPage == 1) {
@@ -181,6 +185,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
 
     final result = await authRepository.getNews(
         event.contentType ?? state.contentType,
+        state.code,
         event.isMoreOrRefresh == 1 ? _currentPage : 1,
         event.isMoreOrRefresh == 1
             ? 1
