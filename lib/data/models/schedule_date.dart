@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:nttcs/core/utils/functions.dart';
 
 part 'schedule_date.g.dart';
 
@@ -10,7 +11,7 @@ class ScheduleDate {
   @JsonKey(name: 'Date')
   String date;
 
-  @JsonKey(name: 'DatesCopy', includeIfNull: false)
+  @JsonKey(name: 'DatesCopy', defaultValue: '')
   String? datesCopy;
 
   @JsonKey(name: 'SchedulePlaylistTimes')
@@ -33,10 +34,22 @@ class ScheduleDate {
     }
   }
 
-  factory ScheduleDate.fromJson(Map<String, dynamic> json) =>
-      _$ScheduleDateFromJson(json);
+  factory ScheduleDate.fromJson(Map<String, dynamic> json) => _$ScheduleDateFromJson(json);
 
   Map<String, dynamic> toJson() => _$ScheduleDateToJson(this);
+
+  ScheduleDate copyWith({
+    int? id,
+    String? date,
+    List<SchedulePlaylistTime>? schedulePlaylistTimes,
+  }) {
+    return ScheduleDate(
+      id: id ?? this.id,
+      date: date ?? this.date,
+      schedulePlaylistTimes: schedulePlaylistTimes ?? this.schedulePlaylistTimes,
+    );
+  }
+
 }
 
 @JsonSerializable(explicitToJson: true)
@@ -64,8 +77,7 @@ class SchedulePlaylistTime {
     required this.playlists,
   });
 
-  factory SchedulePlaylistTime.fromJson(Map<String, dynamic> json) =>
-      _$SchedulePlaylistTimeFromJson(json);
+  factory SchedulePlaylistTime.fromJson(Map<String, dynamic> json) => _$SchedulePlaylistTimeFromJson(json);
 
   Map<String, dynamic> toJson() => _$SchedulePlaylistTimeToJson(this);
 }
@@ -78,10 +90,10 @@ class Playlist {
   @JsonKey(name: 'Order')
   int order;
 
-  @JsonKey(name: 'MediaProjectId')
+  @JsonKey(name: 'MediaProjectId', includeIfNull: false, fromJson: fromJsonToString)
   String mediaProjectId;
 
-  @JsonKey(name: 'BroadcastRegion', includeIfNull: false)
+  @JsonKey(name: 'BroadcastRegion', includeIfNull: false, fromJson: fromJsonToString)
   String? broadcastRegion;
 
   @JsonKey(name: 'BanTinId', includeIfNull: false)
@@ -143,8 +155,7 @@ class Playlist {
     this.duration,
   });
 
-  factory Playlist.fromJson(Map<String, dynamic> json) =>
-      _$PlaylistFromJson(json);
+  factory Playlist.fromJson(Map<String, dynamic> json) => _$PlaylistFromJson(json);
 
   Map<String, dynamic> toJson() => _$PlaylistToJson(this);
 }

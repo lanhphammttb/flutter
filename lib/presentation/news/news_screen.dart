@@ -19,7 +19,7 @@ class NewsScreen extends StatefulWidget {
 class _NewsScreenState extends State<NewsScreen> {
   late TextEditingController _searchController;
   late NewsBloc newsBloc;
-  final ScrollController _scrollController = ScrollController(); // Tạo ScrollController
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {

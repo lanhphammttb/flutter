@@ -177,4 +177,22 @@ class AuthRepository {
       return Failure('$e');
     }
   }
+
+  Future<Result<void>> delSchedule(int id) async {
+    try {
+      final result = await authApiClient.delSchedule(id);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> getDetailSchedule(int scheduleId) async{
+    try {
+      final result = await authApiClient.getDetailSchedule(scheduleId);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
 }

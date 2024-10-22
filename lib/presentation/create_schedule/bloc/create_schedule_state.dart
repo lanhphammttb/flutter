@@ -17,7 +17,6 @@ class CreateScheduleState extends Equatable {
   final DateTime? date;
   final List<TreeNode> treeNodes;
   final List<TreeNode> originalTreeNodes;
-  final TreeNode? location;
   final List<Device> devices;
   final List<Content> news;
   final List<int> selectedDeviceIds;
@@ -33,6 +32,12 @@ class CreateScheduleState extends Equatable {
   final int contentType;
   final List<SchedulePlaylistTime> schedulePlaylistTimes;
   final List<ScheduleDate> scheduleDates;
+  final String locationName;
+  final DetailSchedule? detailSchedule;
+  final String scheduleName;
+  final String locationCode;
+  final DelStatus delStatus;
+  final SyncStatus syncStatus;
 
   const CreateScheduleState({
     this.data,
@@ -46,7 +51,6 @@ class CreateScheduleState extends Equatable {
     this.date,
     this.treeNodes = const [],
     this.originalTreeNodes = const [],
-    this.location,
     this.devices = const [],
     this.news = const [],
     this.selectedDeviceIds = const [],
@@ -61,6 +65,12 @@ class CreateScheduleState extends Equatable {
     this.contentType = 3,
     this.schedulePlaylistTimes = const [],
     this.scheduleDates = const [],
+    this.locationName = '',
+    this.detailSchedule,
+    this.scheduleName = '',
+    this.locationCode = '',
+    this.delStatus = DelStatus.initial,
+    this.syncStatus = SyncStatus.initial,
   });
 
   CreateScheduleState copyWith({
@@ -75,7 +85,6 @@ class CreateScheduleState extends Equatable {
     DateTime? date,
     List<TreeNode>? treeNodes,
     List<TreeNode>? originalTreeNodes,
-    TreeNode? location,
     List<Device>? devices,
     List<Content>? news,
     List<int>? selectedDeviceIds,
@@ -91,6 +100,12 @@ class CreateScheduleState extends Equatable {
     int? contentType,
     List<SchedulePlaylistTime>? schedulePlaylistTimes,
     List<ScheduleDate>? scheduleDates,
+    String? locationName,
+    DetailSchedule? detailSchedule,
+    String? scheduleName,
+    String? locationCode,
+    DelStatus? delStatus,
+    SyncStatus? syncStatus,
   }) {
     return CreateScheduleState(
       data: data ?? this.data,
@@ -104,7 +119,6 @@ class CreateScheduleState extends Equatable {
       date: date ?? this.date,
       treeNodes: treeNodes ?? this.treeNodes,
       originalTreeNodes: originalTreeNodes ?? this.originalTreeNodes,
-      location: location ?? this.location,
       devices: devices ?? this.devices,
       news: news ?? this.news,
       selectedDeviceIds: selectedDeviceIds ?? this.selectedDeviceIds,
@@ -119,6 +133,12 @@ class CreateScheduleState extends Equatable {
       contentType: contentType ?? this.contentType,
       schedulePlaylistTimes: schedulePlaylistTimes ?? this.schedulePlaylistTimes,
       scheduleDates: scheduleDates ?? this.scheduleDates,
+      locationName: locationName ?? this.locationName,
+      detailSchedule: detailSchedule ?? this.detailSchedule,
+      scheduleName: scheduleName ?? this.scheduleName,
+      locationCode: locationCode ?? this.locationCode,
+      delStatus: delStatus ?? this.delStatus,
+      syncStatus: syncStatus ?? this.syncStatus,
     );
   }
 
@@ -135,7 +155,6 @@ class CreateScheduleState extends Equatable {
         date,
         treeNodes,
         originalTreeNodes,
-        location,
         devices,
         news,
         selectedDeviceIds,
@@ -150,5 +169,11 @@ class CreateScheduleState extends Equatable {
         contentType,
         schedulePlaylistTimes,
         scheduleDates,
+        locationName,
+        detailSchedule,
+        scheduleName,
+        locationCode,
+        delStatus,
+        syncStatus,
       ];
 }

@@ -4,25 +4,28 @@ class CreateScheduleEvent extends Equatable {
   const CreateScheduleEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class CreateSchedule extends CreateScheduleEvent {
-  String name;
+  final String name;
 
-  CreateSchedule(this.name);
+  const CreateSchedule(this.name);
 
   @override
   List<Object> get props => [name];
 }
 
 class SelectLocation extends CreateScheduleEvent {
-  final TreeNode location;
+  final String locationName;
+  final int locationId;
+  final String? scheduleName;
+  final String? locationCode;
 
-  const SelectLocation(this.location);
+  const SelectLocation(this.locationName, this.locationId, {this.scheduleName, this.locationCode});
 
   @override
-  List<Object> get props => [location];
+  List<Object?> get props => [locationName, locationId, scheduleName, locationCode];
 }
 
 class SelectDevice extends CreateScheduleEvent {
@@ -36,12 +39,6 @@ class SelectDevice extends CreateScheduleEvent {
 
 class SelectAllDevices extends CreateScheduleEvent {
   const SelectAllDevices();
-}
-
-class AddDateEvent extends CreateScheduleEvent {
-  final String date;
-
-  const AddDateEvent(this.date);
 }
 
 class CopyDate extends CreateScheduleEvent {
@@ -95,10 +92,10 @@ class DeviceSearchTextChanged extends SearchTextChanged {
   List<Object> get props => [searchText];
 }
 
-class ExpandNodeEvent extends CreateScheduleEvent {
+class ExpandNode extends CreateScheduleEvent {
   final TreeNode node;
 
-  const ExpandNodeEvent(this.node);
+  const ExpandNode(this.node);
 
   @override
   List<Object> get props => [node];
@@ -157,4 +154,27 @@ class RemoveScheduleDate extends CreateScheduleEvent {
   List<Object> get props => [dateIndex];
 }
 
+class Del2Schedule extends CreateScheduleEvent {}
+
+class Sync2Schedule extends CreateScheduleEvent {
+  final String scheduleName;
+
+  const Sync2Schedule(this.scheduleName);
+
+  @override
+  List<Object> get props => [scheduleName];
+}
+
 class ResetCreateSchedule extends CreateScheduleEvent {}
+
+class FetchDetailSchedule extends CreateScheduleEvent {
+  final int scheduleId;
+  final String locationName;
+  final int locationId;
+  final String scheduleName;
+
+  const FetchDetailSchedule(this.scheduleId, this.locationName, this.locationId, this.scheduleName);
+
+  @override
+  List<Object> get props => [scheduleId, locationName, locationId, scheduleName];
+}

@@ -24,7 +24,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late HomeBloc homeBloc;
-  bool isLocationLoaded = false;
 
   @override
   void initState() {
@@ -110,7 +109,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           if (state.status == HomeStatus.loading) {
                             return const Center(child: CircularProgressIndicator());
                           } else if (state.status == HomeStatus.success && state.treeNodes.isNotEmpty) {
-                            isLocationLoaded = true;
                             return TreeNodeWidget(
                               treeNodes: state.treeNodes,
                               onItemClick: (node) {
@@ -132,9 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ).show(context);
 
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (!isLocationLoaded) {
-                  homeBloc.add(FetchLocations());
-                }
+                homeBloc.add(FetchLocations());
               });
             },
             child: Row(

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:nttcs/core/theme/custom_text_style.dart';
 import 'package:nttcs/data/models/schedule.dart';
+import 'package:nttcs/presentation/create_schedule/bloc/create_schedule_bloc.dart';
 import 'package:nttcs/widgets/custom_bottom_sheet.dart';
 import 'package:nttcs/widgets/custom_elevated_button.dart';
 import 'package:nttcs/widgets/search_field.dart';
+import 'package:shimmer/shimmer.dart';
 import 'bloc/schedule_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
@@ -17,72 +20,152 @@ class ScheduleScreen extends StatefulWidget {
 }
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
-  final TextEditingController _controller = TextEditingController();
+  late TextEditingController _searchController;
+  final ScrollController _scrollController = ScrollController();
   late ScheduleBloc scheduleBloc;
-  String _searchQuery = '';
-  String _filter = 'all'; // Biến để lưu trữ trạng thái bộ lọc
 
   @override
   void initState() {
     super.initState();
     scheduleBloc = context.read<ScheduleBloc>();
+    _scrollController.addListener(_onScroll);
+    _searchController = TextEditingController(text: scheduleBloc.state.searchQuery);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.extentAfter < 200 && scheduleBloc.state.status == ScheduleStatus.success) {
+      scheduleBloc.add(const FetchSchedule(1));
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          _buildControlPanel(),
-          _buildSearchField(),
-          Expanded(
-            child: BlocBuilder<ScheduleBloc, ScheduleState>(
-              builder: (context, state) {
-                if (state.status == ScheduleStatus.loading) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (state.status == ScheduleStatus.success) {
-                  final filteredItems = state.schedules.where((schedule) {
-                    final matchesSearch = schedule.name?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false;
-
-                    if (_filter == 'all') {
-                      return matchesSearch; // Hiển thị tất cả
-                    } else if (_filter == 'draft') {
-                      return matchesSearch && schedule.status == 2;
-                    } else if (_filter == 'used') {
-                      return matchesSearch && schedule.status == 0;
-                    } else if (_filter == 'cancelled') {
-                      return matchesSearch && schedule.status == 1;
-                    }
-                    return false;
-                  }).toList();
-
-                  if (filteredItems.isEmpty) {
-                    return const Center(child: Text('Không có lịch phát nào.'));
+      body: MultiBlocListener(
+          listeners: [
+            BlocListener<ScheduleBloc, ScheduleState>(
+              listenWhen: (previous, current) => previous.syncStatus != current.syncStatus,
+              listener: (context, state) {
+                if (state.syncStatus != SyncStatus.initial) {
+                  switch (state.syncStatus) {
+                    case SyncStatus.success:
+                      Fluttertoast.showToast(
+                          msg: 'Phát lịch thành công!',
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.BOTTOM,
+                          timeInSecForIosWeb: 1,
+                          backgroundColor: Colors.green,
+                          textColor: Colors.white,
+                          fontSize: 16.0);
+                      break;
+                    case SyncStatus.failure:
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(state.message)),
+                      );
+                      break;
+                    case SyncStatus.initial:
+                      break;
+                    case SyncStatus.loading:
+                      Fluttertoast.showToast(
+                          msg: 'Đang đồng bộ...',
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.BOTTOM,
+                          timeInSecForIosWeb: 1,
+                          backgroundColor: Colors.orange,
+                          textColor: Colors.white,
+                          fontSize: 16.0);
+                      break;
                   }
-
-                  return RefreshIndicator(
-                      // Thêm RefreshIndicator ở đây
-                      onRefresh: () async => scheduleBloc.add(const FetchSchedule(1)),
-                      child: ListView.builder(
-                        itemCount: filteredItems.length,
-                        itemBuilder: (context, index) {
-                          final schedule = filteredItems[index];
-                          final createdTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(schedule.createdTime!));
-                          final modifiedTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(schedule.modifiedTime!));
-                          return _buildScheduleCard(schedule, createdTime, modifiedTime);
-                        },
-                      ));
-                } else if (state.status == ScheduleStatus.failure) {
-                  return Center(
-                    child: Text('Lỗi: ${state.message}', style: const TextStyle(color: Colors.red)),
-                  );
                 }
-                return const Center(child: Text('Không có dữ liệu.'));
               },
             ),
-          ),
-        ],
-      ),
+            BlocListener<ScheduleBloc, ScheduleState>(
+              listenWhen: (previous, current) => previous.delStatus != current.delStatus,
+              listener: (context, state) {
+                if (state.delStatus != DelStatus.initial) {
+                  switch (state.delStatus) {
+                    case DelStatus.success:
+                      Fluttertoast.showToast(
+                          msg: 'Xóa lịch thành công!',
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.BOTTOM,
+                          timeInSecForIosWeb: 1,
+                          backgroundColor: Colors.green,
+                          textColor: Colors.white,
+                          fontSize: 16.0);
+                      break;
+                    case DelStatus.failure:
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(state.message)),
+                      );
+                      break;
+                    case DelStatus.initial:
+                      break;
+                    case DelStatus.loading:
+                      Fluttertoast.showToast(
+                          msg: 'Đang xóa...',
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.BOTTOM,
+                          timeInSecForIosWeb: 1,
+                          backgroundColor: Colors.red,
+                          textColor: Colors.white,
+                          fontSize: 16.0);
+                      break;
+                  }
+                }
+              },
+            )
+          ],
+          child: Column(
+            children: [
+              _buildControlPanel(),
+              _buildSearchField(),
+              Expanded(
+                child: BlocBuilder<ScheduleBloc, ScheduleState>(
+                  builder: (context, state) {
+                    if (state.status == ScheduleStatus.loading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state.status == ScheduleStatus.success || state.status == ScheduleStatus.more) {
+                      final filteredItems = _getFilteredItems(state);
+                      if (filteredItems.isEmpty) {
+                        return const Center(child: Text('Không có lịch phát nào.'));
+                      }
+
+                      return RefreshIndicator(
+                          // Thêm RefreshIndicator ở đây
+                          onRefresh: () async => scheduleBloc.add(const FetchSchedule(0)),
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            itemCount: filteredItems.length + (state.isMoreOrRefresh == 1 ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == filteredItems.length && state.isMoreOrRefresh == 1) {
+                                return _buildShimmer(); // Hiển thị shimmer khi đang tải thêm
+                              }
+
+                              final schedule = filteredItems[index];
+                              final createdTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(schedule.createdTime!));
+                              final modifiedTime = DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.parse(schedule.modifiedTime!));
+                              return _buildScheduleCard(schedule, createdTime, modifiedTime);
+                            },
+                          ));
+                    } else if (state.status == ScheduleStatus.failure) {
+                      return Center(
+                        child: Text('Lỗi: ${state.message}', style: const TextStyle(color: Colors.red)),
+                      );
+                    }
+                    return const Center(child: Text(''));
+                  },
+                ),
+              ),
+            ],
+          )),
     );
   }
 
@@ -97,7 +180,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               CustomElevatedButton(
                 onPressed: () {
                   if (state.locationNode?.level == 3) {
-                    Navigator.pushNamed(context, '/create-schedule', arguments: state.locationNode);
+                    context.read<CreateScheduleBloc>().add(SelectLocation(
+                          state.locationNode!.name,
+                          state.locationNode!.id,
+                          scheduleName: '${state.locationNode!.name} - ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+                          locationCode: state.locationNode!.code,
+                        ));
+                    Navigator.pushNamed(context, '/create-schedule');
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Vui lòng chọn địa bàn cấp xã!')),
@@ -116,17 +205,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   Widget _buildSearchField() {
     return SearchField(
-      controller: _controller,
+      controller: _searchController,
       hintSearch: 'Tìm kiếm lịch phát...',
-      onChanged: (value) {
-        setState(() {
-          _searchQuery = value;
-        });
-      },
+      onChanged: (value) => scheduleBloc.add(SearchSchedule(value)),
       onClear: () {
         setState(() {
-          _controller.clear();
-          _searchQuery = '';
+          _searchController.clear();
+          scheduleBloc.add(const SearchSchedule(''));
         });
       },
       onFilter: _showFilterBottomSheet,
@@ -136,63 +221,57 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   void _showFilterBottomSheet() {
     CustomBottomSheet(
         height: 270,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('Tất cả'),
-              leading: Radio<String>(
-                value: 'all',
-                groupValue: _filter,
-                onChanged: (value) {
-                  setState(() {
-                    _filter = value!; // Cập nhật giá trị bộ lọc
-                  });
-                  Navigator.pop(context);
-                },
+        child: BlocBuilder<ScheduleBloc, ScheduleState>(builder: (context, state) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Tất cả'),
+                leading: Radio<String>(
+                  value: 'all',
+                  groupValue: state.filter,
+                  onChanged: (value) {
+                    scheduleBloc.add(UpdateFilter(value!));
+                    Navigator.pop(context);
+                  },
+                ),
               ),
-            ),
-            ListTile(
-              title: const Text('Bản nháp'),
-              leading: Radio<String>(
-                value: 'draft',
-                groupValue: _filter,
-                onChanged: (value) {
-                  setState(() {
-                    _filter = value!;
-                  });
-                  Navigator.pop(context);
-                },
+              ListTile(
+                title: const Text('Bản nháp'),
+                leading: Radio<String>(
+                  value: 'draft',
+                  groupValue: state.filter,
+                  onChanged: (value) {
+                    scheduleBloc.add(UpdateFilter(value!));
+                    Navigator.pop(context);
+                  },
+                ),
               ),
-            ),
-            ListTile(
-              title: const Text('Đang sử dụng'),
-              leading: Radio<String>(
-                value: 'used',
-                groupValue: _filter,
-                onChanged: (value) {
-                  setState(() {
-                    _filter = value!;
-                  });
-                  Navigator.pop(context);
-                },
+              ListTile(
+                title: const Text('Đang sử dụng'),
+                leading: Radio<String>(
+                  value: 'used',
+                  groupValue: state.filter,
+                  onChanged: (value) {
+                    scheduleBloc.add(UpdateFilter(value!));
+                    Navigator.pop(context);
+                  },
+                ),
               ),
-            ),
-            ListTile(
-              title: const Text('Đã hủy'),
-              leading: Radio<String>(
-                value: 'cancelled',
-                groupValue: _filter,
-                onChanged: (value) {
-                  setState(() {
-                    _filter = value!;
-                  });
-                  Navigator.pop(context);
-                },
+              ListTile(
+                title: const Text('Đã hủy'),
+                leading: Radio<String>(
+                  value: 'cancelled',
+                  groupValue: state.filter,
+                  onChanged: (value) {
+                    scheduleBloc.add(UpdateFilter(value!));
+                    Navigator.pop(context);
+                  },
+                ),
               ),
-            ),
-          ],
-        )).show(context);
+            ],
+          );
+        })).show(context);
   }
 
   Widget _buildScheduleCard(Schedule schedule, String createdTime, String modifiedTime) {
@@ -202,9 +281,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         motion: const DrawerMotion(),
         children: [
           CustomSlidableAction(
-            onPressed: (context) {
-              // Hành động cho nút xóa
-            },
+            onPressed: (context) => scheduleBloc.add(DelSchedule(schedule.id)),
             padding: const EdgeInsets.symmetric(vertical: 1.0),
             backgroundColor: Colors.red, // Màu nền đỏ cho nút xóa
             child: const Column(
@@ -214,7 +291,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 Icon(Icons.delete, color: Colors.white, size: 24),
                 SizedBox(height: 4),
                 Text(
-                  'Xóa',
+                  'Hủy lịch',
                   style: TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ],
@@ -222,7 +299,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ),
           CustomSlidableAction(
             onPressed: (context) => scheduleBloc.add(SyncSchedule(schedule.id)),
-            backgroundColor: Colors.orange,
+            backgroundColor: Colors.green,
             padding: const EdgeInsets.symmetric(vertical: 1.0),
             child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -236,24 +313,43 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               ],
             ),
           ),
-          CustomSlidableAction(
-            onPressed: (context) {
-              // Hành động cho nút sửa
-            },
-            backgroundColor: Colors.blue,
-            padding: const EdgeInsets.symmetric(vertical: 1.0),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.edit, color: Colors.white, size: 28),
-                SizedBox(height: 4),
-                Text(
-                  'Sửa',
-                  style: TextStyle(color: Colors.white, fontSize: 12),
-                ),
-              ],
+          if (schedule.status == 2)
+            CustomSlidableAction(
+              onPressed: (context) {
+                context.read<CreateScheduleBloc>().add(FetchDetailSchedule(schedule.id, schedule.siteMapName, schedule.siteMapId, schedule.name));
+                Navigator.pushNamed(context, '/create-schedule');
+              },
+              backgroundColor: Colors.blue,
+              padding: const EdgeInsets.symmetric(vertical: 1.0),
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.edit, color: Colors.white, size: 28),
+                  SizedBox(height: 4),
+                  Text(
+                    'Sửa',
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ],
+              ),
             ),
-          ),
+          if (schedule.status == 0)
+            CustomSlidableAction(
+              onPressed: (context) {},
+              backgroundColor: Colors.orange,
+              padding: const EdgeInsets.symmetric(vertical: 1.0),
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.copy, color: Colors.white, size: 28),
+                  SizedBox(height: 4),
+                  Text(
+                    'Sao chép',
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
       child: InkWell(
@@ -291,7 +387,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       children: [
         Expanded(
           child: Text(
-            schedule.name ?? 'Lịch không xác định',
+            schedule.name,
             style: CustomTextStyles.titleLargeBlue800,
           ),
         ),
@@ -305,9 +401,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInfoText('Địa bàn', schedule.siteMapName ?? 'Không xác định'),
+        _buildInfoText('Địa bàn', schedule.siteMapName),
         _buildInfoText('Lặp lại', '${schedule.scheduleDates.length} ngày'),
-        _buildInfoText('Thiết bị', 'Tất cả'),
+        _buildInfoText('Thiết bị', schedule.devices.isEmpty ? 'Tất cả' : '${schedule.devices.length} thiết bị'),
       ],
     );
   }
@@ -358,5 +454,39 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       ),
     );
+  }
+
+  Widget _buildShimmer() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Container(
+          height: 100,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Schedule> _getFilteredItems(ScheduleState state) {
+    return state.schedules.where((schedule) {
+      final matchesSearch = schedule.name.toLowerCase().contains(state.searchQuery.toLowerCase());
+      switch (state.filter) {
+        case 'draft':
+          return matchesSearch && schedule.status == 2;
+        case 'used':
+          return matchesSearch && schedule.status == 0;
+        case 'cancelled':
+          return matchesSearch && schedule.status == 1;
+        default:
+          return matchesSearch;
+      }
+    }).toList();
   }
 }

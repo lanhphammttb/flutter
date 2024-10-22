@@ -61,7 +61,7 @@ class _ChoicePlaceScreenState extends State<ChoicePlaceScreen> {
             child: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(
               builder: (context, state) {
                 return Text(
-                  'Địa điểm đã chọn: ${state.location?.name ?? ''}',
+                  'Địa điểm đã chọn: ${state.locationName ?? ''}',
                   style: const TextStyle(color: Colors.blue, fontSize: 16),
                 );
               },
@@ -80,8 +80,8 @@ class _ChoicePlaceScreenState extends State<ChoicePlaceScreen> {
                       return TreeNodeWidget(
                         treeNodes: state.treeNodes,
                         onItemClick: (node) {
-                          createScheduleBloc.add(SelectLocation(node));
-                          createScheduleBloc.add(ExpandNodeEvent(node));
+                          createScheduleBloc.add(SelectLocation(node.name, node.id));
+                          createScheduleBloc.add(ExpandNode(node));
                         },
                       );
                     } else if (state.locationStatus == LocationStatus.failure) {

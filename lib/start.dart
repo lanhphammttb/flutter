@@ -16,6 +16,8 @@ import 'package:nttcs/presentation/news/bloc/news_bloc.dart';
 import 'package:nttcs/presentation/overview/bloc/overview_bloc.dart';
 import 'package:nttcs/presentation/schedule/bloc/schedule_bloc.dart';
 
+import 'shared/shared_bloc.dart';
+
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 void startApp() {
@@ -51,9 +53,11 @@ class MyApp extends StatelessWidget {
             BlocProvider(
               create: (context) => ThemeBloc(ThemeState(themeType: PrefUtils().getThemeData())),
             ),
+            BlocProvider(create: (context) => SharedLocationCubit()),
             BlocProvider(
               create: (context) => HomeBloc(
                 context.read<AuthRepository>(),
+                context.read<SharedLocationCubit>(),
               ), // Providing HomeBloc
             ),
             BlocProvider(
@@ -74,6 +78,7 @@ class MyApp extends StatelessWidget {
             BlocProvider(
               create: (context) => CreateScheduleBloc(
                 context.read<AuthRepository>(),
+                context.read<SharedLocationCubit>()
               ), // Providing HomeBloc
             ),
             BlocProvider(
@@ -122,10 +127,12 @@ class _AppContentState extends State<AppContent> {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: NavigatorService.navigatorKey,
-          localizationsDelegates: const [AppLocalizationDelegate(),
-            GlobalMaterialLocalizations.delegate,  // Cung cấp Material localizations
+          localizationsDelegates: const [
+            AppLocalizationDelegate(),
+            GlobalMaterialLocalizations.delegate, // Cung cấp Material localizations
             GlobalCupertinoLocalizations.delegate, // Cung cấp Cupertino localizations
-            GlobalWidgetsLocalizations.delegate],
+            GlobalWidgetsLocalizations.delegate
+          ],
           theme: theme,
           // Use the theme data from the ThemeBloc
           title: 'Nguồn thông tin cơ sở',

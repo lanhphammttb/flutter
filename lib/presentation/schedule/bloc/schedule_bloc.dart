@@ -22,6 +22,9 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
   ScheduleBloc(this.authRepository) : super(const ScheduleState()) {
     on<FetchSchedule>(_onFetchSchedule);
     on<SyncSchedule>(_onSyncSchedule);
+    on<UpdateFilter>(_onUpdateFilter);
+    on<SearchSchedule>(_onSearchSchedule);
+    on<DelSchedule>(_onDelSchedule);
   }
 
   void _emitLoadingStateDelayed(Emitter<ScheduleState> emit) {
@@ -56,8 +59,8 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
         event.isMoreOrRefresh == 1
             ? 1
             : _currentPage > totalPage
-                ? totalPage
-                : _currentPage);
+            ? totalPage
+            : _currentPage);
 
     switch (result) {
       case Success(data: final data as SpecificResponse<Schedule>):
@@ -86,5 +89,29 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
         emit(state.copyWith(syncStatus: SyncStatus.failure, message: error));
         break;
     }
+  }
+
+  Future<void> _onDelSchedule(DelSchedule event, Emitter<ScheduleState> emit) async {
+    emit(state.copyWith(delStatus: DelStatus.loading));
+    final result = await authRepository.delSchedule(event.id);
+
+    switch (result) {
+      case Success(data: final data as SpecificStatusResponse<dynamic>):
+        emit(state.copyWith(delStatus: DelStatus.success));
+
+        add(const FetchSchedule(0));
+        break;
+      case Failure(message: final error):
+        emit(state.copyWith(delStatus: DelStatus.failure, message: error));
+        break;
+    }
+  }
+
+  void _onUpdateFilter(UpdateFilter event, Emitter<ScheduleState> emit) {
+    emit(state.copyWith(filter: event.filter));
+  }
+
+  void _onSearchSchedule(SearchSchedule event, Emitter<ScheduleState> emit) {
+    emit(state.copyWith(searchQuery: event.searchQuery));
   }
 }

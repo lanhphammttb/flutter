@@ -6,6 +6,7 @@ import 'package:nttcs/data/models/specific_response.dart';
 import 'package:nttcs/data/models/tree_node.dart';
 import 'package:nttcs/data/repositories/auth_repository.dart';
 import 'package:nttcs/data/result_type.dart';
+import 'package:nttcs/shared/shared_bloc.dart';
 
 part 'home_event.dart';
 
@@ -13,8 +14,9 @@ part 'home_state.dart';
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final AuthRepository authRepository;
+  final SharedLocationCubit sharedLocationCubit;
 
-  HomeBloc(this.authRepository) : super(const HomeState()) {
+  HomeBloc(this.authRepository, this.sharedLocationCubit) : super(const HomeState()) {
     on<FetchLocations>(_onFetchLocations);
     on<SearchTextChanged>(_onSearchTextChanged);
     on<ExpandNode>(_onExpandNode);
@@ -30,23 +32,28 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   Future<void> _onFetchLocations(FetchLocations event, Emitter<HomeState> emit) async {
-    _emitLoadingStateDelayed(emit);
+    if (sharedLocationCubit.hasLocations()) {
+      emit(state.copyWith(treeNodes: TreeNode.buildTree(sharedLocationCubit.state), originalTreeNodes: TreeNode.buildTree(sharedLocationCubit.state)));
+    } else {
+      _emitLoadingStateDelayed(emit);
 
-    try {
-      final result = await authRepository.getLocations();
-      if (result is Success) {
-        final data = result.data as SpecificResponse<Location>;
-        List<TreeNode> treeNodes = TreeNode.buildTree(data.items);
-        emit(state.copyWith(
-          status: HomeStatus.success,
-          treeNodes: treeNodes,
-          originalTreeNodes: treeNodes,
-        ));
-      } else if (result is Failure) {
-        emit(state.copyWith(status: HomeStatus.failure, error: result.message));
+      try {
+        final result = await authRepository.getLocations();
+        if (result is Success) {
+          final data = result.data as SpecificResponse<Location>;
+          sharedLocationCubit.setLocations(data.items);
+          List<TreeNode> treeNodes = TreeNode.buildTree(data.items);
+          emit(state.copyWith(
+            status: HomeStatus.success,
+            treeNodes: treeNodes,
+            originalTreeNodes: treeNodes,
+          ));
+        } else if (result is Failure) {
+          emit(state.copyWith(status: HomeStatus.failure, error: result.message));
+        }
+      } catch (error) {
+        emit(state.copyWith(status: HomeStatus.failure, error: error.toString()));
       }
-    } catch (error) {
-      emit(state.copyWith(status: HomeStatus.failure, error: error.toString()));
     }
   }
 

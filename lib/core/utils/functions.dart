@@ -32,3 +32,5 @@ String convertDateFormat(String dateString) {
 
   throw ArgumentError('Ngày không hợp lệ: $dateString');
 }
+
+String fromJsonToString(dynamic json) => json?.toString() ?? '';

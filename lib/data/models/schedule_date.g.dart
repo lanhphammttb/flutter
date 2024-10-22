@@ -9,29 +9,20 @@ part of 'schedule_date.dart';
 ScheduleDate _$ScheduleDateFromJson(Map<String, dynamic> json) => ScheduleDate(
       id: (json['Id'] as num).toInt(),
       date: json['Date'] as String,
-      datesCopy: json['DatesCopy'] as String?,
+      datesCopy: json['DatesCopy'] as String? ?? '',
       schedulePlaylistTimes: (json['SchedulePlaylistTimes'] as List<dynamic>)
           .map((e) => SchedulePlaylistTime.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
 
-Map<String, dynamic> _$ScheduleDateToJson(ScheduleDate instance) {
-  final val = <String, dynamic>{
-    'Id': instance.id,
-    'Date': instance.date,
-  };
-
-  void writeNotNull(String key, dynamic value) {
-    if (value != null) {
-      val[key] = value;
-    }
-  }
-
-  writeNotNull('DatesCopy', instance.datesCopy);
-  val['SchedulePlaylistTimes'] =
-      instance.schedulePlaylistTimes.map((e) => e.toJson()).toList();
-  return val;
-}
+Map<String, dynamic> _$ScheduleDateToJson(ScheduleDate instance) =>
+    <String, dynamic>{
+      'Id': instance.id,
+      'Date': instance.date,
+      'DatesCopy': instance.datesCopy,
+      'SchedulePlaylistTimes':
+          instance.schedulePlaylistTimes.map((e) => e.toJson()).toList(),
+    };
 
 SchedulePlaylistTime _$SchedulePlaylistTimeFromJson(
         Map<String, dynamic> json) =>
@@ -58,8 +49,8 @@ Map<String, dynamic> _$SchedulePlaylistTimeToJson(
 Playlist _$PlaylistFromJson(Map<String, dynamic> json) => Playlist(
       id: (json['Id'] as num).toInt(),
       order: (json['Order'] as num).toInt(),
-      mediaProjectId: json['MediaProjectId'] as String,
-      broadcastRegion: json['BroadcastRegion'] as String?,
+      mediaProjectId: fromJsonToString(json['MediaProjectId']),
+      broadcastRegion: fromJsonToString(json['BroadcastRegion']),
       banTinId: json['BanTinId'] as String?,
       tieuDe: json['TieuDe'] as String?,
       loaiLinhVuc: json['LoaiLinhVuc'] as String?,
