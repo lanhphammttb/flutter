@@ -33,4 +33,23 @@ String convertDateFormat(String dateString) {
   throw ArgumentError('Ngày không hợp lệ: $dateString');
 }
 
+String convertDateFormat2(String dateString) {
+  final DateFormat targetFormat = DateFormat(Constants.formatDate);
+  final List<DateFormat> sourceFormats = [
+    DateFormat(Constants.formatDate), // dd-MM-yyyy
+    DateFormat(Constants.formatDate2), // yyyy-MM-dd
+  ];
+
+  for (var format in sourceFormats) {
+    try {
+      final date = format.parseStrict(dateString);
+      return targetFormat.format(date);
+    } catch (e) {
+      continue;
+    }
+  }
+
+  throw ArgumentError('Ngày không hợp lệ: $dateString');
+}
+
 String fromJsonToString(dynamic json) => json?.toString() ?? '';

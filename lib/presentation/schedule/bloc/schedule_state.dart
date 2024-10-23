@@ -6,6 +6,8 @@ enum SyncStatus { initial, loading, success, failure }
 
 enum DelStatus { initial, loading, success, failure }
 
+enum CopyStatus { initial, loading, success, failure }
+
 class ScheduleState extends Equatable {
   final ScheduleStatus status;
   final List<Schedule> schedules;
@@ -14,6 +16,7 @@ class ScheduleState extends Equatable {
   final List<int> locationIds;
   final SyncStatus syncStatus;
   final DelStatus delStatus;
+  final CopyStatus copyStatus;
   final int isMoreOrRefresh;
   final String searchQuery;
   final String filter;
@@ -26,6 +29,7 @@ class ScheduleState extends Equatable {
     this.locationIds = const [],
     this.syncStatus = SyncStatus.initial,
     this.delStatus = DelStatus.initial,
+    this.copyStatus = CopyStatus.initial,
     this.isMoreOrRefresh = 0,
     this.searchQuery = '',
     this.filter = 'all',
@@ -39,6 +43,7 @@ class ScheduleState extends Equatable {
     List<int>? locationIds,
     SyncStatus? syncStatus,
     DelStatus? delStatus,
+    CopyStatus? copyStatus,
     int? isMoreOrRefresh,
     String? searchQuery,
     String? filter,
@@ -51,6 +56,7 @@ class ScheduleState extends Equatable {
       locationIds: locationIds ?? this.locationIds,
       syncStatus: syncStatus ?? this.syncStatus,
       delStatus: delStatus ?? this.delStatus,
+      copyStatus: copyStatus ?? this.copyStatus,
       isMoreOrRefresh: isMoreOrRefresh ?? this.isMoreOrRefresh,
       searchQuery: searchQuery ?? this.searchQuery,
       filter: filter ?? this.filter,
@@ -58,5 +64,5 @@ class ScheduleState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [status, schedules, message, locationNode, locationIds, syncStatus, delStatus, isMoreOrRefresh, searchQuery, filter];
+  List<Object?> get props => [status, schedules, message, locationNode, locationIds, syncStatus, delStatus, copyStatus, isMoreOrRefresh, searchQuery, filter];
 }

@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:nttcs/core/constants/constants.dart';
+import 'package:nttcs/core/utils/functions.dart';
+import 'package:nttcs/data/models/detail_schedule.dart';
 import 'package:nttcs/data/models/schedule.dart';
+import 'package:nttcs/data/models/schedule_date.dart';
 import 'package:nttcs/data/models/specific_response.dart';
 import 'package:nttcs/data/models/specific_status_reponse.dart';
 import 'package:nttcs/data/models/tree_node.dart';
@@ -25,6 +28,7 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     on<UpdateFilter>(_onUpdateFilter);
     on<SearchSchedule>(_onSearchSchedule);
     on<DelSchedule>(_onDelSchedule);
+    on<CopySchedule>(_onCopySchedule);
   }
 
   void _emitLoadingStateDelayed(Emitter<ScheduleState> emit) {
@@ -59,8 +63,8 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
         event.isMoreOrRefresh == 1
             ? 1
             : _currentPage > totalPage
-            ? totalPage
-            : _currentPage);
+                ? totalPage
+                : _currentPage);
 
     switch (result) {
       case Success(data: final data as SpecificResponse<Schedule>):
@@ -113,5 +117,32 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
 
   void _onSearchSchedule(SearchSchedule event, Emitter<ScheduleState> emit) {
     emit(state.copyWith(searchQuery: event.searchQuery));
+  }
+
+  Future<void> _onCopySchedule(CopySchedule event, Emitter<ScheduleState> emit) async {
+    final result = await authRepository.getDetailSchedule(event.id);
+
+    switch (result) {
+      case Success(data: final data as SpecificStatusResponse<DetailSchedule>):
+        List<ScheduleDate>? scheduleDates = data.items?.scheduleDates.map((e) {
+          return e.resetIds();
+        }).toList();
+
+        final result = await authRepository.createSchedule(data.items!.siteMapId, data.items!.name, scheduleDates!, data.items!.devices, 0);
+
+        switch (result) {
+          case Success(data: final data as SpecificStatusResponse<dynamic>):
+            emit(state.copyWith(copyStatus: CopyStatus.success));
+            add(const FetchSchedule(0));
+            break;
+          case Failure(message: final error):
+            emit(state.copyWith(copyStatus: CopyStatus.failure, message: error));
+            break;
+        }
+        break;
+      case Failure(message: final error):
+        emit(state.copyWith(message: error));
+        break;
+    }
   }
 }

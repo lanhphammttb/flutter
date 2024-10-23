@@ -51,6 +51,15 @@ class CopyDate extends CreateScheduleEvent {
   List<Object> get props => [scheduleDate, dates];
 }
 
+class EditDate extends CreateScheduleEvent {
+  final int index;
+
+  const EditDate(this.index);
+
+  @override
+  List<Object> get props => [index];
+}
+
 class AddPlaylist extends CreateScheduleEvent {
   final int dateIndex;
 
@@ -64,6 +73,15 @@ class RemovePlaylist extends CreateScheduleEvent {
 
   @override
   List<Object> get props => [playlistIndex];
+}
+
+class RemoveSchedulePlaylistTimes extends CreateScheduleEvent {
+  final int index;
+
+  const RemoveSchedulePlaylistTimes(this.index);
+
+  @override
+  List<Object> get props => [index];
 }
 
 class UpdatePlaylist extends CreateScheduleEvent {
@@ -122,23 +140,26 @@ class FetchNews3 extends CreateScheduleEvent {
 }
 
 class SelectNews extends CreateScheduleEvent {
-  final Content content;
+  final Content? content;
+  final List<Playlist>? selectedNews;
+  final String? duration;
 
-  const SelectNews(this.content);
+  const SelectNews({this.content, this.selectedNews, this.duration});
 
   @override
-  List<Object> get props => [content];
+  List<Object?> get props => [content, selectedNews, duration];
 }
 
 class AddTimeLine extends CreateScheduleEvent {
   final String nameTimeLine;
   final String startTime;
   final String endTime;
+  final int index;
 
-  const AddTimeLine(this.nameTimeLine, this.startTime, this.endTime);
+  const AddTimeLine(this.nameTimeLine, this.startTime, this.endTime, this.index);
 
   @override
-  List<Object> get props => [nameTimeLine, startTime, endTime];
+  List<Object> get props => [nameTimeLine, startTime, endTime, index];
 }
 
 class AddScheduleDate extends CreateScheduleEvent {

@@ -6,6 +6,8 @@ enum LocationStatus { initial, loading, more, success, failure }
 
 enum DeviceStatus { initial, loading, more, success, failure }
 
+enum DelPlaylistStatus { initial, loading, more, success, failure }
+
 class CreateScheduleState extends Equatable {
   final SpecificResponse<Schedule>? data;
   final String message;
@@ -20,11 +22,12 @@ class CreateScheduleState extends Equatable {
   final List<Device> devices;
   final List<Content> news;
   final List<int> selectedDeviceIds;
-  final List<Content> selectedNews;
+  final List<Playlist> selectedNews;
   final CreateScheduleStatus status;
   final LocationStatus locationStatus;
   final DeviceStatus deviceStatus;
   final NewsStatus newsStatus;
+  final DelPlaylistStatus delPlaylistStatus;
   final String locationSearchQuery;
   final String deviceSearchQuery;
   final bool isSelectAll;
@@ -38,6 +41,7 @@ class CreateScheduleState extends Equatable {
   final String locationCode;
   final DelStatus delStatus;
   final SyncStatus syncStatus;
+  final int dateIndex;
 
   const CreateScheduleState({
     this.data,
@@ -58,6 +62,7 @@ class CreateScheduleState extends Equatable {
     this.locationStatus = LocationStatus.initial,
     this.deviceStatus = DeviceStatus.initial,
     this.newsStatus = NewsStatus.initial,
+    this.delPlaylistStatus = DelPlaylistStatus.initial,
     this.locationSearchQuery = '',
     this.deviceSearchQuery = '',
     this.isSelectAll = false,
@@ -71,6 +76,7 @@ class CreateScheduleState extends Equatable {
     this.locationCode = '',
     this.delStatus = DelStatus.initial,
     this.syncStatus = SyncStatus.initial,
+    this.dateIndex = -1,
   });
 
   CreateScheduleState copyWith({
@@ -78,7 +84,7 @@ class CreateScheduleState extends Equatable {
     String? message,
     String? device,
     List<DateTime>? selectedDates,
-    List<Content>? selectedNews,
+    List<Playlist>? selectedNews,
     int? locationId,
     List<int>? devicesId,
     List<DateTime>? dates,
@@ -93,6 +99,7 @@ class CreateScheduleState extends Equatable {
     LocationStatus? locationStatus,
     DeviceStatus? deviceStatus,
     NewsStatus? newsStatus,
+    DelPlaylistStatus? delPlaylistStatus,
     String? locationSearchQuery,
     String? deviceSearchQuery,
     bool? isSelectAll,
@@ -106,6 +113,7 @@ class CreateScheduleState extends Equatable {
     String? locationCode,
     DelStatus? delStatus,
     SyncStatus? syncStatus,
+    int? dateIndex,
   }) {
     return CreateScheduleState(
       data: data ?? this.data,
@@ -126,6 +134,7 @@ class CreateScheduleState extends Equatable {
       locationStatus: locationStatus ?? this.locationStatus,
       deviceStatus: deviceStatus ?? this.deviceStatus,
       newsStatus: newsStatus ?? this.newsStatus,
+      delPlaylistStatus: delPlaylistStatus ?? this.delPlaylistStatus,
       locationSearchQuery: locationSearchQuery ?? this.locationSearchQuery,
       deviceSearchQuery: deviceSearchQuery ?? this.deviceSearchQuery,
       isSelectAll: isSelectAll ?? this.isSelectAll,
@@ -139,6 +148,7 @@ class CreateScheduleState extends Equatable {
       locationCode: locationCode ?? this.locationCode,
       delStatus: delStatus ?? this.delStatus,
       syncStatus: syncStatus ?? this.syncStatus,
+      dateIndex: dateIndex ?? this.dateIndex,
     );
   }
 
@@ -162,6 +172,7 @@ class CreateScheduleState extends Equatable {
         locationStatus,
         deviceStatus,
         newsStatus,
+        delPlaylistStatus,
         locationSearchQuery,
         deviceSearchQuery,
         isSelectAll,
@@ -175,5 +186,6 @@ class CreateScheduleState extends Equatable {
         locationCode,
         delStatus,
         syncStatus,
+        dateIndex,
       ];
 }

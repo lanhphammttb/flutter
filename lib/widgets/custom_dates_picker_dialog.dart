@@ -48,7 +48,8 @@ class CustomDatesPickerDialog {
               },
               selectionMode: DateRangePickerSelectionMode.multiple,
               selectableDayPredicate: (DateTime date) {
-                bool isDisabledDate = disabledDates.any((disabledDate) => date.year == disabledDate.year && date.month == disabledDate.month && date.day == disabledDate.day);
+                bool isDisabledDate =
+                    disabledDates.any((disabledDate) => date.year == disabledDate.year && date.month == disabledDate.month && date.day == disabledDate.day);
 
                 // Disable nếu là ngày trong danh sách hoặc trước hôm nay
                 return !isDisabledDate && !date.isBefore(DateTime(today.year, today.month, today.day));
@@ -62,7 +63,7 @@ class CustomDatesPickerDialog {
               backgroundColor: Colors.green,
               onPressed: () {
                 if (_selectedDates.isNotEmpty) {
-                  selectedDates(_selectedDates.map((date) => DateFormat(Constants.formatDate).format(date)).toList());
+                  selectedDates(_selectedDates.map((date) => DateFormat(Constants.formatDate2).format(date)).toList());
                   Navigator.of(context).pop();
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(

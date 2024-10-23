@@ -5,6 +5,7 @@ import 'package:nttcs/core/app_export.dart';
 import 'package:nttcs/core/utils/functions.dart';
 import 'package:nttcs/data/models/schedule_date.dart';
 import 'package:nttcs/presentation/schedule/bloc/schedule_bloc.dart';
+import 'package:nttcs/widgets/confirm_dialog.dart';
 import 'package:nttcs/widgets/custom_dates_picker_dialog.dart';
 import 'package:nttcs/widgets/custom_elevated_button.dart';
 
@@ -159,7 +160,8 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
                 child: CustomElevatedButton(
                   text: 'Hủy lịch',
                   backgroundColor: Colors.red,
-                  onPressed: () => createScheduleBloc.add(Del2Schedule()),
+                  onPressed: () =>
+                      ConfirmDialog.confirmDialog(context, 'Ban có chắc chắn muốn hủy lịch?', onConfirm: () => createScheduleBloc.add(Del2Schedule())),
                 ),
               ),
               const SizedBox(width: 8), // Khoảng cách giữa các nút
@@ -167,7 +169,8 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
                 child: CustomElevatedButton(
                   text: 'Lưu & Phát',
                   backgroundColor: Colors.green,
-                  onPressed: () => createScheduleBloc.add(Sync2Schedule(_nameController.text)),
+                  onPressed: () => ConfirmDialog.confirmDialog(context, 'Ban có chắc chắn muốn lưu và phát lịch?',
+                      onConfirm: () => createScheduleBloc.add(Sync2Schedule(_nameController.text))),
                 ),
               ),
               const SizedBox(width: 8), // Khoảng cách giữa các nút
@@ -175,7 +178,8 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
                 child: CustomElevatedButton(
                   text: 'Lưu nháp',
                   backgroundColor: appTheme.primary,
-                  onPressed: () => createScheduleBloc.add(CreateSchedule(_nameController.text)),
+                  onPressed: () => ConfirmDialog.confirmDialog(context, 'Ban có chắc chắn muốn lưu?',
+                      onConfirm: () => createScheduleBloc.add(CreateSchedule(_nameController.text))),
                 ),
               ),
             ],
@@ -236,8 +240,15 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
             ),
           ),
         ),
-        _buildOptionTile(context, title: 'Địa điểm phát', subtitle: 'Địa điểm đã chọn: ${state.locationName}', onTap: () => Navigator.pushNamed(context, '/choice-place')),
-        _buildOptionTile(context, title: 'Thiết bị phát', subtitle: 'Đã chọn: ${state.selectedDeviceIds.length}', onTap: () {
+        _buildOptionTile(context,
+            title: 'Địa điểm phát',
+            subtitle: 'Địa điểm đã chọn: ${state.locationName}',
+            onTap: () => {
+                  createScheduleBloc.add(FetchLocations()),
+                  Navigator.pushNamed(context, '/choice-place'),
+                }),
+        _buildOptionTile(context,
+            title: 'Thiết bị phát', subtitle: 'Đã chọn: ${state.selectedDeviceIds.isEmpty ? 'Toàn bộ địa bàn' : state.selectedDeviceIds.length}', onTap: () {
           createScheduleBloc.add(FetchDevices());
           Navigator.pushNamed(context, '/choice-device');
         }),
@@ -264,7 +275,10 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.add, color: Colors.white, size: 20),
-                  onPressed: () => Navigator.pushNamed(context, '/choice-date'),
+                  onPressed: () {
+                    createScheduleBloc.add(const EditDate(-1));
+                    Navigator.pushNamed(context, '/choice-date');
+                  },
                 ),
               ),
             ),
@@ -283,16 +297,28 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
               endActionPane: ActionPane(
                 motion: const DrawerMotion(),
                 children: [
-                  _buildSlidableAction('Xóa', Icons.delete, Colors.red, () => createScheduleBloc.add(RemoveScheduleDate(index))),
+                  _buildSlidableAction('Xóa', Icons.delete, Colors.red, () {
+                    ConfirmDialog.confirmDialog(
+                      context,
+                      'Bạn có chắc chắn muốn xóa ngày ${convertDateFormat(date.date)} không?',
+                      onConfirm: () => createScheduleBloc.add(RemoveScheduleDate(index)),
+                    );
+                  }),
                   _buildSlidableAction(
                       'Sao chép',
                       Icons.copy,
                       Colors.orange,
-                      () =>
-                          CustomDatesPickerDialog.datesPickerDialog(context, (selectedDate) => createScheduleBloc.add(CopyDate(date, selectedDate)), state.scheduleDates.map((e) => e.date).toList())),
-                  _buildSlidableAction('Sửa', Icons.edit, Colors.blue, () {
-                    // Handle edit action
-                  }),
+                      () => CustomDatesPickerDialog.datesPickerDialog(
+                          context, (selectedDate) => createScheduleBloc.add(CopyDate(date, selectedDate)), state.scheduleDates.map((e) => e.date).toList())),
+                  _buildSlidableAction(
+                    'Sửa',
+                    Icons.edit,
+                    Colors.blue,
+                    () {
+                      Navigator.pushNamed(context, '/choice-date', arguments: date.date);
+                      createScheduleBloc.add(EditDate(index));
+                    },
+                  ),
                 ],
               ),
               child: _buildDates(date),

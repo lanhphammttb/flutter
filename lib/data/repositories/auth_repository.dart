@@ -116,7 +116,7 @@ class AuthRepository {
     }
   }
 
-  Future<Result<void>> createSchedule(int locationSelected, String name, List<ScheduleDate> scheduleDates, List<Device> devices, int id) async {
+  Future<Result<void>> createSchedule(int locationSelected, String name, List<ScheduleDate> scheduleDates, List<int> devices, int id) async {
     try {
       final result = await authApiClient.createSchedule(locationSelected, name, scheduleDates, devices, id);
       return Success(result);
@@ -187,9 +187,36 @@ class AuthRepository {
     }
   }
 
-  Future<Result<void>> getDetailSchedule(int scheduleId) async{
+  Future<Result<void>> getDetailSchedule(int scheduleId) async {
     try {
       final result = await authApiClient.getDetailSchedule(scheduleId);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> delPlaylist(int id) async {
+    try {
+      final result = await authApiClient.delPlaylist(id);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> delScheduleDate(int id) async {
+    try {
+      final result = await authApiClient.delScheduleDate(id);
+      return Success(result);
+    } catch (e) {
+      return Failure('$e');
+    }
+  }
+
+  Future<Result<void>> delSchedulePlaylistTime(int id) async {
+    try {
+      final result = await authApiClient.delSchedulePlaylistTime(id);
       return Success(result);
     } catch (e) {
       return Failure('$e');

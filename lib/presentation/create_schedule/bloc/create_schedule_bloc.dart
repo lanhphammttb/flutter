@@ -43,6 +43,7 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
     on<FetchNews3>(_onFetchNews);
     on<SelectNews>(_onSelectNews);
     on<RemovePlaylist>(_onRemovePlaylist);
+    on<RemoveSchedulePlaylistTimes>(_onRemoveSchedulePlaylistTimes);
     on<AddTimeLine>(_onAddTimeLine);
     on<AddScheduleDate>(_onAddScheduleDate);
     on<RemoveScheduleDate>(_onRemoveScheduleDate);
@@ -51,11 +52,15 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
     on<ExpandNode>(_onExpandNode);
     on<Del2Schedule>(_onDelSchedule);
     on<Sync2Schedule>(_onSaveAndSyncSchedule);
+    on<EditDate>(_onEditDate);
   }
 
   Future<void> _onCreateSchedule(CreateSchedule event, Emitter<CreateScheduleState> emit) async {
     emit(state.copyWith(status: CreateScheduleStatus.loading));
-    final result = await authRepository.createSchedule(state.locationId, event.name, state.scheduleDates, state.devices, 0);
+    List<ScheduleDate> scheduleDates = state.scheduleDates.map((e) {
+      return e.copyWith(date: convertDateFormat2(e.date));
+    }).toList();
+    final result = await authRepository.createSchedule(state.locationId, event.name, scheduleDates, state.devices.map((device) => device.id).toList(), 0);
 
     if (result is Success) {
       emit(state.copyWith(status: CreateScheduleStatus.success));
@@ -101,20 +106,25 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
   }
 
   Future<void> _onFetchLocations(FetchLocations event, Emitter<CreateScheduleState> emit) async {
-    _emitLoadingStateDelayed(emit);
+    if (sharedLocationCubit.hasLocations()) {
+      List<TreeNode> treeNodes = TreeNode.buildTree(sharedLocationCubit.state);
+      emit(state.copyWith(treeNodes: treeNodes, originalTreeNodes: treeNodes, locationStatus: LocationStatus.success));
+    } else {
+      _emitLoadingStateDelayed(emit);
 
-    final result = await authRepository.getLocations();
+      final result = await authRepository.getLocations();
 
-    switch (result) {
-      case Success(data: final data as SpecificResponse<Location>):
-        sharedLocationCubit.setLocations(data.items);
-        List<TreeNode> treeNodes = TreeNode.buildTree(data.items);
-        Location node = data.items.firstWhere((element) => element.id == state.locationId);
-        emit(state.copyWith(locationStatus: LocationStatus.success, treeNodes: treeNodes, originalTreeNodes: treeNodes, locationCode: node.code));
-        break;
-      case Failure(message: final error):
-        emit(state.copyWith(locationStatus: LocationStatus.failure, message: error));
-        break;
+      switch (result) {
+        case Success(data: final data as SpecificResponse<Location>):
+          sharedLocationCubit.setLocations(data.items);
+          List<TreeNode> treeNodes = TreeNode.buildTree(data.items);
+          Location node = data.items.firstWhere((element) => element.id == state.locationId);
+          emit(state.copyWith(locationStatus: LocationStatus.success, treeNodes: treeNodes, originalTreeNodes: treeNodes, locationCode: node.code));
+          break;
+        case Failure(message: final error):
+          emit(state.copyWith(locationStatus: LocationStatus.failure, message: error));
+          break;
+      }
     }
   }
 
@@ -170,54 +180,110 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
   }
 
   void _onSelectNews(SelectNews event, Emitter<CreateScheduleState> emit) {
-    emit(state.copyWith(selectedNews: state.selectedNews + [event.content]));
+    if (event.content != null) {
+      final playlist = Playlist(
+        id: 0,
+        order: state.selectedNews.length,
+        mediaProjectId: event.content!.banTinId,
+        thoiLuong: event.content!.thoiLuong,
+        duration: event.duration ?? event.content!.thoiLuong,
+        tieuDe: event.content!.tieuDe,
+      );
+
+      emit(state.copyWith(selectedNews: List.from(state.selectedNews)..add(playlist)));
+    } else {
+      emit(state.copyWith(selectedNews: event.selectedNews));
+    }
   }
 
-  void _onRemovePlaylist(RemovePlaylist event, Emitter<CreateScheduleState> emit) {
-    final updatedSelectedItems = List<Content>.from(state.selectedNews)..removeAt(event.playlistIndex);
+  FutureOr<void> _onRemovePlaylist(RemovePlaylist event, Emitter<CreateScheduleState> emit) async {
+    emit(state.copyWith(delPlaylistStatus: DelPlaylistStatus.loading));
+    Playlist playlist = state.selectedNews[event.playlistIndex];
+    if (playlist.id != 0) {
+      final result = await authRepository.delPlaylist(playlist.id);
 
-    emit(state.copyWith(selectedNews: updatedSelectedItems));
+      switch (result) {
+        case Success(data: final data as SpecificStatusResponse<dynamic>):
+          emit(state.copyWith(selectedNews: List.from(state.selectedNews)..removeAt(event.playlistIndex), delPlaylistStatus: DelPlaylistStatus.success));
+          break;
+        case Failure(message: final error):
+          emit(state.copyWith(message: error));
+          break;
+      }
+    } else {
+      emit(state.copyWith(selectedNews: List.from(state.selectedNews)..removeAt(event.playlistIndex), delPlaylistStatus: DelPlaylistStatus.success));
+    }
   }
 
   void _onAddTimeLine(AddTimeLine event, Emitter<CreateScheduleState> emit) {
-    SchedulePlaylistTime schedulePlaylistTime = SchedulePlaylistTime(
-      id: 0,
+    final newSchedulePlaylistTime = SchedulePlaylistTime(
+      id: event.index == -1 ? 0 : state.schedulePlaylistTimes[event.index].id,
       name: event.nameTimeLine,
       start: event.startTime,
       end: event.endTime,
       playlists: state.selectedNews.asMap().entries.map((entry) {
-        final index = entry.key;
-        final content = entry.value;
         return Playlist(
           id: 0,
-          order: index,
-          mediaProjectId: content.banTinId,
-          thoiLuong: content.thoiLuong,
+          order: entry.key,
+          mediaProjectId: entry.value.mediaProjectId,
+          thoiLuong: entry.value.thoiLuong,
+          duration: entry.value.duration,
         );
       }).toList(),
     );
 
-    final updatedScheduleDates = List<SchedulePlaylistTime>.from(state.schedulePlaylistTimes)..add(schedulePlaylistTime);
+    final updatedSchedulePlaylistTimes = List<SchedulePlaylistTime>.from(state.schedulePlaylistTimes);
 
-    emit(state.copyWith(schedulePlaylistTimes: updatedScheduleDates, selectedNews: []));
+    if (event.index == -1) {
+      updatedSchedulePlaylistTimes.add(newSchedulePlaylistTime);
+    } else {
+      updatedSchedulePlaylistTimes[event.index] = newSchedulePlaylistTime;
+    }
+
+    emit(state.copyWith(schedulePlaylistTimes: updatedSchedulePlaylistTimes));
   }
 
   void _onAddScheduleDate(AddScheduleDate event, Emitter<CreateScheduleState> emit) {
-    ScheduleDate scheduleDate = ScheduleDate(
-      id: 0,
-      date: state.dateString == '' ? DateFormat(Constants.formatDate).format(DateTime.now()) : state.dateString,
+    final scheduleDate = ScheduleDate(
+      id: state.dateIndex == -1 ? 0 : state.scheduleDates[state.dateIndex].id,
+      date: state.dateString.isNotEmpty ? state.dateString : DateFormat(Constants.formatDate2).format(DateTime.now()),
       schedulePlaylistTimes: state.schedulePlaylistTimes,
     );
 
-    final updatedScheduleDates = List<ScheduleDate>.from(state.scheduleDates)..add(scheduleDate);
+    final updatedScheduleDates = List<ScheduleDate>.from(state.scheduleDates);
 
-    emit(state.copyWith(scheduleDates: updatedScheduleDates, schedulePlaylistTimes: []));
+    if (state.dateIndex == -1) {
+      updatedScheduleDates.add(scheduleDate);
+    } else {
+      updatedScheduleDates[state.dateIndex] = scheduleDate;
+    }
+
+    emit(state.copyWith(
+      scheduleDates: updatedScheduleDates,
+      schedulePlaylistTimes: [],
+      dateString: '',
+    ));
   }
 
-  void _onRemoveScheduleDate(RemoveScheduleDate event, Emitter<CreateScheduleState> emit) {
-    final updatedScheduleDates = List<ScheduleDate>.from(state.scheduleDates)..removeAt(event.dateIndex);
-
-    emit(state.copyWith(scheduleDates: updatedScheduleDates));
+  FutureOr<void> _onRemoveScheduleDate(RemoveScheduleDate event, Emitter<CreateScheduleState> emit) async {
+    ScheduleDate scheduleDate = state.scheduleDates[event.dateIndex];
+    if (scheduleDate.id != 0) {
+      final result = await authRepository.delScheduleDate(scheduleDate.id);
+      switch (result) {
+        case Success(data: final data as SpecificStatusResponse<dynamic>):
+          if (data.status) {
+            emit(state.copyWith(scheduleDates: List.from(state.scheduleDates)..removeAt(event.dateIndex)));
+          } else {
+            emit(state.copyWith(message: data.message));
+          }
+          break;
+        case Failure(message: final error):
+          emit(state.copyWith(message: error));
+          break;
+      }
+    } else {
+      emit(state.copyWith(scheduleDates: List.from(state.scheduleDates)..removeAt(event.dateIndex)));
+    }
   }
 
   void _onCopyDate(CopyDate event, Emitter<CreateScheduleState> emit) {
@@ -226,7 +292,9 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
       ...event.dates.map((date) => ScheduleDate(
             id: 0,
             date: date,
-            schedulePlaylistTimes: List.from(event.scheduleDate.schedulePlaylistTimes),
+            schedulePlaylistTimes: event.scheduleDate.schedulePlaylistTimes.map((e) {
+              return e.resetIds();
+            }).toList(),
           )),
     ];
 
@@ -242,13 +310,9 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
 
     if (sharedLocationCubit.hasLocations()) {
       Location node = sharedLocationCubit.state.firstWhere((element) => element.id == event.locationId);
-      log('node: $node');
+      List<TreeNode> treeNodes = TreeNode.buildTree(sharedLocationCubit.state);
       emit(state.copyWith(
-          treeNodes: TreeNode.buildTree(sharedLocationCubit.state),
-          originalTreeNodes: TreeNode.buildTree(sharedLocationCubit.state),
-          locationStatus: LocationStatus.success,
-          locationId: event.locationId,
-          locationCode: node.code));
+          treeNodes: treeNodes, originalTreeNodes: treeNodes, locationStatus: LocationStatus.success, locationId: event.locationId, locationCode: node.code));
     } else {
       add(FetchLocations());
     }
@@ -302,22 +366,58 @@ class CreateScheduleBloc extends Bloc<CreateScheduleEvent, CreateScheduleState> 
 
   Future<void> _onSaveAndSyncSchedule(Sync2Schedule event, Emitter<CreateScheduleState> emit) async {
     emit(state.copyWith(status: CreateScheduleStatus.loading));
-    final result = await authRepository.createSchedule(state.locationId, event.scheduleName, state.scheduleDates, state.devices, state.detailSchedule?.id ?? 0);
+    final result = await authRepository.createSchedule(
+        state.locationId, event.scheduleName, state.scheduleDates, state.devices.map((device) => device.id).toList(), state.detailSchedule?.id ?? 0);
+    switch (result) {
+      case Success(data: final data as SpecificStatusResponse<Schedule>):
+        emit(state.copyWith(status: CreateScheduleStatus.success, syncStatus: SyncStatus.loading));
+        final result = await authRepository.syncSchedule(data.items?.id ?? 0);
 
-    if (result is Success) {
-      emit(state.copyWith(status: CreateScheduleStatus.success, syncStatus: SyncStatus.loading));
-      final result = await authRepository.syncSchedule(state.detailSchedule?.id ?? 0);
+        switch (result) {
+          case Success(data: final data as SpecificStatusResponse<dynamic>):
+            emit(state.copyWith(syncStatus: SyncStatus.success));
+            break;
+          case Failure(message: final error):
+            emit(state.copyWith(syncStatus: SyncStatus.failure, message: error));
+            break;
+        }
+        break;
+      case Failure(message: final error):
+        emit(state.copyWith(status: CreateScheduleStatus.failure, message: error));
+        break;
+    }
+  }
+
+  void _onEditDate(EditDate event, Emitter<CreateScheduleState> emit) {
+    if (event.index == -1) {
+      emit(state.copyWith(dateString: '', schedulePlaylistTimes: [], dateIndex: event.index));
+      return;
+    } else {
+      final ScheduleDate scheduleDate = state.scheduleDates[event.index];
+
+      emit(state.copyWith(dateString: scheduleDate.date, schedulePlaylistTimes: scheduleDate.schedulePlaylistTimes, dateIndex: event.index));
+    }
+  }
+
+  FutureOr<void> _onRemoveSchedulePlaylistTimes(RemoveSchedulePlaylistTimes event, Emitter<CreateScheduleState> emit) async {
+    SchedulePlaylistTime schedulePlaylistTime = state.schedulePlaylistTimes[event.index];
+    if (schedulePlaylistTime.id != 0) {
+      final result = await authRepository.delSchedulePlaylistTime(schedulePlaylistTime.id);
 
       switch (result) {
         case Success(data: final data as SpecificStatusResponse<dynamic>):
-          emit(state.copyWith(syncStatus: SyncStatus.success));
+          if (data.status) {
+            emit(state.copyWith(schedulePlaylistTimes: List.from(state.schedulePlaylistTimes)..removeAt(event.index)));
+          } else {
+            emit(state.copyWith(message: data.message));
+          }
           break;
         case Failure(message: final error):
-          emit(state.copyWith(syncStatus: SyncStatus.failure, message: error));
+          emit(state.copyWith(message: error));
           break;
       }
-    } else if (result is Failure) {
-      emit(state.copyWith(status: CreateScheduleStatus.failure, message: result.message));
+    } else {
+      emit(state.copyWith(schedulePlaylistTimes: List.from(state.schedulePlaylistTimes)..removeAt(event.index)));
     }
   }
 }

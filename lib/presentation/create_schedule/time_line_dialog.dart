@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nttcs/core/app_export.dart';
 import 'package:nttcs/core/utils/functions.dart';
+import 'package:nttcs/data/models/content.dart';
+import 'package:nttcs/data/models/schedule_date.dart';
 import 'package:nttcs/presentation/create_schedule/bloc/create_schedule_bloc.dart';
 import 'package:nttcs/presentation/device/TooltipShape.dart';
 import 'package:nttcs/presentation/news/bloc/news_bloc.dart';
@@ -11,13 +13,27 @@ import 'package:nttcs/widgets/custom_elevated_button.dart';
 import '../../widgets/custom_time_picker_dialog.dart';
 
 class TimeLineDialog extends StatefulWidget {
-  const TimeLineDialog({super.key});
+  final String? timeStart;
+  final String? timeEnd;
+  final String? name;
+  final int? timeLineIndex;
 
-  static void show(BuildContext context) {
+  const TimeLineDialog({super.key, this.timeStart, this.timeEnd, this.name, this.timeLineIndex});
+
+  static void show(
+    BuildContext context, {
+    SchedulePlaylistTime? timeFrame,
+    int? timeLineIndex,
+  }) {
     CustomBottomSheet(
       height: 420,
       showDraggableIndicator: false,
-      child: const TimeLineDialog(),
+      child: TimeLineDialog(
+        timeStart: timeFrame?.start ?? '05:00:00',
+        timeEnd: timeFrame?.end ?? '05:00:00',
+        name: timeFrame?.name ?? 'Khung giờ từ 05:00:00 đến 05:00:00',
+        timeLineIndex: timeLineIndex ?? -1,
+      ),
     ).show(context);
   }
 
@@ -26,15 +42,23 @@ class TimeLineDialog extends StatefulWidget {
 }
 
 class _TimeLineDialogState extends State<TimeLineDialog> {
-  String timeStart = '05:00:00';
-  String timeEnd = '05:00:00';
-  TextEditingController nameController = TextEditingController(text: 'Khung giờ từ 05:00:00 đến 05:00:00');
+  late String timeStart;
+  late String timeEnd;
+  late int timeLineIndex;
+  TextEditingController nameController = TextEditingController();
+  bool autoRenderText = true;
   late CreateScheduleBloc createScheduleBloc;
 
   @override
   void initState() {
     super.initState();
     createScheduleBloc = context.read<CreateScheduleBloc>();
+
+    timeStart = widget.timeStart ?? '05:00:00';
+    timeEnd = widget.timeEnd ?? '05:00:00';
+    timeLineIndex = widget.timeLineIndex ?? -1;
+
+    nameController.text = widget.name ?? 'Khung giờ từ 05:00:00 đến 05:00:00';
   }
 
   @override
@@ -80,9 +104,12 @@ class _TimeLineDialogState extends State<TimeLineDialog> {
             child: TextField(
               controller: nameController,
               inputFormatters: [
-                LengthLimitingTextInputFormatter(60), // Giới hạn 50 ký tự
+                LengthLimitingTextInputFormatter(60),
               ],
-              onChanged: (value) => setState(() => nameController.text = value),
+              onChanged: (value) => setState(() {
+                autoRenderText = false;
+                nameController.text = value;
+              }),
               decoration: InputDecoration(
                 isDense: true,
                 border: InputBorder.none,
@@ -149,6 +176,7 @@ class _TimeLineDialogState extends State<TimeLineDialog> {
           nameController.text,
           timeStart,
           timeEnd,
+          timeLineIndex,
         ));
         Navigator.pop(context);
       },
@@ -210,12 +238,6 @@ class _TimeLineDialogState extends State<TimeLineDialog> {
                   ];
                 },
               ),
-              const Spacer(),
-              // Uncomment or adjust the text below as per your requirement
-              // Text(
-              //   convertSecondsToHHMMSS(state.selectedContent != null ? state.selectedContent!.thoiLuong : '0'),
-              //   style: const TextStyle(color: Colors.grey),
-              // ),
             ],
           );
         },
@@ -261,8 +283,13 @@ class _TimeLineDialogState extends State<TimeLineDialog> {
                                   trailing: IconButton(
                                       icon: const Icon(Icons.add, color: Colors.blue),
                                       onPressed: () {
-                                        createScheduleBloc.add(SelectNews(content));
-                                        setTimeEnd();
+                                        if (content.loaiBanTin == '5') {
+                                          CustomTimePickerDialog.timePickerDialog(context, 1, addSelectedNews: (String time) {
+                                            setTimeEnd(() => createScheduleBloc.add(SelectNews(content: content, duration: time)));
+                                          });
+                                        } else {
+                                          setTimeEnd(() => createScheduleBloc.add(SelectNews(content: content)));
+                                        }
                                       }));
                             },
                           );
@@ -281,7 +308,7 @@ class _TimeLineDialogState extends State<TimeLineDialog> {
                             return ListTile(
                               contentPadding: const EdgeInsets.fromLTRB(16, 0, 0, 4),
                               leading: Icon(Icons.queue_music_outlined, color: appTheme.primary),
-                              title: Text(state.selectedNews[index].tieuDe),
+                              title: Text(state.selectedNews[index].tieuDe ?? ''),
                               subtitle: Text(convertSecondsToHHMMSS(state.selectedNews[index].thoiLuong)),
                               trailing: IconButton(
                                   icon: const Icon(Icons.remove, color: Colors.red),
@@ -320,18 +347,33 @@ class _TimeLineDialogState extends State<TimeLineDialog> {
     );
   }
 
-  void setTimeEnd() {
+  Future<void> setTimeEnd([Function()? callback]) async {
+    await callback?.call();
     int totalDuration = 0;
-    for (var news in createScheduleBloc.state.selectedNews) {
-      totalDuration += int.parse(news.thoiLuong);
-    }
-    final List<String> timeStartList = timeStart.split(':');
-    final int hour = int.parse(timeStartList[0]);
-    final int minute = int.parse(timeStartList[1]);
-    final int second = int.parse(timeStartList[2]);
+    if (createScheduleBloc.state.delPlaylistStatus != DelPlaylistStatus.loading) {
+      if (createScheduleBloc.state.selectedNews.isEmpty) {
+        setState(() {
+          timeEnd = timeStart;
+          if (autoRenderText) {
+            nameController.text = 'Khung giờ từ $timeStart đến $timeEnd';
+          }
+        });
+      } else {
+        for (var news in createScheduleBloc.state.selectedNews) {
+          totalDuration += int.parse(news.duration ?? news.thoiLuong);
+        }
+        final List<String> timeStartList = timeStart.split(':');
+        final int hour = int.parse(timeStartList[0]);
+        final int minute = int.parse(timeStartList[1]);
+        final int second = int.parse(timeStartList[2]);
 
-    setState(() {
-      timeEnd = convertSecondsToHHMMSS((hour * 3600 + minute * 60 + second + totalDuration).toString());
-    });
+        setState(() {
+          timeEnd = convertSecondsToHHMMSS((hour * 3600 + minute * 60 + second + totalDuration).toString());
+          if (autoRenderText) {
+            nameController.text = 'Khung giờ từ $timeStart đến $timeEnd';
+          }
+        });
+      }
+    }
   }
 }

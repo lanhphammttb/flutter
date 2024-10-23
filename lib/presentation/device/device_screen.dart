@@ -7,6 +7,7 @@ import 'package:nttcs/core/utils/functions.dart';
 import 'package:nttcs/data/models/content.dart';
 import 'package:nttcs/data/models/device2.dart';
 import 'package:nttcs/presentation/news/bloc/news_bloc.dart';
+import 'package:nttcs/widgets/confirm_dialog.dart';
 import 'package:nttcs/widgets/custom_bottom_sheet.dart';
 import 'package:nttcs/widgets/custom_elevated_button.dart';
 import 'package:nttcs/widgets/custom_image_view.dart';
@@ -70,7 +71,13 @@ class _DeviceScreenState extends State<DeviceScreen> {
           if (state.status == DeviceStatus.success && state.message.isNotEmpty) {
             print('Message to display: ${state.message}'); // Kiểm tra giá trị của state.message
             Fluttertoast.showToast(
-                msg: state.message, toastLength: Toast.LENGTH_SHORT, gravity: ToastGravity.BOTTOM, timeInSecForIosWeb: 1, backgroundColor: Colors.green, textColor: Colors.white, fontSize: 16.0);
+                msg: state.message,
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                timeInSecForIosWeb: 1,
+                backgroundColor: Colors.green,
+                textColor: Colors.white,
+                fontSize: 16.0);
 
             //gán mặc định cho message
             deviceBloc.add(const FetchDevices(2));
@@ -243,53 +250,105 @@ class _DeviceScreenState extends State<DeviceScreen> {
         children: [
           CustomElevatedButton(
             onPressed: () {
-              CustomBottomSheet(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(4, 0, 16, 0),
-                        child: BlocBuilder<DeviceBloc, DeviceState>(
-                          builder: (context, state) {
-                            return Row(
-                              children: [
-                                Expanded(child: Slider(value: state.volumePreview.toDouble() ?? 50.0, min: 0, max: 100, onChanged: (value) => deviceBloc.add(DeviceVolumeChanged(value.toInt())))),
-                                Text('${state.volumePreview}'),
-                                const SizedBox(width: 16),
-                                CustomElevatedButton(
-                                  onPressed: () => deviceBloc.add(CommitVolumeChange(0, state.volumePreview)),
-                                  text: 'Âm lượng',
-                                  leftIcon: const Icon(Icons.volume_up, color: Colors.white, size: 20),
-                                ),
-                              ],
-                            );
-                          },
+              if (deviceBloc.state.selectedItems.isEmpty) {
+                Fluttertoast.showToast(
+                    msg: 'Vui lòng chọn ít nhất 1 thiết bị',
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    timeInSecForIosWeb: 1,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    fontSize: 16.0);
+              } else {
+                CustomBottomSheet(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 0, 16, 0),
+                          child: BlocBuilder<DeviceBloc, DeviceState>(
+                            builder: (context, state) {
+                              return Row(
+                                children: [
+                                  Expanded(
+                                      child: Slider(
+                                          value: state.volumePreview.toDouble() ?? 50.0,
+                                          min: 0,
+                                          max: 100,
+                                          onChanged: (value) => deviceBloc.add(DeviceVolumeChanged(value.toInt())))),
+                                  Text('${state.volumePreview}'),
+                                  const SizedBox(width: 16),
+                                  CustomElevatedButton(
+                                    onPressed: () => ConfirmDialog.confirmDialog(context, 'Bạn có chắc chắn muốn thực hiện hành động này?',
+                                        onConfirm: () => deviceBloc.add(CommitVolumeChange(0, state.volumePreview))),
+                                    text: 'Âm lượng',
+                                    leftIcon: const Icon(Icons.volume_up, color: Colors.white, size: 20),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                        child: GridView.count(
-                          crossAxisCount: MediaQuery.of(context).size.width > 414 ? 4 : 3,
-                          crossAxisSpacing: 4,
-                          mainAxisSpacing: 4,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          children: [
-                            _buildControlButton('Khởi động lại', Icons.refresh, Colors.blue, () => deviceBloc.add(const CommitVolumeChange(3, 3))),
-                            _buildControlButton2('Bật công suất', Assets.images.icHotspotOn, Colors.blue, () => deviceBloc.add(const CommitVolumeChange(1, 0))),
-                            _buildControlButton2('Tắt công suất', Assets.images.icHotspotOff, Colors.red, () => deviceBloc.add(const CommitVolumeChange(1, 1))),
-                            _buildControlButton('Phát tiếp', Icons.play_arrow, Colors.blue, () => deviceBloc.add(const CommitVolumeChange(2, 3))),
-                            _buildControlButton('Tạm dừng', Icons.pause, Colors.red, () => deviceBloc.add(const CommitVolumeChange(2, 2))),
-                            _buildControlButton('Bản tin tiếp', Icons.fast_forward, Colors.blue, () => deviceBloc.add(const CommitVolumeChange(2, 1))),
-                            _buildControlButton('Dừng phát', Icons.stop_circle, Colors.red, () => deviceBloc.add(const CommitVolumeChange(2, 0))),
-                          ],
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                          child: GridView.count(
+                            crossAxisCount: MediaQuery.of(context).size.width > 414 ? 4 : 3,
+                            crossAxisSpacing: 4,
+                            mainAxisSpacing: 4,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            children: [
+                              _buildControlButton(
+                                  'Khởi động lại',
+                                  Icons.refresh,
+                                  Colors.blue,
+                                  () => ConfirmDialog.confirmDialog(context, 'Bạn có chắc chắn muốn thực hiện hành động này?',
+                                      onConfirm: () => deviceBloc.add(const CommitVolumeChange(3, 3)))),
+                              _buildControlButton2(
+                                  'Bật công suất',
+                                  Assets.images.icHotspotOn,
+                                  Colors.blue,
+                                  () => ConfirmDialog.confirmDialog(context, 'Bạn có chắc chắn muốn thực hiện hành động này?',
+                                      onConfirm: () => deviceBloc.add(const CommitVolumeChange(1, 0)))),
+                              _buildControlButton2(
+                                  'Tắt công suất',
+                                  Assets.images.icHotspotOff,
+                                  Colors.red,
+                                  () => ConfirmDialog.confirmDialog(context, 'Bạn có chắc chắn muốn thực hiện hành động này?',
+                                      onConfirm: () => deviceBloc.add(const CommitVolumeChange(1, 1)))),
+                              _buildControlButton(
+                                  'Phát tiếp',
+                                  Icons.play_arrow,
+                                  Colors.blue,
+                                  () => ConfirmDialog.confirmDialog(context, 'Bạn có chắc chắn muốn thực hiện hành động này?',
+                                      onConfirm: () => deviceBloc.add(const CommitVolumeChange(2, 3)))),
+                              _buildControlButton(
+                                  'Tạm dừng',
+                                  Icons.pause,
+                                  Colors.red,
+                                  () => ConfirmDialog.confirmDialog(context, 'Bạn có chắc chắn muốn thực hiện hành động này?',
+                                      onConfirm: () => deviceBloc.add(const CommitVolumeChange(2, 2)))),
+                              _buildControlButton(
+                                  'Bản tin tiếp',
+                                  Icons.fast_forward,
+                                  Colors.blue,
+                                  () => ConfirmDialog.confirmDialog(context, 'Bạn có chắc chắn muốn thực hiện hành động này?',
+                                      onConfirm: () => deviceBloc.add(const CommitVolumeChange(2, 1)))),
+                              _buildControlButton(
+                                  'Dừng phát',
+                                  Icons.stop_circle,
+                                  Colors.red,
+                                  () => ConfirmDialog.confirmDialog(context, 'Bạn có chắc chắn muốn thực hiện hành động này?',
+                                      onConfirm: () => deviceBloc.add(const CommitVolumeChange(2, 0)))),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                height: 510.v,
-              ).show(context);
+                  height: 510.v,
+                ).show(context);
+              }
             },
             text: 'Điều khiển',
             rightIcon: const Icon(Icons.arrow_drop_down, color: Colors.white),
@@ -350,7 +409,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
                               },
                             ),
                             const Spacer(),
-                            Text(convertSecondsToHHMMSS(state.selectedContent != null ? state.selectedContent!.thoiLuong : '0'), style: const TextStyle(color: Colors.grey)),
+                            Text(convertSecondsToHHMMSS(state.selectedContent != null ? state.selectedContent!.thoiLuong : '0'),
+                                style: const TextStyle(color: Colors.grey)),
                             const SizedBox(width: 4),
                             CustomElevatedButton(
                               text: 'Phát',
@@ -359,7 +419,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
                               backgroundColor: Colors.red,
                               onPressed: () {
                                 if (state.selectedContent != null) {
-                                  deviceBloc.add(const PlayNow());
+                                  ConfirmDialog.confirmDialog(context, 'Bạn có chắc chắn muốn phát phẩn cấp?',
+                                      onConfirm: () => deviceBloc.add(const PlayNow()));
                                 } else {
                                   Fluttertoast.showToast(
                                       msg: 'Vui lòng chọn bản tin trước khi phát',
@@ -402,9 +463,11 @@ class _DeviceScreenState extends State<DeviceScreen> {
                                       color: Colors.grey, // Màu xám cho thời gian
                                     ),
                                   ),
-                                  trailing: state.selectedContent != null && state.selectedContent!.banTinId == content.banTinId ? const Icon(Icons.check, color: Colors.green) : null,
+                                  trailing: state.selectedContent != null && state.selectedContent!.banTinId == content.banTinId
+                                      ? const Icon(Icons.check, color: Colors.green)
+                                      : null,
                                   onTap: () {
-                                    if (state.contentType == 5) {
+                                    if (content.loaiBanTin == '5') {
                                       CustomTimePickerDialog.timePickerDialog(context, 1, addSelectedNews: (String time) {
                                         // vẫn là content nhưng thay đổi thời lượng
                                         Content updatedContent = Content(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:nttcs/core/app_export.dart';
+import 'package:nttcs/widgets/confirm_dialog.dart';
 import 'package:nttcs/widgets/custom_date_picker_dialog.dart';
 import 'package:nttcs/widgets/custom_elevated_button.dart';
 import 'package:nttcs/presentation/create_schedule/time_line_dialog.dart';
@@ -38,7 +39,8 @@ class _ChoiceDateScreenState extends State<ChoiceDateScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: GestureDetector(
-              onTap: () => CustomDatePickerDialog.datePickerDialog(context, (String selectedDate) => createScheduleBloc.add(DateStringChanged(selectedDate))),
+              onTap: () => CustomDatePickerDialog.datePickerDialog(context, (String selectedDate) => createScheduleBloc.add(DateStringChanged(selectedDate)),
+                  createScheduleBloc.state.scheduleDates.map((e) => e.date).toList(), createScheduleBloc.state.dateString),
               child: BlocBuilder<CreateScheduleBloc, CreateScheduleState>(
                 builder: (context, state) => Row(
                   children: [
@@ -79,64 +81,69 @@ class _ChoiceDateScreenState extends State<ChoiceDateScreen> {
                   itemCount: state.schedulePlaylistTimes.length,
                   itemBuilder: (context, index) {
                     final timeFrame = state.schedulePlaylistTimes[index];
-                    return Card(
-                      color: appTheme.white,
-                      margin: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: appTheme.primary, // Đặt màu ở đây thay vì thuộc tính color.
-                              borderRadius: BorderRadius.circular(8.0), // Bo góc cho container.
-                            ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.fromLTRB(16, 0, 0, 0),
-                              title: Text(
-                                timeFrame.name,
-                                style: CustomTextStyles.titleOverview,
+                    return GestureDetector(
+                      onTap: () {
+                        TimeLineDialog.show(context, timeFrame: timeFrame, timeLineIndex: index);
+                        createScheduleBloc.add(SelectNews(selectedNews: timeFrame.playlists));
+                      },
+                      child: Card(
+                        color: appTheme.white,
+                        margin: const EdgeInsets.all(8.0),
+                        child: Column(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: appTheme.primary, // Đặt màu ở đây thay vì thuộc tính color.
+                                borderRadius: BorderRadius.circular(8.0), // Bo góc cho container.
                               ),
-                              trailing: IconButton(
-                                padding: EdgeInsets.zero,
-                                icon: const Icon(Icons.close, color: Colors.red),
-                                onPressed: () {
-                                  // Xử lý sự kiện khi nhấn nút "close".
-                                  // context.read<CreateScheduleBloc>().add(RemoveTimeFrame(index));
-                                },
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.fromLTRB(16, 0, 0, 0),
+                                title: Text(
+                                  timeFrame.name,
+                                  style: CustomTextStyles.titleOverview,
+                                ),
+                                trailing: IconButton(
+                                  padding: EdgeInsets.zero,
+                                  icon: const Icon(Icons.close, color: Colors.red),
+                                  onPressed: () => ConfirmDialog.confirmDialog(context, 'Bạn có chắc chắn muốn xóa?',
+                                      onConfirm: () => createScheduleBloc.add(RemoveSchedulePlaylistTimes(index))),
+                                ),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(Icons.calendar_month_outlined, color: appTheme.primary),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      '${timeFrame.start} - ${timeFrame.end}',
-                                      style: CustomTextStyles.titleSmallInter,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Icon(Icons.article_outlined, color: appTheme.primary),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      '${timeFrame.playlists.length} bản tin',
-                                      style: CustomTextStyles.titleSmallInter,
-                                    ),
-                                  ],
-                                ),
-                              ],
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(Icons.calendar_month_outlined, color: appTheme.primary),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        '${timeFrame.start} - ${timeFrame.end}',
+                                        style: CustomTextStyles.titleSmallInter,
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.article_outlined, color: appTheme.primary),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        '${timeFrame.playlists.length} bản tin',
+                                        style: CustomTextStyles.titleSmallInter,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
+                    ;
                   },
                 );
               },

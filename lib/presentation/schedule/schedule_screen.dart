@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:nttcs/core/theme/custom_text_style.dart';
 import 'package:nttcs/data/models/schedule.dart';
 import 'package:nttcs/presentation/create_schedule/bloc/create_schedule_bloc.dart';
+import 'package:nttcs/widgets/confirm_dialog.dart';
 import 'package:nttcs/widgets/custom_bottom_sheet.dart';
 import 'package:nttcs/widgets/custom_elevated_button.dart';
 import 'package:nttcs/widgets/search_field.dart';
@@ -281,7 +282,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         motion: const DrawerMotion(),
         children: [
           CustomSlidableAction(
-            onPressed: (context) => scheduleBloc.add(DelSchedule(schedule.id)),
+            onPressed: (context) =>
+                ConfirmDialog.confirmDialog(context, 'Ban có chắc chắn muốn hủy lịch?', onConfirm: () => scheduleBloc.add(DelSchedule(schedule.id))),
             padding: const EdgeInsets.symmetric(vertical: 1.0),
             backgroundColor: Colors.red, // Màu nền đỏ cho nút xóa
             child: const Column(
@@ -298,7 +300,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             ),
           ),
           CustomSlidableAction(
-            onPressed: (context) => scheduleBloc.add(SyncSchedule(schedule.id)),
+            onPressed: (context) =>
+                ConfirmDialog.confirmDialog(context, 'Ban có chắc chắn muốn phát lịch?', onConfirm: () => scheduleBloc.add(SyncSchedule(schedule.id))),
             backgroundColor: Colors.green,
             padding: const EdgeInsets.symmetric(vertical: 1.0),
             child: const Column(
@@ -335,7 +338,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             ),
           if (schedule.status == 0)
             CustomSlidableAction(
-              onPressed: (context) {},
+              onPressed: (context) =>
+                  ConfirmDialog.confirmDialog(context, 'Ban có chắc chắn muốn phát lịch?', onConfirm: () => scheduleBloc.add(CopySchedule(schedule.id))),
               backgroundColor: Colors.orange,
               padding: const EdgeInsets.symmetric(vertical: 1.0),
               child: const Column(

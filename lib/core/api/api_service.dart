@@ -111,7 +111,8 @@ class AuthApiClient {
   Future<SpecificResponse<Device>> getDevice(int siteMapId, int page) async {
     try {
       final [token, siteId] = authLocalDataSource.getValue([Constants.token, Constants.id]);
-      final response = await dio.get('Device/sitemapid', token: token, queryParameters: {'SiteMapId': siteMapId, 'SiteId': siteId, 'Type': 'IPRADIO', 'Page': page, 'Size': Constants.pageSize});
+      final response = await dio.get('Device/sitemapid',
+          token: token, queryParameters: {'SiteMapId': siteMapId, 'SiteId': siteId, 'Type': 'IPRADIO', 'Page': page, 'Size': Constants.pageSize});
 
       return SpecificResponse<Device>.fromJson(
         response.data,
@@ -236,7 +237,8 @@ class AuthApiClient {
     }
   }
 
-  Future<SpecificStatusResponse<Schedule>> createSchedule(int locationSelected, String name, List<ScheduleDate> scheduleDates, List<Device> devices, int id) async {
+  Future<SpecificStatusResponse<Schedule>> createSchedule(
+      int locationSelected, String name, List<ScheduleDate> scheduleDates, List<int> devices, int id) async {
     try {
       final [token, siteId] = authLocalDataSource.getValue([Constants.token, Constants.id]);
 
@@ -247,7 +249,7 @@ class AuthApiClient {
         'SiteId': siteId,
         'SiteMapId': locationSelected.toString(),
         'ScheduleDates': scheduleDates.map((date) => date.toJson()).toList(),
-        'Devices': devices.map((device) => device.id).toList(),
+        'Devices': devices,
       };
       log('Request JSON: ${jsonEncode(data)}');
 
@@ -439,6 +441,66 @@ class AuthApiClient {
         response.data,
         (item) => DetailSchedule.fromJson(item as Map<String, dynamic>),
       );
+    } catch (e) {
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  Future<SpecificStatusResponse<dynamic>> delPlaylist(int id) async {
+    try {
+      final [token] = authLocalDataSource.getValue([Constants.token]);
+      final response = await dio.get('Schedule/delete/scheduleStatementTimeShiftContent/$id', token: token);
+
+      return SpecificStatusResponse<dynamic>.fromJson(
+        response.data,
+        (item) => item,
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message']);
+      } else {
+        throw Exception(e.message);
+      }
+    } catch (e) {
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  Future<SpecificStatusResponse<dynamic>> delScheduleDate(int id) async {
+    try {
+      final [token] = authLocalDataSource.getValue([Constants.token]);
+      final response = await dio.get('Schedule/delete/scheduleStatementDate/$id', token: token);
+
+      return SpecificStatusResponse<dynamic>.fromJson(
+        response.data,
+        (item) => item,
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message']);
+      } else {
+        throw Exception(e.message);
+      }
+    } catch (e) {
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  Future<SpecificStatusResponse<dynamic>> delSchedulePlaylistTime(int id) async {
+    try {
+      final [token] = authLocalDataSource.getValue([Constants.token]);
+      final response = await dio.get('Schedule/delete/ScheduleStatementTimeShifts/$id', token: token);
+
+      return SpecificStatusResponse<dynamic>.fromJson(
+        response.data,
+        (item) => item,
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(e.response!.data['message']);
+      } else {
+        throw Exception(e.message);
+      }
     } catch (e) {
       throw Exception('An error occurred: $e');
     }

@@ -36,6 +36,15 @@ class DelSchedule extends ScheduleEvent {
   List<Object?> get props => [id];
 }
 
+class CopySchedule extends ScheduleEvent {
+  final int id;
+
+  const CopySchedule(this.id);
+
+  @override
+  List<Object?> get props => [id];
+}
+
 class UpdateFilter extends ScheduleEvent {
   final String filter;
 

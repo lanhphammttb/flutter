@@ -33,7 +33,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   Future<void> _onFetchLocations(FetchLocations event, Emitter<HomeState> emit) async {
     if (sharedLocationCubit.hasLocations()) {
-      emit(state.copyWith(treeNodes: TreeNode.buildTree(sharedLocationCubit.state), originalTreeNodes: TreeNode.buildTree(sharedLocationCubit.state)));
+      List<TreeNode> treeNodes = TreeNode.buildTree(sharedLocationCubit.state);
+      emit(state.copyWith(treeNodes: treeNodes, originalTreeNodes: treeNodes, status: HomeStatus.success));
     } else {
       _emitLoadingStateDelayed(emit);
 

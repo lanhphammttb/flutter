@@ -35,16 +35,16 @@ class Content {
   final String nguonTin;
 
   @JsonKey(name: 'CreatedUser', defaultValue: '')
-  final String createdUser;
+  final String? createdUser;
 
   @JsonKey(name: 'CreatedTime', defaultValue: '')
-  final String createdTime;
+  final String? createdTime;
 
   @JsonKey(name: 'VungPhatThietBi', defaultValue: '')
   final String vungPhatThietBi;
 
   @JsonKey(name: 'TacGia')
-  final TacGia tacGia;
+  final TacGia? tacGia;
 
   Content({
     required this.banTinId,
@@ -57,10 +57,10 @@ class Content {
     required this.noiDungTomTat,
     required this.thoiLuong,
     required this.nguonTin,
-    required this.createdUser,
-    required this.createdTime,
+    this.createdUser,
+    this.createdTime,
     required this.vungPhatThietBi,
-    required this.tacGia,
+    this.tacGia,
   });
 
   factory Content.fromJson(Map<String, dynamic> json) => _$ContentFromJson(json);

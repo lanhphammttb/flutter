@@ -20,7 +20,9 @@ Content _$ContentFromJson(Map<String, dynamic> json) => Content(
       createdUser: json['CreatedUser'] as String? ?? '',
       createdTime: json['CreatedTime'] as String? ?? '',
       vungPhatThietBi: json['VungPhatThietBi'] as String? ?? '',
-      tacGia: TacGia.fromJson(json['TacGia'] as Map<String, dynamic>),
+      tacGia: json['TacGia'] == null
+          ? null
+          : TacGia.fromJson(json['TacGia'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$ContentToJson(Content instance) => <String, dynamic>{
@@ -37,7 +39,7 @@ Map<String, dynamic> _$ContentToJson(Content instance) => <String, dynamic>{
       'CreatedUser': instance.createdUser,
       'CreatedTime': instance.createdTime,
       'VungPhatThietBi': instance.vungPhatThietBi,
-      'TacGia': instance.tacGia.toJson(),
+      'TacGia': instance.tacGia?.toJson(),
     };
 
 TacGia _$TacGiaFromJson(Map<String, dynamic> json) => TacGia(

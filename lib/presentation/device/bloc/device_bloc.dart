@@ -179,7 +179,8 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
         return;
       }
       if (state.newsStatus == NewsStatus.success) {
-        emit(state.copyWith(newsStatus: NewsStatus.more, contentType: state.contentType, selectedContent: event.isMoreOrRefresh == 1 ? state.selectedContent : null));
+        emit(state.copyWith(
+            newsStatus: NewsStatus.more, contentType: state.contentType, selectedContent: event.isMoreOrRefresh == 1 ? state.selectedContent : null));
       }
     }
 
@@ -217,12 +218,12 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
         if (data.status) {
           emit(state.copyWith(
             status: DeviceStatus.success,
-            message: 'Phát ngay thành công',
+            message: 'Phát khẩn cấp thành công',
           ));
         } else {
           emit(state.copyWith(
             status: DeviceStatus.failure,
-            message: data.message ?? 'Phát ngay  thất bại',
+            message: data.message ?? 'Phát khẩn cấp thất bại',
           ));
         }
         break;

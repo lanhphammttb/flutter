@@ -24,14 +24,13 @@ class ScheduleDate {
     required this.schedulePlaylistTimes,
   });
 
-  void resetIds() {
+  ScheduleDate resetIds() {
     id = 0;
     for (var playlistTime in schedulePlaylistTimes) {
-      playlistTime.id = 0;
-      for (var playlist in playlistTime.playlists) {
-        playlist.id = 0;
-      }
+      playlistTime.resetIds();
     }
+
+    return this;
   }
 
   factory ScheduleDate.fromJson(Map<String, dynamic> json) => _$ScheduleDateFromJson(json);
@@ -49,7 +48,6 @@ class ScheduleDate {
       schedulePlaylistTimes: schedulePlaylistTimes ?? this.schedulePlaylistTimes,
     );
   }
-
 }
 
 @JsonSerializable(explicitToJson: true)
@@ -76,6 +74,17 @@ class SchedulePlaylistTime {
     required this.end,
     required this.playlists,
   });
+
+  SchedulePlaylistTime resetIds() {
+    id = 0; // Reset this ID
+
+    // Reset IDs for all Playlists
+    for (var playlist in playlists) {
+      playlist.resetIds();
+    }
+
+    return this;
+  }
 
   factory SchedulePlaylistTime.fromJson(Map<String, dynamic> json) => _$SchedulePlaylistTimeFromJson(json);
 
@@ -158,6 +167,12 @@ class Playlist {
   factory Playlist.fromJson(Map<String, dynamic> json) => _$PlaylistFromJson(json);
 
   Map<String, dynamic> toJson() => _$PlaylistToJson(this);
+
+  Playlist resetIds() {
+    id = 0;
+
+    return this;
+  }
 }
 
 @JsonSerializable()
